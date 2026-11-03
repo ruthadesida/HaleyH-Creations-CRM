@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * HaleyH Creations design tokens (see DESIGN.md).
+ * Warm ivory ground, charcoal ink, muted gold accents.
+ */
+@theme {
+  --color-ivory: #f8f3ea;
+  --color-surface: #fffdf8;
+  --color-ink: #23211e;
+  --color-muted: #655e54;
+  --color-line: #23211e1f;
+  --color-line-strong: #23211e33;
+  --color-gold: #b08d57;
+  --color-gold-soft: #b08d5726;
+  --color-gold-ink: #76592a;
+  --color-success: #2f6b4f;
+  --color-success-soft: #2f6b4f1a;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #8a5a001a;
+  --color-danger: #a63a2b;
+  --color-danger-soft: #a63a2b14;
+
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bodoni), ui-serif, Georgia, serif;
+
+  --radius-card: 10px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ------------------------------------------------------------------ */
+/* Mobile-native baseline (mobile-native skill)                        */
+/* ------------------------------------------------------------------ */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  background: var(--color-ivory);
+  color: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-feature-settings: "kern";
+}
+
+/* Inputs at 16px stop iOS zooming the page on focus. */
+input,
+textarea,
+select {
+  font-size: max(16px, 1rem);
+}
+
+button,
+a,
+[role="button"],
+summary,
+label {
+  touch-action: manipulation;
+}
+
+button,
+[role="button"],
+[role="tab"],
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+::selection {
+  background: var(--color-gold-soft);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Money and counts line up. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Display type: Bodoni for titles and big money figures only. */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material {
+    background: var(--color-surface) !important;
+    backdrop-filter: none !important;
+  }
 }
