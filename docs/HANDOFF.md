@@ -7,7 +7,7 @@ _Last updated: 2026-11-03_
 ## Where things stand
 
 - **Foundation (done, on `main`, CI green):** Next.js 16.4 app, security headers, Vitest, Playwright on 6 viewports plus security probes, CI pipeline (lint, types, unit, build, e2e, npm audit, gitleaks, CodeQL, dependency review), Dependabot, reviewer and QA agents, design system (`DESIGN.md`).
-- **Database (written, being verified in CI):** 3 migrations in `supabase/migrations/` covering the full multi-business schema, RLS, derived money figures, audit log, RPCs and the demo workspace. pgTAP tests in `supabase/tests/database/`. The first CI run caught a type bug in the order summary view (fixed in `1fac4c1`); confirming the re-run.
+- **Database (done, CI green):** 3 migrations in `supabase/migrations/` covering the full multi-business schema, RLS, derived money figures, audit log, RPCs and the demo workspace. **58 pgTAP tests pass** in CI (isolation, roles, money and workflow). Not yet applied to a hosted Supabase project.
 - **App code (in progress):** helpers `src/lib/money.ts` and `src/lib/phone.ts` with 43 passing unit tests. UI libraries installed. Screens not built yet.
 
 ## Blocked on the owner
@@ -18,7 +18,7 @@ _Last updated: 2026-11-03_
 
 ## Next steps
 
-1. Confirm the CI `database` job is green; fix any failing pgTAP tests.
+1. Once the owner has signed in to Supabase: create the dev project, link, `npx.cmd supabase db push`, write `.env.local`, scope `.mcp.json`.
 2. Build the app shell: Supabase SSR clients, `proxy.ts` session refresh, data access layer (`getUser`, `getWorkspace(slug)`, role checks), design tokens and base styles (ivory/charcoal/gold, Bodoni Moda + Instrument Sans, mobile-native baseline), bottom tab bar + sidebar, Sonner toaster.
 3. Auth screens: sign up, sign in, sign out, password reset; onboarding (create HaleyH workspace with NGN / Africa/Lagos, or open the demo workspace); accept-invite page.
 4. Core screens in order: dashboard → customers (with duplicate warning) → enquiries list + drag-and-drop pipeline → follow-up tasks → orders (create from enquiry, items, stages, cancel) → manual payments and refunds → staff management.
