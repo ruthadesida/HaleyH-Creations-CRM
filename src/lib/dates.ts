@@ -42,6 +42,23 @@ function tzOffsetMs(at: Date, tz: string): number {
   return asUtc - at.getTime();
 }
 
+/** A `datetime-local` value ("2026-11-04T10:30") in the business time zone → UTC ISO string. */
+export function zonedInputToUtc(local: string, tz = DEFAULT_TZ): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local)) return null;
+  const asIfUtc = new Date(`${local}:00Z`);
+  // Two passes handle DST edges in zones that have them.
+  let utc = asIfUtc.getTime() - tzOffsetMs(asIfUtc, tz);
+  utc = asIfUtc.getTime() - tzOffsetMs(new Date(utc), tz);
+  return new Date(utc).toISOString();
+}
+
+/** UTC ISO string → `datetime-local` value in the business time zone. */
+export function utcToZonedInput(iso: string | null | undefined, tz = DEFAULT_TZ): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return new Date(d.getTime() + tzOffsetMs(d, tz)).toISOString().slice(0, 16);
+}
+
 /** "3 Nov" (or "3 Nov 2025" when not this year). */
 export function formatDate(iso: string | null | undefined, tz = DEFAULT_TZ, now = new Date()): string {
   if (!iso) return "";

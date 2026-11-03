@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { addDays, daysUntil, endOfDayUtc, localMidnightUtc, relativeDue, startOfMonth, todayIn } from "./dates";
+import {
+  addDays, daysUntil, endOfDayUtc, localMidnightUtc, relativeDue, startOfMonth, todayIn, utcToZonedInput, zonedInputToUtc,
+} from "./dates";
 
 // 23:30 UTC on 3 Nov is already 00:30 on 4 Nov in Lagos (UTC+1).
 const lateUtc = new Date("2026-11-03T23:30:00Z");
@@ -22,6 +24,19 @@ describe("day boundaries", () => {
   });
   it("finds the start of the month", () => {
     expect(startOfMonth("2026-11-17")).toBe("2026-11-01");
+  });
+});
+
+describe("zoned datetime inputs", () => {
+  it("treats a typed time as Lagos time", () => {
+    expect(zonedInputToUtc("2026-11-04T10:30")).toBe("2026-11-04T09:30:00.000Z");
+  });
+  it("round-trips", () => {
+    expect(utcToZonedInput(zonedInputToUtc("2026-11-04T00:15"))).toBe("2026-11-04T00:15");
+  });
+  it("rejects malformed input", () => {
+    expect(zonedInputToUtc("tomorrow")).toBeNull();
+    expect(utcToZonedInput(null)).toBe("");
   });
 });
 
