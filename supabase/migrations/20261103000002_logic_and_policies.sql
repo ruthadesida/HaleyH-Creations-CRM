@@ -26,7 +26,8 @@ with (security_invoker = true)
 as
 with item_totals as (
   select business_id, order_id,
-    sum(quantity::bigint * unit_price_minor) as subtotal,
+    -- sum(bigint) returns numeric; cast back so money stays in whole kobo.
+    sum(quantity::bigint * unit_price_minor)::bigint as subtotal,
     count(*) as item_count,
     bool_or(item_type = 'made_to_order') as has_made_to_order
   from public.order_items
@@ -34,8 +35,8 @@ with item_totals as (
 ),
 payment_totals as (
   select business_id, order_id,
-    sum(amount_minor) filter (where kind = 'payment') as paid,
-    sum(amount_minor) filter (where kind = 'refund') as refunded,
+    (sum(amount_minor) filter (where kind = 'payment'))::bigint as paid,
+    (sum(amount_minor) filter (where kind = 'refund'))::bigint as refunded,
     max(paid_on) filter (where kind = 'payment') as last_paid_on
   from public.payments
   where voided_at is null
