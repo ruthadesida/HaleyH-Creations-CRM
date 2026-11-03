@@ -26,7 +26,7 @@ function rawGet(path: string): Promise<{ status: number; body: string }> {
 
 test.describe("security headers", () => {
   test("sets hardening headers and hides the framework", async ({ request }) => {
-    const res = await request.get("/");
+    const res = await request.get("/login");
     const h = res.headers();
 
     expect(h["x-powered-by"]).toBeUndefined();
@@ -46,7 +46,7 @@ test.describe("security headers", () => {
   });
 
   test("applies headers to unknown routes too", async ({ request }) => {
-    const res = await request.get("/this-route-does-not-exist");
+    const res = await request.get("/login/this-route-does-not-exist");
     expect(res.status()).toBe(404);
     expect(res.headers()["content-security-policy"]).toBeDefined();
   });
