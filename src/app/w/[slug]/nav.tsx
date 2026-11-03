@@ -27,7 +27,7 @@ type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean };
 
 function items(slug: string, role: Role) {
   const base = `/w/${slug}`;
-  if (role === "production") {
+  if (role === "production_manager") {
     return {
       tabs: FEATURES.production ? [{ href: `${base}/production`, label: "My work", icon: Package }] : [],
       extra: [] as Item[],

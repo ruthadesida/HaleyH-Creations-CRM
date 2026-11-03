@@ -6,42 +6,43 @@ create extension if not exists pgtap with schema extensions;
 select plan(16);
 
 ---------------------------------------------------------------------------
--- Production staff: only their assigned jobs, nothing else
+-- Production manager: production work, no customer payments or order values
 ---------------------------------------------------------------------------
 select tests.login('a0000000-0000-0000-0000-000000000003');
-select is_empty($$ select 1 from public.customers $$, 'Production staff cannot read customer records');
-select is_empty($$ select 1 from public.orders $$, 'Production staff cannot read orders');
-select is_empty($$ select 1 from public.payments $$, 'Production staff cannot read payments');
-select is_empty($$ select 1 from public.order_summaries $$, 'Production staff cannot see order values or balances');
+select is_empty($$ select 1 from public.customers $$, 'Production manager cannot read customer records');
+select is_empty($$ select 1 from public.orders $$, 'Production manager cannot read orders');
+select is_empty($$ select 1 from public.payments $$, 'Production manager cannot read payments');
+select is_empty($$ select 1 from public.order_summaries $$, 'Production manager cannot see order values or balances');
 select results_eq(
   $$ select order_number, item_description, bust::int from public.my_production_jobs('aaaaaaaa-0000-0000-0000-000000000000') $$,
   $$ values ('HA-00001'::text, 'Wrap dress'::text, 90) $$,
-  'Production staff see their assigned job with the measurements they need');
+  'Production manager see their assigned job with the measurements they need');
 select throws_ok(
   $$ insert into public.customers (business_id, full_name) values ('aaaaaaaa-0000-0000-0000-000000000000', 'X') $$,
-  '42501', null, 'Production staff cannot create customers');
+  '42501', null, 'Production manager cannot create customers');
 reset role;
 
 ---------------------------------------------------------------------------
--- Sales staff: daily work, but no refunds, cancellations or audit history
+-- Front office: daily work, but no refunds, cancellations or audit history
 ---------------------------------------------------------------------------
 select tests.login('a0000000-0000-0000-0000-000000000002');
-select results_eq($$ select count(*)::int from public.customers $$, array[1], 'Sales staff read their business''s customers');
+select results_eq($$ select count(*)::int from public.customers $$, array[1], 'Front office read their business''s customers');
 select lives_ok(
   $$ insert into public.payments (business_id, order_id, amount_minor, method)
      values ('aaaaaaaa-0000-0000-0000-000000000000', 'dddddddd-0000-0000-0000-00000000000a', 500000, 'cash') $$,
-  'Sales staff can record a payment');
+  'Front office can record a payment');
 select throws_ok(
   $$ insert into public.payments (business_id, order_id, kind, amount_minor, method)
      values ('aaaaaaaa-0000-0000-0000-000000000000', 'dddddddd-0000-0000-0000-00000000000a', 'refund', 1000, 'cash') $$,
-  '42501', null, 'Sales staff cannot record refunds');
+  '42501', null, 'Front office cannot record refunds');
+-- Voiding is an owner-only correction (Spec 2): RLS hides the row from the front office's update.
+update public.payments set void_reason = 'front office tries' where order_id = 'dddddddd-0000-0000-0000-00000000000a';
+select is_empty($$ select 1 from public.payments where void_reason is not null $$,
+  'Front office cannot void (silently alter) a payment');
+select is_empty($$ select 1 from public.audit_log $$, 'Front office cannot read the audit log');
 select throws_ok(
-  $$ update public.orders set status = 'cancelled', cancel_reason = 'test' where id = 'dddddddd-0000-0000-0000-00000000000a' $$,
-  '42501', null, 'Sales staff cannot cancel orders');
-select is_empty($$ select 1 from public.audit_log $$, 'Sales staff cannot read the audit log');
-select throws_ok(
-  $$ select public.update_member((select id from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000003'), 'manager') $$,
-  '42501', null, 'Sales staff cannot change anyone''s role');
+  $$ select public.update_member((select id from public.memberships where user_id = 'a0000000-0000-0000-0000-000000000003'), 'front_office') $$,
+  '42501', null, 'Front office cannot change anyone''s role');
 reset role;
 
 ---------------------------------------------------------------------------

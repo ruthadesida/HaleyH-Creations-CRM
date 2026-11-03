@@ -22,7 +22,7 @@ async function SidebarContent({ params }: SlugParams) {
       <Link href={`/w/${slug}`} className="px-2">
         <Wordmark name={business.name} className="block text-xl leading-tight" />
       </Link>
-      {role !== "production" && <NewButton slug={slug} variant="sidebar" />}
+      {role !== "production_manager" && <NewButton slug={slug} variant="sidebar" />}
       <Sidebar slug={slug} role={role} name={business.name} />
     </>
   );
@@ -56,7 +56,7 @@ async function PhoneNav({ params }: SlugParams) {
   return (
     <>
       <BottomTabs slug={slug} role={role} />
-      {role !== "production" && <NewButton slug={slug} variant="fab" />}
+      {role !== "production_manager" && <NewButton slug={slug} variant="fab" />}
     </>
   );
 }

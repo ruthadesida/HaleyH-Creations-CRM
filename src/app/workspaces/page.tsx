@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, Chip } from "@/components/ui/bits";
 import { Wordmark } from "@/components/wordmark";
 import { requireUser } from "@/lib/dal";
+import { ROLE_LABEL } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { openDemoWorkspace } from "./actions";
 import { CreateWorkspaceForm } from "./create-form";
 
 export const metadata: Metadata = { title: "Workspaces" };
 
-const ROLE_LABEL = { owner: "Owner", manager: "Manager", sales: "Sales", production: "Production" } as const;
 
 async function WorkspaceList({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const user = await requireUser();

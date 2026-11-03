@@ -1,7 +1,7 @@
 -- Shared fixtures for database tests. Each test file runs `\ir ../shared/fixtures.psql`
 -- inside its own transaction, which is rolled back at the end.
 --
--- Business A (prefix HA): owner A, sales A, production A, deactivated former A.
+-- Business A (prefix HA): owner A, front office A, production manager A, deactivated former A.
 -- Business B (prefix HB): owner B.
 -- A platform admin who is not a member of either.
 
@@ -37,9 +37,9 @@ insert into public.businesses (id, name, slug, order_prefix) values
 
 insert into public.memberships (business_id, user_id, role, status) values
   ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000001', 'owner', 'active'),
-  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000002', 'sales', 'active'),
-  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000003', 'production', 'active'),
-  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000004', 'sales', 'deactivated'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000002', 'front_office', 'active'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000003', 'production_manager', 'active'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000004', 'front_office', 'deactivated'),
   ('bbbbbbbb-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000001', 'owner', 'active');
 
 insert into public.platform_admins (user_id) values ('c0000000-0000-0000-0000-000000000001');

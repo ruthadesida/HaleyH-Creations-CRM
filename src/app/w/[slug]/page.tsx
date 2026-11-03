@@ -31,7 +31,7 @@ function periodRange(period: Period, today: string): [string, string] {
 async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   const { slug } = await params;
   const { business, role } = await getWorkspace(slug);
-  if (role === "production") return <ProductionHomeComingSoon />;
+  if (role === "production_manager") return <ProductionHomeComingSoon />;
 
   const sp = await searchParams;
   const period: Period = (typeof sp.period === "string" && sp.period in PERIODS ? sp.period : "month") as Period;

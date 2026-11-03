@@ -93,7 +93,48 @@ export const CATEGORY_LABEL: Record<Enums["product_category"], string> = {
 
 export const ROLE_LABEL: Record<Enums["member_role"], string> = {
   owner: "Owner",
-  manager: "Manager",
-  sales: "Sales / front office",
-  production: "Production",
+  front_office: "Front office manager",
+  production_manager: "Production manager / QC",
+  sales: "Front office (retired role)",
+};
+
+/** Roles an owner can give (the retired 'sales' value is never offered). */
+export const ASSIGNABLE_ROLES = ["owner", "front_office", "production_manager"] as const;
+
+export const OWNER_TITLES = ["Managing Director / CEO", "Creative Director"] as const;
+
+export const STOCK_KIND_LABEL = {
+  raw_material: "Raw material",
+  packaging: "Packaging & consumables",
+  finished_good: "Finished good",
+} as const;
+
+export const LOCATION_KIND_LABEL = {
+  store: "Store",
+  production: "Production floor",
+  showroom: "Showroom / finished goods",
+  external_maker: "With an external maker",
+  quarantine: "Quarantine",
+} as const;
+
+export const MAKER_TRADE_LABEL = {
+  tailor: "Tailor",
+  shoemaker: "Shoemaker",
+  bag_maker: "Bag maker",
+  other: "Other",
+} as const;
+
+export const STOCK_DOC_LABEL: Record<string, string> = {
+  opening_balance: "Opening balance",
+  purchase_receipt: "Purchase receipt",
+  supplier_return: "Supplier return",
+  transfer: "Transfer",
+  material_issue: "Issue to production",
+  material_return: "Return from production",
+  production_completion: "Production completed",
+  customer_dispatch: "Dispatched to customer",
+  customer_return: "Customer return",
+  scrap: "Write-off",
+  adjustment: "Count adjustment",
+  reversal: "Reversal",
 };

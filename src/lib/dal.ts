@@ -53,12 +53,15 @@ export const getWorkspace = cache(async (slug: string): Promise<Workspace> => {
   return { business, role: memberships[0].role, user };
 });
 
+/** Mirrors the database role helpers (app.is_office, app.is_production, app.is_owner). */
 export const can = {
-  /** Office work: customers, enquiries, orders, payments. */
-  office: (role: Role) => role !== "production",
-  /** Refunds, voids, cancellations, moving orders back, products. */
-  manage: (role: Role) => role === "owner" || role === "manager",
-  /** Staff and business settings. */
+  /** Front office work: customers, enquiries, sales orders, payment records. */
+  office: (role: Role) => role === "owner" || role === "front_office",
+  /** Production and stock work: materials, makers, locations, transfers, counts. */
+  production: (role: Role) => role === "owner" || role === "production_manager",
+  /** Corrections, refunds, voids, prices, approvals, archiving customers. */
+  manage: (role: Role) => role === "owner",
+  /** Staff, permissions and business settings. */
   own: (role: Role) => role === "owner",
 };
 
