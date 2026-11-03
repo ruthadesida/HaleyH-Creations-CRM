@@ -24,6 +24,7 @@ import { Chip } from "@/components/ui/bits";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
+import { FEATURES } from "@/lib/features";
 import { ENQUIRY_STAGE_LABEL } from "@/lib/labels";
 import { moveEnquiry } from "./actions";
 
@@ -63,7 +64,7 @@ export function PipelineBoard({ slug, cards }: { slug: string; cards: BoardCard[
       apply({ id: card.id, stage, position });
       const r = await moveEnquiry(slug, { id: card.id, stage, position, lost_reason: lostReason });
       if (!r.ok) toast.error(r.message);
-      else if (stage === "won" && !card.hasOrder) setWonCard(card);
+      else if (stage === "won" && !card.hasOrder && FEATURES.orders) setWonCard(card);
     });
   }
 

@@ -6,7 +6,25 @@ A phone-first CRM and order-management app for HaleyH Creations, a Nigerian fash
 
 These rules come from the owner. Follow all of them in every session. If a rule conflicts with a request, ask.
 
-**Start every session by reading:** [docs/HANDOFF.md](docs/HANDOFF.md) (current state and next steps), [docs/STATUS.md](docs/STATUS.md) (what works, what's a placeholder), and the doc for the area you're touching.
+**Start every session by reading:** [docs/HANDOFF.md](docs/HANDOFF.md) (current state and next steps), [docs/STATUS.md](docs/STATUS.md) (what works, what's a placeholder), [docs/SPEC.md](docs/SPEC.md) (the owner's specifications; **Spec 2 wins conflicts**), [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md) (phase plan and design decisions), and the doc for the area you're touching.
+
+## Scope (Spec 2)
+
+An integrated CRM, sales, purchasing, inventory and production system: Enquiry → Sales order → Stock or production → QC → Dispatch → Delivery → After-sales, and Opening inventory/purchases → Raw materials → WIP → Finished goods → Sale/return. Build in the four phases in `docs/GAP-ANALYSIS.md`; finish and test each core workflow before advanced features.
+
+## Inventory, production and costing rules
+
+- The **inventory movement ledger is the source of truth**. Stock changes only through posted documents written by database functions in one transaction. Never update or delete a posted movement; reverse it with a mirror document.
+- Every posting is idempotent (idempotency key) and safe under concurrency (row locks). Prevent negative stock by default. Transfers never change total inventory.
+- Reservations reduce *available*, never *physical*, stock. Dispatch reduces finished goods exactly once. Material is consumed at issue to production, never again at dispatch.
+- A PO never increases stock; an accepted goods receipt does; a supplier payment never does. Opening balances never create sales, expenses or cash.
+- Quantities are decimals with explicit units; never mix units without a defined conversion. Prices and payments are exact integer kobo; unit costs may carry fractional kobo.
+- Separate effective date from creation timestamp; refuse postings before the owner's closed-period date.
+- Only QC-passed items become saleable. Returned/rejected goods go to quarantine until inspected. A refund never restocks anything by itself.
+- Valuation: moving weighted average (document changes in `docs/COSTING.md`). Label profit "estimated" when costs are missing; never call gross profit net profit. No assumed tax rates.
+- Keep commercial, payment, production and fulfilment status separate; show one clear progress summary.
+- Roles (Spec 2): two **owners** (Managing Director/CEO, Creative Director), **front office manager**, **production manager/QC**, and **makers** as a directory without logins (optional restricted logins later). Production staff never see payments or financial reports; costs only if an owner allows.
+- Feature switchboard: `src/lib/features.ts`. Hide every link/button/card for an area until it works end to end. Never ship screens that imply unbuilt functionality.
 
 ## Stack
 

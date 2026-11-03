@@ -10,6 +10,7 @@ import { Card, Chip, Detail, Money, SectionTitle } from "@/components/ui/bits";
 import { ButtonLink, buttonStyles } from "@/components/ui/button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { can, getWorkspace } from "@/lib/dal";
+import { FEATURES } from "@/lib/features";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE, PAYMENT_METHOD_LABEL, PAYMENT_TONE, SOURCE_LABEL, TASK_KIND_LABEL, stageLabel,
@@ -70,7 +71,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <ButtonLink href={`${base}/enquiries/new?customer=${c.id}`} variant="primary"><Plus aria-hidden /> Enquiry</ButtonLink>
-          <ButtonLink href={`${base}/orders/new?customer=${c.id}`} variant="gold"><Plus aria-hidden /> Order</ButtonLink>
+          {FEATURES.orders && <ButtonLink href={`${base}/orders/new?customer=${c.id}`} variant="gold"><Plus aria-hidden /> Order</ButtonLink>}
           <WhatsAppButton phone={c.whatsapp || c.phone} message={`Hello ${firstName}, this is ${business.name}. `} />
           {c.phone && (
             <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className={buttonStyles({ variant: "secondary" })}>
@@ -150,7 +151,8 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                 <ul>
                   {(orders.data ?? []).map((o) => (
                     <li key={o.id} className="border-b border-line last:border-b-0">
-                      <Link href={`${base}/orders/${o.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5">
+                      <Link href={FEATURES.orders ? `${base}/orders/${o.id}` : "#"} aria-disabled={!FEATURES.orders || undefined}
+                        className={`flex min-h-16 items-center justify-between gap-3 px-4 py-3 ${FEATURES.orders ? "hover:bg-ink/[0.03] active:bg-ink/5" : "pointer-events-none"}`}>
                         <span className="min-w-0">
                           <span className="block font-medium">{o.order_number}</span>
                           <span className="block text-sm text-muted">
@@ -214,7 +216,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
           </section>
 
           <section>
-            <SectionTitle action={<Link href={`${base}/tasks/new?customer=${c.id}`} className="text-sm text-gold-ink underline underline-offset-4">Add follow-up</Link>}>
+            <SectionTitle action={FEATURES.tasks && <Link href={`${base}/tasks/new?customer=${c.id}`} className="text-sm text-gold-ink underline underline-offset-4">Add follow-up</Link>}>
               Follow-ups
             </SectionTitle>
             {(tasks.data ?? []).length === 0 ? (

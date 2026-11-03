@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-03 (later)
+
+- **Spec 2 adopted** (integrated CRM + purchasing + inventory + production). Phases and design decisions in GAP-ANALYSIS.md. Orders/payments/tasks UI folded into Spec 2 phases instead of being built twice.
+- **Feature switchboard** (`src/lib/features.ts`) hides every link to an unbuilt area, per "don't produce screens that imply unbuilt functionality".
+- **Using the existing Supabase project** "HaleyH Creations CRM" for development now (owner's choice); a clean production project comes before real data.
+- **Email confirmation stays on.** Custom email templates need a custom SMTP provider on the free plan; the app's messages account for links opened in another browser.
+- **CI browser tests use a throwaway local Supabase**, never the real project.
+
 ## 2026-11-03
 
 - **Supabase for database, auth and storage.** Postgres Row Level Security enforces business separation in the database itself, which the owner required. A free plan covers testing.

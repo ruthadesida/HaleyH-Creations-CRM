@@ -1,5 +1,7 @@
 # Implementation plan
 
+> **Superseded for scope and phases by Spec 2** — see [GAP-ANALYSIS.md](GAP-ANALYSIS.md) for the current four-phase plan. The architecture, costs and testing notes below still apply.
+
 ## Architecture
 
 - **Next.js 16** (App Router, Server Components, Server Actions, Cache Components) on **Supabase** (Postgres, Auth, Storage).

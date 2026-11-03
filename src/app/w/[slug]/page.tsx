@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Card, Chip, Money, PageHeader } from "@/components/ui/bits";
 import { cn } from "@/lib/cn";
 import { getWorkspace } from "@/lib/dal";
+import { FEATURES } from "@/lib/features";
 import { addDays, endOfDayUtc, formatDate, relativeDue, startOfMonth, todayIn } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
@@ -82,8 +83,9 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   const receivedNet = (received.data ?? []).reduce(
     (s, p) => s + (p.kind === "refund" ? -p.amount_minor : p.amount_minor), 0);
   const orderValue = (booked.data ?? []).reduce((s, r) => s + (r.total_minor ?? 0), 0);
-  const followUps = (enqDue.count ?? 0) + (tasksDue.count ?? 0);
-  const overdueFollowUps = (enqOverdue.count ?? 0) + (tasksOverdue.count ?? 0);
+  // Tasks join this count once the Follow-ups screen is built (FEATURES.tasks).
+  const overdueFollowUps = (enqOverdue.count ?? 0) + (FEATURES.tasks ? (tasksOverdue.count ?? 0) : 0);
+  void tasksDue;
   const base = `/w/${slug}`;
   const cur = business.currency;
 
@@ -95,11 +97,11 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
       <section aria-labelledby="attention" className="mb-8">
         <h2 id="attention" className="sr-only">Needs attention</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Stat href={`${base}/tasks?due=today`} label="Follow-ups due today or overdue" value={followUps}
+          <Stat href={`${base}/enquiries?view=list&due=today`} label="Follow-ups due today or overdue" value={enqDue.count ?? 0}
             note={overdueFollowUps > 0 ? `${overdueFollowUps} overdue` : "None overdue"} alert={overdueFollowUps > 0} />
           <Stat href={`${base}/enquiries?stage=new`} label="New enquiries" value={newEnq.count ?? 0} note="Not yet contacted" />
-          <Stat href={`${base}/orders?payment=awaiting`} label="Orders awaiting payment" value={awaiting.count ?? 0} note="Unpaid or part-paid" />
-          <Stat href={`${base}/orders?balance=outstanding`} label="Outstanding balances" money={outstanding} currency={cur}
+          <Stat href={FEATURES.orders && `${base}/orders?payment=awaiting`} label="Orders awaiting payment" value={awaiting.count ?? 0} note="Unpaid or part-paid" />
+          <Stat href={FEATURES.orders && `${base}/orders?balance=outstanding`} label="Outstanding balances" money={outstanding} currency={cur}
             note="Still owed on open orders" />
         </div>
       </section>
@@ -107,11 +109,11 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
       <section aria-labelledby="work" className="mb-8">
         <h2 id="work" className="mb-3 text-base font-semibold">Orders in progress</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Stat href={`${base}/orders?stage=in_production`} label="In production" value={inProd.count ?? 0} />
-          <Stat href={`${base}/orders?due=soon`} label="Due in the next 3 days" value={dueSoon.count ?? 0} />
-          <Stat href={`${base}/orders?due=overdue`} label="Past promised date" value={overdueOrders.count ?? 0}
+          <Stat href={FEATURES.orders && `${base}/orders?stage=in_production`} label="In production" value={inProd.count ?? 0} />
+          <Stat href={FEATURES.orders && `${base}/orders?due=soon`} label="Due in the next 3 days" value={dueSoon.count ?? 0} />
+          <Stat href={FEATURES.orders && `${base}/orders?due=overdue`} label="Past promised date" value={overdueOrders.count ?? 0}
             alert={(overdueOrders.count ?? 0) > 0} note={(overdueOrders.count ?? 0) > 0 ? "Not yet dispatched" : "All on time"} />
-          <Stat href={`${base}/orders?stage=ready_for_dispatch`} label="Ready for dispatch" value={ready.count ?? 0} />
+          <Stat href={FEATURES.orders && `${base}/orders?stage=ready_for_dispatch`} label="Ready for dispatch" value={ready.count ?? 0} />
         </div>
       </section>
 
@@ -129,7 +131,7 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
           </nav>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link href={`${base}/payments?from=${from}&to=${to}`} className="group">
+          <MaybeLink href={FEATURES.payments && `${base}/payments?from=${from}&to=${to}`}>
             <Card className="h-full p-5 transition-colors duration-150 group-hover:border-gold">
               <p className="flex items-center justify-between text-sm text-muted">
                 Money received <ArrowUpRight aria-hidden className="size-4" />
@@ -139,8 +141,8 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
                 Payments recorded manually, minus refunds · {PERIODS[period].toLowerCase()}
               </p>
             </Card>
-          </Link>
-          <Link href={`${base}/orders?from=${from}&to=${to}`} className="group">
+          </MaybeLink>
+          <MaybeLink href={FEATURES.orders && `${base}/orders?from=${from}&to=${to}`}>
             <Card className="h-full p-5 transition-colors duration-150 group-hover:border-gold">
               <p className="flex items-center justify-between text-sm text-muted">
                 Order value <ArrowUpRight aria-hidden className="size-4" />
@@ -150,14 +152,14 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
                 Total of orders placed, whether paid or not · excludes cancelled
               </p>
             </Card>
-          </Link>
+          </MaybeLink>
         </div>
       </section>
 
       <section aria-labelledby="due-list">
         <div className="mb-3 flex items-center justify-between">
           <h2 id="due-list" className="text-base font-semibold">Enquiry follow-ups due</h2>
-          <Link href={`${base}/enquiries?due=today`} className="text-sm text-gold-ink underline underline-offset-4">See all</Link>
+          <Link href={`${base}/enquiries?view=list&due=today`} className="text-sm text-gold-ink underline underline-offset-4">See all</Link>
         </div>
         {(upcoming.data ?? []).length === 0 ? (
           <Card className="px-5 py-6 text-muted">Nothing due. Nice work.</Card>
@@ -188,15 +190,20 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   );
 }
 
+/** Links only when the destination is built (see lib/features.ts). */
+function MaybeLink({ href, children }: { href: string | false; children: React.ReactNode }) {
+  return href ? <Link href={href} className="group">{children}</Link> : <div className="group/static">{children}</div>;
+}
+
 function Stat({ href, label, value, money, currency, note, alert }: {
-  href: string; label: string; value?: number; money?: number; currency?: string; note?: string; alert?: boolean;
+  href: string | false; label: string; value?: number; money?: number; currency?: string; note?: string; alert?: boolean;
 }) {
   return (
-    <Link href={href} className="group">
-      <Card className={cn("flex h-full min-h-28 flex-col justify-between p-4 transition-colors duration-150 group-hover:border-gold",
-        alert && "border-danger/30")}>
+    <MaybeLink href={href}>
+      <Card className={cn("flex h-full min-h-28 flex-col justify-between p-4 transition-colors duration-150",
+        href && "group-hover:border-gold", alert && "border-danger/30")}>
         <p className="flex items-start justify-between gap-2 text-sm text-muted">
-          {label} <ArrowUpRight aria-hidden className="size-4 shrink-0" />
+          {label} {href && <ArrowUpRight aria-hidden className="size-4 shrink-0" />}
         </p>
         <div>
           {money !== undefined ? (
@@ -207,7 +214,7 @@ function Stat({ href, label, value, money, currency, note, alert }: {
           {note && <span className={cn("mt-1.5 block text-sm", alert ? "text-danger" : "text-muted")}>{note}</span>}
         </div>
       </Card>
-    </Link>
+    </MaybeLink>
   );
 }
 

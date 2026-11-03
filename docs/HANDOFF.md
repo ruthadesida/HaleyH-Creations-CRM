@@ -1,32 +1,32 @@
 # Handoff
 
-> **Prompt for the next session:** "Continue building the HaleyH Creations CRM. Read `CLAUDE.md`, then this file, then `docs/STATUS.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
+> **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins) and `docs/GAP-ANALYSIS.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
 _Last updated: 2026-11-03_
 
 ## Where things stand
 
-- **Foundation (done, on `main`, CI green):** Next.js 16.4 app, security headers, Vitest, Playwright on 6 viewports plus security probes, CI pipeline (lint, types, unit, build, e2e, npm audit, gitleaks, CodeQL, dependency review), Dependabot, reviewer and QA agents, design system (`DESIGN.md`).
-- **Database (done, CI green):** 3 migrations in `supabase/migrations/` covering the full multi-business schema, RLS, derived money figures, audit log, RPCs and the demo workspace. **58 pgTAP tests pass** in CI (isolation, roles, money and workflow). Not yet applied to a hosted Supabase project.
-- **App code (in progress):** helpers `src/lib/money.ts` and `src/lib/phone.ts` with 43 passing unit tests. UI libraries installed. Screens not built yet.
+- **Supabase:** project "HaleyH Creations CRM" (`ezuysbhroxcnacnqpazl`, eu-west-1, free plan) is linked; migrations 0001–0004 applied; auth hardened (10+ char passwords with letters and digits, secure password change, redirect allow-list). Keys are in `.env.local` (not committed). `.mcp.json` scopes the Supabase MCP to this project.
+- **Working in the app:** sign up / sign in / reset, workspace onboarding (NGN, Africa/Lagos), demo workspace with fictional data, app shell (phone tabs + New sheet, laptop sidebar), dashboard, customers (search, duplicate warning, details, archive), enquiries (list, drag-and-drop pipeline, quick-add customer, follow-ups).
+- **Hidden until built** (`src/lib/features.ts`): orders, payments, follow-up tasks, products, settings, production.
+- **Tests:** 87 unit tests, 58 database tests (CI), Playwright on 6 viewports + security probes. CI runs browser tests against a throwaway local Supabase.
+- **Spec 2 received** (full business management system). Gap analysis and phase plan: `docs/GAP-ANALYSIS.md`.
+- Dev server: `npm run dev` (also via the preview config in `..\.claude\launch.json`).
 
-## Blocked on the owner
+## Next steps (Phase 1 of Spec 2)
 
-1. **Supabase sign-in.** `npx.cmd supabase login` is waiting in the owner's terminal for them to press Enter and sign in. Once signed in: create a free dev project (region: London `eu-west-2`, closest to Lagos), link it, push migrations, write `.env.local`, and scope `.mcp.json`'s Supabase URL with `?project_ref=<dev ref>`.
-2. **GitHub dependency graph.** "Dependency review" fails on PRs until the dependency graph is enabled in the repo's Settings → Code security. Needs the owner's OK to change.
-3. **Dependabot PRs:** #1 (minor/patch) and #3 (ESLint 10) pass all real checks; #2 (TypeScript 7) breaks lint and should be closed or ignored until typescript-eslint supports it. Merge only with the owner's OK.
+1. Migration: roles → `owner` (+ title), `front_office`, `production_manager`; owner-granted `can_view_costs`; `makers` directory; update RLS helpers, RPCs and all pgTAP tests.
+2. Staff & settings UI: invite link (copy / share on WhatsApp), role and title changes, deactivate, last-owner protection; business settings incl. cutover date and closed-period date.
+3. Catalogue: finished-good variants (SKU, size, colour, length/options, price, cost, archived), materials and packaging (code, base unit, purchase unit + conversion, supplier, reorder level, default location), suppliers.
+4. Locations + inventory ledger: `stock_documents` / `stock_movements`, posting functions (idempotent, locked, no negative stock, closed periods), reversal, stock levels view (on hand / reserved / available / incoming / WIP), transfers, owner-approved adjustments.
+5. Opening balance import: CSV template, preview + mapping, validation + duplicate checks, owner approval, posting, batch reversal.
+6. Tests A, L (transfers), M, N; reviewer + QA agents; update docs; flip feature flags only when done.
 
-## Next steps
+## Blocked on / waiting for the owner
 
-1. Once the owner has signed in to Supabase: create the dev project, link, `npx.cmd supabase db push`, write `.env.local`, scope `.mcp.json`.
-2. Build the app shell: Supabase SSR clients, `proxy.ts` session refresh, data access layer (`getUser`, `getWorkspace(slug)`, role checks), design tokens and base styles (ivory/charcoal/gold, Bodoni Moda + Instrument Sans, mobile-native baseline), bottom tab bar + sidebar, Sonner toaster.
-3. Auth screens: sign up, sign in, sign out, password reset; onboarding (create HaleyH workspace with NGN / Africa/Lagos, or open the demo workspace); accept-invite page.
-4. Core screens in order: dashboard → customers (with duplicate warning) → enquiries list + drag-and-drop pipeline → follow-up tasks → orders (create from enquiry, items, stages, cancel) → manual payments and refunds → staff management.
-5. E2E tests for the full enquiry → order → payment → delivery workflow and cross-business direct-URL attempts, once Supabase is connected.
-6. QA pass: `qa` agent, `break-ui`, `review-animations`, `jury` score; then reviewer agent; update docs.
-
-## Open questions for the owner
-
-- Production domain name (needed before enabling HSTS preload and setting auth redirect URLs).
-- Should staff invites be shared as a link (current plan: copy link / share on WhatsApp) or also emailed? Email needs a custom SMTP provider for production volumes.
-- Any specific order-stage names HaleyH uses (stages are configurable per business)?
+- Approval of the Phase 1 role model (see GAP-ANALYSIS "Conflicts" §1).
+- **Owner account:** sign up in the app (any browser on this PC can open the confirmation link).
+- **GitHub dependency graph** (Settings → Code security) so "Dependency review" works on PRs.
+- **Dependabot PRs:** #1 and #3 pass all real checks; #2 (TypeScript 7) breaks lint, leave it.
+- **Backups:** the free Supabase plan has no automatic backups. Decide: Supabase Pro ($25/month) or a scheduled database dump (to be built in Phase 4).
+- Production domain (for auth redirect URLs and HSTS preload); custom SMTP provider (needed for custom email templates and staff email beyond the Supabase team).

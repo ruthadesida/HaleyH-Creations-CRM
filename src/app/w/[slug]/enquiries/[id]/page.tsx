@@ -11,6 +11,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { cn } from "@/lib/cn";
 import { authorize } from "@/lib/dal";
+import { FEATURES } from "@/lib/features";
 import { formatDateTime } from "@/lib/dates";
 import { ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE, SOURCE_LABEL } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
@@ -84,7 +85,7 @@ async function EnquiryDetail({ params }: PageProps<"/w/[slug]/enquiries/[id]">) 
             {e.stage === "lost" && e.lost_reason && <p className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-danger">Lost: {e.lost_reason}</p>}
           </section>
 
-          <Card className="p-4 sm:p-5">
+          {FEATURES.orders && <Card className="p-4 sm:p-5">
             {order ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p>Order <span className="font-medium">{order.order_number}</span> was created from this enquiry.</p>
@@ -96,7 +97,7 @@ async function EnquiryDetail({ params }: PageProps<"/w/[slug]/enquiries/[id]">) 
                 <ButtonLink href={`${base}/orders/new?enquiry=${e.id}`} variant="gold"><ShoppingBag aria-hidden /> Create order</ButtonLink>
               </div>
             )}
-          </Card>
+          </Card>}
         </div>
 
         <div className="flex flex-col gap-4">

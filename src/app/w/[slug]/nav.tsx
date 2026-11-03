@@ -21,6 +21,7 @@ import { useState } from "react";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/dal";
+import { FEATURES } from "@/lib/features";
 
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean };
 
@@ -28,23 +29,22 @@ function items(slug: string, role: Role) {
   const base = `/w/${slug}`;
   if (role === "production") {
     return {
-      tabs: [{ href: `${base}/production`, label: "My work", icon: Package }],
+      tabs: FEATURES.production ? [{ href: `${base}/production`, label: "My work", icon: Package }] : [],
       extra: [] as Item[],
     };
   }
-  return {
-    tabs: [
-      { href: base, label: "Today", icon: Sun, exact: true },
-      { href: `${base}/enquiries`, label: "Enquiries", icon: Inbox },
-      { href: `${base}/orders`, label: "Orders", icon: ShoppingBag },
-      { href: `${base}/customers`, label: "Customers", icon: Users },
-    ] as Item[],
-    extra: [
-      { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
-      { href: `${base}/products`, label: "Products", icon: Package },
-      { href: `${base}/settings`, label: "Settings", icon: Settings },
-    ] as Item[],
-  };
+  const tabs: (Item | false)[] = [
+    { href: base, label: "Today", icon: Sun, exact: true },
+    { href: `${base}/enquiries`, label: "Enquiries", icon: Inbox },
+    FEATURES.orders && { href: `${base}/orders`, label: "Orders", icon: ShoppingBag },
+    { href: `${base}/customers`, label: "Customers", icon: Users },
+  ];
+  const extra: (Item | false)[] = [
+    FEATURES.tasks && { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
+    FEATURES.products && { href: `${base}/products`, label: "Products", icon: Package },
+    FEATURES.settings && { href: `${base}/settings`, label: "Settings", icon: Settings },
+  ];
+  return { tabs: tabs.filter(Boolean) as Item[], extra: extra.filter(Boolean) as Item[] };
 }
 
 function useActive() {
@@ -142,12 +142,13 @@ export function Sheet({ title, children }: { title: string; children: React.Reac
   );
 }
 
-const NEW_ACTIONS = (slug: string) => [
-  { href: `/w/${slug}/enquiries/new`, label: "New enquiry", hint: "Someone asked about an item", icon: MessageSquarePlus },
-  { href: `/w/${slug}/orders/new`, label: "New order", hint: "Items, delivery and price", icon: ShoppingBag },
-  { href: `/w/${slug}/customers/new`, label: "New customer", hint: "Contact details and sizes", icon: UserPlus },
-  { href: `/w/${slug}/orders?pay=1`, label: "Record a payment", hint: "Find the order, then record it", icon: Wallet },
-];
+const NEW_ACTIONS = (slug: string) =>
+  [
+    { href: `/w/${slug}/enquiries/new`, label: "New enquiry", hint: "Someone asked about an item", icon: MessageSquarePlus },
+    FEATURES.orders && { href: `/w/${slug}/orders/new`, label: "New order", hint: "Items, delivery and price", icon: ShoppingBag },
+    { href: `/w/${slug}/customers/new`, label: "New customer", hint: "Contact details and sizes", icon: UserPlus },
+    FEATURES.payments && { href: `/w/${slug}/orders?pay=1`, label: "Record a payment", hint: "Find the order, then record it", icon: Wallet },
+  ].filter(Boolean) as { href: string; label: string; hint: string; icon: LucideIcon }[];
 
 /** One-thumb "New" button on phones; a full-width button in the sidebar on laptops. */
 export function NewButton({ slug, variant }: { slug: string; variant: "fab" | "sidebar" }) {
