@@ -84,7 +84,7 @@ export function CustomerForm({
             defaultValue={v("phone")} {...inv("phone")} />
         </Field>
         <Field label="WhatsApp" htmlFor="whatsapp" error={err("whatsapp")} optional
-          hint={<label className="flex items-center gap-2"><input type="checkbox" name="whatsapp_same" className="size-4 accent-[var(--color-ink)]" /> Same as phone</label>}>
+          hint={<label className="flex items-center gap-2"><input type="checkbox" name="whatsapp_same" defaultChecked={state.values?.whatsapp_same === "on"} className="size-5 accent-[var(--color-ink)]" /> Same as phone</label>}>
           <Input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" autoComplete="off" defaultValue={v("whatsapp")} {...inv("whatsapp")} />
         </Field>
       </div>

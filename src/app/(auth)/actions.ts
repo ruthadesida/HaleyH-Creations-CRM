@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { type ActionState, fieldErrors, formValues } from "@/lib/action-state";
 import { createClient } from "@/lib/supabase/server";
@@ -12,13 +11,15 @@ import {
   signUpSchema,
 } from "@/lib/validation/auth";
 
-async function siteOrigin() {
-  const h = await headers();
-  const origin = h.get("origin");
-  if (origin) return origin;
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
+/**
+ * Base URL for links in emails. Comes from server config, never from request
+ * headers, so a forged Host/Origin can't point a reset link at another site.
+ */
+function siteOrigin() {
+  const url = process.env.SITE_URL;
+  if (url) return url.replace(/\/+$/, "");
+  if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
+  throw new Error("SITE_URL is not configured.");
 }
 
 export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -47,7 +48,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     return { fieldErrors: fieldErrors(parsed.error), values: formValues(formData) };
   }
   const supabase = await createClient();
-  const origin = await siteOrigin();
+  const origin = siteOrigin();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -80,7 +81,7 @@ export async function requestPasswordReset(_prev: ActionState, formData: FormDat
     return { fieldErrors: fieldErrors(parsed.error), values: formValues(formData) };
   }
   const supabase = await createClient();
-  const origin = await siteOrigin();
+  const origin = siteOrigin();
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/confirm?next=/reset-password/update`,
   });

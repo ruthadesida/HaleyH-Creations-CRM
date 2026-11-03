@@ -59,6 +59,11 @@ export function utcToZonedInput(iso: string | null | undefined, tz = DEFAULT_TZ)
   return new Date(d.getTime() + tzOffsetMs(d, tz)).toISOString().slice(0, 16);
 }
 
+/** The UTC instant `days` days before now. */
+export function daysAgoIso(days: number, now = new Date()): string {
+  return new Date(now.getTime() - days * 86_400_000).toISOString();
+}
+
 /** "3 Nov" (or "3 Nov 2025" when not this year). */
 export function formatDate(iso: string | null | undefined, tz = DEFAULT_TZ, now = new Date()): string {
   if (!iso) return "";

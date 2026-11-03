@@ -1,7 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card, Chip, Money, PageHeader } from "@/components/ui/bits";
 import { cn } from "@/lib/cn";
@@ -32,7 +31,7 @@ function periodRange(period: Period, today: string): [string, string] {
 async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   const { slug } = await params;
   const { business, role } = await getWorkspace(slug);
-  if (role === "production") redirect(`/w/${slug}/production`);
+  if (role === "production") return <ProductionHomeComingSoon />;
 
   const sp = await searchParams;
   const period: Period = (typeof sp.period === "string" && sp.period in PERIODS ? sp.period : "month") as Period;
@@ -100,13 +99,15 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
           <Stat href={`${base}/enquiries?view=list&due=today`} label="Follow-ups due today or overdue" value={enqDue.count ?? 0}
             note={overdueFollowUps > 0 ? `${overdueFollowUps} overdue` : "None overdue"} alert={overdueFollowUps > 0} />
           <Stat href={`${base}/enquiries?stage=new`} label="New enquiries" value={newEnq.count ?? 0} note="Not yet contacted" />
+          {FEATURES.orders && <>
           <Stat href={FEATURES.orders && `${base}/orders?payment=awaiting`} label="Orders awaiting payment" value={awaiting.count ?? 0} note="Unpaid or part-paid" />
           <Stat href={FEATURES.orders && `${base}/orders?balance=outstanding`} label="Outstanding balances" money={outstanding} currency={cur}
             note="Still owed on open orders" />
+          </>}
         </div>
       </section>
 
-      <section aria-labelledby="work" className="mb-8">
+      {FEATURES.orders && <section aria-labelledby="work" className="mb-8">
         <h2 id="work" className="mb-3 text-base font-semibold">Orders in progress</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Stat href={FEATURES.orders && `${base}/orders?stage=in_production`} label="In production" value={inProd.count ?? 0} />
@@ -115,15 +116,15 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
             alert={(overdueOrders.count ?? 0) > 0} note={(overdueOrders.count ?? 0) > 0 ? "Not yet dispatched" : "All on time"} />
           <Stat href={FEATURES.orders && `${base}/orders?stage=ready_for_dispatch`} label="Ready for dispatch" value={ready.count ?? 0} />
         </div>
-      </section>
+      </section>}
 
-      <section aria-labelledby="money" className="mb-8">
+      {FEATURES.payments && <section aria-labelledby="money" className="mb-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 id="money" className="text-base font-semibold">Money</h2>
           <nav aria-label="Period" className="flex flex-wrap gap-1.5">
             {(Object.keys(PERIODS) as Period[]).map((p) => (
               <Link key={p} href={`${base}?period=${p}`} scroll={false} aria-current={p === period ? "true" : undefined}
-                className={cn("h-9 rounded-full px-3.5 text-sm leading-9 transition-colors duration-150",
+                className={cn("inline-flex min-h-11 items-center rounded-full px-4 text-sm transition-colors duration-150",
                   p === period ? "bg-ink text-ivory" : "bg-ink/5 text-ink hover:bg-ink/10")}>
                 {PERIODS[p]}
               </Link>
@@ -154,7 +155,7 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
             </Card>
           </MaybeLink>
         </div>
-      </section>
+      </section>}
 
       <section aria-labelledby="due-list">
         <div className="mb-3 flex items-center justify-between">
@@ -223,5 +224,16 @@ export default function DashboardPage(props: PageProps<"/w/[slug]">) {
     <Suspense fallback={<div className="h-96 animate-pulse rounded-[var(--radius-card)] bg-ink/5" />}>
       <Dashboard {...props} />
     </Suspense>
+  );
+}
+
+function ProductionHomeComingSoon() {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
+      <h1 className="font-display text-3xl font-medium">Your production screen is coming</h1>
+      <p className="text-muted">
+        Production jobs, materials and quality checks are being built next. Until then, your manager will share your work directly.
+      </p>
+    </div>
   );
 }

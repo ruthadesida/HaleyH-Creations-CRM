@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/ui/bits";
-import { authorize } from "@/lib/dal";
+import { pageWorkspace } from "@/lib/dal";
 import { utcToZonedInput } from "@/lib/dates";
 import { getStaff } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Edit enquiry" };
 
 async function EditEnquiry({ params }: PageProps<"/w/[slug]/enquiries/[id]/edit">) {
   const { slug, id } = await params;
-  const { business } = await authorize(slug);
+  const { business } = await pageWorkspace(slug);
   const supabase = await createClient();
   const [{ data: e }, staff, { data: products }] = await Promise.all([
     supabase.from("enquiries").select("*, customers(id, full_name, phone, city)").eq("id", id).eq("business_id", business.id).maybeSingle(),

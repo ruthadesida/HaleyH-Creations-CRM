@@ -35,7 +35,7 @@ export function CreateWorkspaceForm() {
         </Field>
       </div>
       <input type="hidden" name="timezone" value={v.timezone ?? "Africa/Lagos"} />
-      <p className="text-sm text-muted">Time zone: Lagos (WAT). You can change these later in Settings.</p>
+      <p className="text-sm text-muted">Time zone: Lagos (WAT).</p>
       <Button type="submit" size="lg" block disabled={pending}>
         {pending ? "Creating workspace…" : "Create workspace"}
       </Button>

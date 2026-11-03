@@ -6,8 +6,8 @@ import { FilterPills, SearchBar } from "@/components/search-bar";
 import { Card, Chip, EmptyState, PageHeader } from "@/components/ui/bits";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { authorize } from "@/lib/dal";
-import { endOfDayUtc, formatDateTime, relativeDue, todayIn } from "@/lib/dates";
+import { pageWorkspace } from "@/lib/dal";
+import { daysAgoIso, endOfDayUtc, formatDateTime, relativeDue, todayIn } from "@/lib/dates";
 import { ENQUIRY_STAGES, ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE } from "@/lib/labels";
 import { cleanSearch } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Enquiries" };
 async function Enquiries({ params, searchParams }: PageProps<"/w/[slug]/enquiries">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const { business } = await authorize(slug);
+  const { business } = await pageWorkspace(slug);
   const tz = business.timezone;
   const view = sp.view === "list" ? "list" : "board";
   const stage = typeof sp.stage === "string" && (ENQUIRY_STAGES as string[]).includes(sp.stage) ? sp.stage : "";
@@ -27,24 +27,45 @@ async function Enquiries({ params, searchParams }: PageProps<"/w/[slug]/enquirie
   const nowIso = new Date().toISOString();
 
   const supabase = await createClient();
-  let query = supabase
-    .from("enquiries")
-    .select("id, stage, position, product_interest, follow_up_at, next_action, created_at, customers!inner(full_name), orders(id)")
-    .eq("business_id", business.id)
-    .is("archived_at", null)
-    .order("position")
-    .limit(400);
-  if (stage) query = query.eq("stage", stage as never);
-  if (due) query = query.not("stage", "in", "(won,lost)").lt("follow_up_at", endOfDayUtc(todayIn(tz), tz));
+  // Match the item asked about, or the customer's name.
+  let searchFilter: string | null = null;
   if (q) {
-    // Match the item asked about, or the customer's name.
     const { data: matches } = await supabase.from("customers").select("id")
       .eq("business_id", business.id).ilike("full_name", `*${q}*`).limit(200);
     const ids = (matches ?? []).map((m) => m.id);
-    query = query.or([`product_interest.ilike.*${q}*`, ...(ids.length ? [`customer_id.in.(${ids.join(",")})`] : [])].join(","));
+    searchFilter = [`product_interest.ilike.*${q}*`, ...(ids.length ? [`customer_id.in.(${ids.join(",")})`] : [])].join(",");
   }
-  const { data } = await query;
-  const rows = data ?? [];
+
+  // Open enquiries always load in full; won/lost are limited to recent ones so
+  // years of closed enquiries never push new ones off the board.
+  const closedSince = daysAgoIso(30);
+  const wantsClosed = !due && (!stage || stage === "won" || stage === "lost");
+  const wantsOpen = !stage || !["won", "lost"].includes(stage);
+  const select = "id, stage, position, product_interest, follow_up_at, next_action, created_at, customers!inner(full_name), orders(id)";
+  const build = () => {
+    let query = supabase.from("enquiries").select(select).eq("business_id", business.id).is("archived_at", null);
+    if (searchFilter) query = query.or(searchFilter);
+    return query;
+  };
+  const [openRes, closedRes] = await Promise.all([
+    wantsOpen
+      ? (() => {
+          let query = build().not("stage", "in", "(won,lost)").order("created_at", { ascending: false }).limit(1000);
+          if (stage) query = query.eq("stage", stage as never);
+          if (due) query = query.lt("follow_up_at", endOfDayUtc(todayIn(tz), tz));
+          return query;
+        })()
+      : Promise.resolve({ data: [] }),
+    wantsClosed
+      ? (() => {
+          let query = build().in("stage", stage ? [stage as never] : ["won", "lost"])
+            .order("stage_changed_at", { ascending: false }).limit(200);
+          if (view === "board") query = query.gte("stage_changed_at", closedSince);
+          return query;
+        })()
+      : Promise.resolve({ data: [] }),
+  ]);
+  const rows = [...(openRes.data ?? []), ...(closedRes.data ?? [])].sort((a, b) => a.position - b.position);
 
   const base = `/w/${slug}/enquiries`;
   const toggle = (
@@ -87,7 +108,7 @@ async function Enquiries({ params, searchParams }: PageProps<"/w/[slug]/enquirie
       <>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {toggle}
-          <p className="text-sm text-muted">Drag cards between stages. On a phone, press and hold a card first.</p>
+          <p className="text-sm text-muted">Drag cards between stages. On a phone, press and hold a card first. Won and lost show the last 30 days.</p>
         </div>
         <PipelineBoard slug={slug} cards={cards} />
       </>

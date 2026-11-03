@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/ui/bits";
-import { authorize } from "@/lib/dal";
+import { pageWorkspace } from "@/lib/dal";
 import { getStaff } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/server";
 import { createEnquiry } from "../actions";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "New enquiry" };
 async function NewEnquiry({ params, searchParams }: PageProps<"/w/[slug]/enquiries/new">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const { business, user } = await authorize(slug);
+  const { business, user } = await pageWorkspace(slug);
   const supabase = await createClient();
   const customerId = typeof sp.customer === "string" ? sp.customer : null;
   const [staff, { data: products }, customer] = await Promise.all([

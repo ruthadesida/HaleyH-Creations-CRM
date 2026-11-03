@@ -24,7 +24,7 @@ export const buttonStyles = cva(
         danger: "border border-danger/30 bg-surface text-danger hover:bg-danger-soft",
       },
       size: {
-        sm: "h-10 px-3 text-sm",
+        sm: "h-11 px-3.5 text-sm",
         md: "h-12 px-4 text-base",
         lg: "h-14 px-5 text-base",
         icon: "size-11",

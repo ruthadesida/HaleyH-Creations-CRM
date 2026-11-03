@@ -62,6 +62,13 @@ export const can = {
   own: (role: Role) => role === "owner",
 };
 
+/** For pages: like `authorize`, but shows the 404 page instead of throwing. */
+export async function pageWorkspace(slug: string, check: (role: Role) => boolean = can.office) {
+  const ws = await getWorkspace(slug);
+  if (!check(ws.role)) notFound();
+  return ws;
+}
+
 /** For Server Actions: re-checks session, membership and role on every call. */
 export async function authorize(slug: string, check: (role: Role) => boolean = can.office) {
   const ws = await getWorkspace(slug);

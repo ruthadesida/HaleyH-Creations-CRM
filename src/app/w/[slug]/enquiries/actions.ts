@@ -21,11 +21,28 @@ async function saveEnquiry(slug: string, id: string | null, formData: FormData):
   const supabase = await createClient();
 
   let customerId = e.customer_id;
+  const followUpAt = e.follow_up_local ? zonedInputToUtc(e.follow_up_local, business.timezone) : null;
   if (!customerId) {
     // Quick-add the customer, but warn first if they might already exist.
     if (formData.get("confirm_duplicate") !== "yes") {
       const duplicates = await findDuplicateCustomers(business.id, { phone: e.new_customer_phone });
       if (duplicates.length > 0) return { duplicates, values };
+    }
+    if (!id) {
+      // New enquiry + new customer in one transaction (no orphan customers on failure).
+      const { data: enquiryId, error } = await supabase.rpc("create_enquiry_with_customer", {
+        p_business_id: business.id,
+        p_customer_name: e.new_customer_name!,
+        p_customer_phone: e.new_customer_phone ?? "",
+        p_customer_whatsapp: formData.get("new_customer_whatsapp_same") === "on" ? (e.new_customer_phone ?? "") : "",
+        p_enquiry: {
+          product_interest: e.product_interest ?? "", product_id: e.product_id ?? "", source: e.source ?? "",
+          stage: e.stage, assigned_to: e.assigned_to ?? "", notes: e.notes ?? "", next_action: e.next_action ?? "",
+          follow_up_at: followUpAt ?? "",
+        },
+      });
+      if (error || !enquiryId) return { message: friendlyDbError(error), values };
+      redirect(`/w/${slug}/enquiries/${enquiryId}?created=1`);
     }
     const { data: created, error } = await supabase
       .from("customers")
@@ -52,7 +69,7 @@ async function saveEnquiry(slug: string, id: string | null, formData: FormData):
     assigned_to: e.assigned_to,
     notes: e.notes,
     next_action: e.next_action,
-    follow_up_at: e.follow_up_local ? zonedInputToUtc(e.follow_up_local, business.timezone) : null,
+    follow_up_at: followUpAt,
     lost_reason: e.stage === "lost" ? e.lost_reason : null,
   };
 
@@ -87,12 +104,14 @@ export async function moveEnquiry(slug: string, input: { id: string; stage: stri
   if (stage === "lost" && !lost_reason) return { ok: false, message: "Add a reason before marking it lost." };
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("enquiries")
     .update({ stage, position, ...(stage === "lost" ? { lost_reason } : {}) })
     .eq("id", id)
-    .eq("business_id", business.id);
+    .eq("business_id", business.id)
+    .select("id");
   if (error) return { ok: false, message: friendlyDbError(error) };
+  if (!data?.length) return { ok: false, message: "That enquiry is no longer available." };
   refresh();
   return { ok: true, message: "Moved." };
 }

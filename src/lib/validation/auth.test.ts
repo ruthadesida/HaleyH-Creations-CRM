@@ -5,7 +5,10 @@ describe("safeNext (open-redirect protection)", () => {
   it.each(["/workspaces", "/w/haleyh/orders?status=open"])("allows on-site path %s", (p) => {
     expect(safeNext(p)).toBe(p);
   });
-  it.each(["//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)", "", null, 42])(
+  it("keeps an encoded tab as a harmless on-site path", () => {
+    expect(safeNext("/%09/evil.com/..")).toBe("/%09/");
+  });
+  it.each(["//evil.com", "/\\evil.com", "/\t/evil.com", "/\n/evil.com", "/\r//evil.com", "https://evil.com", "javascript:alert(1)", "", null, 42])(
     "rejects %j",
     (p) => {
       expect(safeNext(p)).toBe("/workspaces");

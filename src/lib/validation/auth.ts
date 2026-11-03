@@ -24,9 +24,18 @@ export const signUpSchema = z.object({
 export const resetRequestSchema = z.object({ email });
 export const newPasswordSchema = z.object({ password: newPassword });
 
-/** Only allow redirects to paths on this site ("/w/…"), never "//evil.com" or "https://…". */
+/**
+ * Only allow redirects to paths on this site ("/w/…"). Parses the value the way a
+ * browser would, so tricks like "/\t/evil.com" or "/\\evil.com" can't escape.
+ */
 export function safeNext(next: unknown, fallback = "/workspaces"): string {
-  if (typeof next !== "string") return fallback;
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
-  return next;
+  if (typeof next !== "string" || !next.startsWith("/") || /[\x00-\x1f\\]/.test(next)) return fallback;
+  try {
+    const base = "http://same-origin.invalid";
+    const url = new URL(next, base);
+    if (url.origin !== base) return fallback;
+    return url.pathname + url.search;
+  } catch {
+    return fallback;
+  }
 }

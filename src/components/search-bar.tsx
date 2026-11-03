@@ -72,7 +72,7 @@ export function FilterPills({ name, options, current, base }: {
         const active = (current ?? "") === o.value;
         return (
           <Link key={o.value || "all"} href={href(o.value)} scroll={false} replace aria-current={active ? "true" : undefined}
-            className={cn("h-9 shrink-0 rounded-full px-3.5 text-sm leading-9 whitespace-nowrap transition-colors duration-150",
+            className={cn("inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm whitespace-nowrap transition-colors duration-150",
               active ? "bg-ink text-ivory" : "bg-ink/5 text-ink hover:bg-ink/10")}>
             {o.label}
           </Link>

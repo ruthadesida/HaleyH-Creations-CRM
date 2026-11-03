@@ -75,9 +75,13 @@ export function EnquiryForm({
             {state.duplicates.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
                 <span className="font-medium">{d.full_name}</span>
-                <Link href={`/w/${slug}/enquiries/new?customer=${d.id}`} className="text-sm font-medium text-gold-ink underline underline-offset-4">
-                  Use this customer
-                </Link>
+                {editing ? (
+                  <span className="text-sm text-muted">Choose them in the customer field above</span>
+                ) : (
+                  <Link href={`/w/${slug}/enquiries/new?customer=${d.id}`} className="text-sm font-medium text-gold-ink underline underline-offset-4">
+                    Use this customer
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -140,12 +144,12 @@ export function EnquiryForm({
           <div className="flex flex-wrap gap-1.5">
             {quickTimes(timezone).map((q) => (
               <button key={q.label} type="button" onClick={() => setFollowUp(q.value)}
-                className="h-9 rounded-full bg-ink/5 px-3.5 text-sm active:scale-95 transition-transform duration-100 hover:bg-ink/10">
+                className="min-h-11 rounded-full bg-ink/5 px-4 text-sm active:scale-95 transition-transform duration-100 hover:bg-ink/10">
                 {q.label}
               </button>
             ))}
             {followUp && (
-              <button type="button" onClick={() => setFollowUp("")} className="h-9 px-2 text-sm text-muted underline underline-offset-4">
+              <button type="button" onClick={() => setFollowUp("")} className="min-h-11 px-2 text-sm text-muted underline underline-offset-4">
                 Clear
               </button>
             )}

@@ -80,6 +80,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}"
             echo "SUPABASE_SECRET_KEY=${SECRET_KEY:-$SERVICE_ROLE_KEY}"
             echo "MAILPIT_URL=${MAILPIT_URL:-${INBUCKET_URL:-}}"
+            echo "SITE_URL=http://localhost:3100"
           } >> "$GITHUB_ENV"
           rm .supabase.env
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

@@ -19,13 +19,6 @@ export async function GET(request: NextRequest) {
     ok = !(await supabase.auth.exchangeCodeForSession(code)).error;
   }
 
-  const target = request.nextUrl.clone();
-  target.search = "";
-  if (ok) {
-    target.pathname = next;
-  } else {
-    target.pathname = "/login";
-    target.searchParams.set("error", "link");
-  }
-  return NextResponse.redirect(target);
+  // `next` is a validated on-site path (may include a query string).
+  return NextResponse.redirect(new URL(ok ? next : "/login?error=link", request.url));
 }

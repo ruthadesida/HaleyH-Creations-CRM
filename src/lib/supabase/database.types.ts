@@ -1227,6 +1227,16 @@ export type Database = {
         Returns: string
       }
       create_demo_workspace: { Args: never; Returns: string }
+      create_enquiry_with_customer: {
+        Args: {
+          p_business_id: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_customer_whatsapp: string
+          p_enquiry: Json
+        }
+        Returns: string
+      }
       create_invitation: {
         Args: {
           p_business_id: string

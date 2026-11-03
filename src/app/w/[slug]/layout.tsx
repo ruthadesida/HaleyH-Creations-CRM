@@ -6,30 +6,78 @@ import { Wordmark } from "@/components/wordmark";
 import { getWorkspace } from "@/lib/dal";
 import { BottomTabs, NewButton, Sidebar } from "./nav";
 
-async function Shell({ params, children }: { params: Promise<{ slug: string }>; children: React.ReactNode }) {
+type SlugParams = { params: Promise<{ slug: string }> };
+
+/*
+ * The navigation reads the session, so each piece streams in behind its own
+ * Suspense boundary. Page content ({children}) is not held behind it: every
+ * page loads its own workspace (cached per request) and shows its own skeleton.
+ */
+
+async function SidebarContent({ params }: SlugParams) {
   const { slug } = await params;
   const { business, role } = await getWorkspace(slug);
-  const office = role !== "production";
+  return (
+    <>
+      <Link href={`/w/${slug}`} className="px-2">
+        <Wordmark name={business.name} className="block text-xl leading-tight" />
+      </Link>
+      {role !== "production" && <NewButton slug={slug} variant="sidebar" />}
+      <Sidebar slug={slug} role={role} name={business.name} />
+    </>
+  );
+}
 
+async function TopBar({ params }: SlugParams) {
+  const { slug } = await params;
+  const { business } = await getWorkspace(slug);
+  return (
+    <>
+      {business.is_demo && (
+        <div role="note" className="bg-gold-soft px-4 py-2 text-center text-sm font-medium text-gold-ink">
+          Demo workspace — fictional sample data, separate from live records.
+        </div>
+      )}
+      <header className="material sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-ivory/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">
+        <Link href={`/w/${slug}`} className="min-w-0">
+          <Wordmark name={business.name} className="block truncate text-lg" />
+        </Link>
+        <Link href="/workspaces" className="flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" aria-label="Switch workspace">
+          <ArrowLeftRight aria-hidden className="size-5" />
+        </Link>
+      </header>
+    </>
+  );
+}
+
+async function PhoneNav({ params }: SlugParams) {
+  const { slug } = await params;
+  const { role } = await getWorkspace(slug);
+  return (
+    <>
+      <BottomTabs slug={slug} role={role} />
+      {role !== "production" && <NewButton slug={slug} variant="fab" />}
+    </>
+  );
+}
+
+export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[slug]">) {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <a href="#content" className="sr-only z-50 rounded bg-ink px-4 py-2 text-ivory focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         Skip to content
       </a>
 
-      {/* Laptop and up: sidebar */}
       <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line px-4 py-6 lg:flex">
-        <Link href={`/w/${slug}`} className="px-2">
-          <Wordmark name={business.name} className="block text-xl leading-tight" />
-        </Link>
-        {office && <NewButton slug={slug} variant="sidebar" />}
-        <Sidebar slug={slug} role={role} name={business.name} />
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-ink/5" />}>
+          <SidebarContent params={params} />
+        </Suspense>
         <div className="mt-auto flex flex-col gap-1 text-sm">
-          <Link href="/workspaces" className="flex h-10 items-center gap-2 rounded-lg px-3 text-muted hover:bg-ink/5">
+          <Link href="/workspaces" className="flex h-11 items-center gap-2 rounded-lg px-3 text-muted hover:bg-ink/5">
             <ArrowLeftRight aria-hidden className="size-4" /> Switch workspace
           </Link>
           <form action={signOut}>
-            <button type="submit" className="flex h-10 w-full items-center gap-2 rounded-lg px-3 text-muted hover:bg-ink/5">
+            <button type="submit" className="flex h-11 w-full items-center gap-2 rounded-lg px-3 text-muted hover:bg-ink/5">
               <LogOut aria-hidden className="size-4" /> Sign out
             </button>
           </form>
@@ -37,53 +85,17 @@ async function Shell({ params, children }: { params: Promise<{ slug: string }>; 
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        {business.is_demo && (
-          <div role="note" className="bg-gold-soft px-4 py-2 text-center text-sm font-medium text-gold-ink">
-            Demo workspace — fictional sample data, separate from live records.
-          </div>
-        )}
-
-        {/* Phone: top bar */}
-        <header className="material sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-ivory/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">
-          <Link href={`/w/${slug}`} className="min-w-0">
-            <Wordmark name={business.name} className="block truncate text-lg" />
-          </Link>
-          <Link href="/workspaces" className="flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" aria-label="Switch workspace">
-            <ArrowLeftRight aria-hidden className="size-5" />
-          </Link>
-        </header>
-
+        <Suspense fallback={<div className="h-14 border-b border-line lg:hidden" />}>
+          <TopBar params={params} />
+        </Suspense>
         <main id="content" className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] sm:px-6 lg:px-10 lg:pt-10 lg:pb-16">
           {children}
         </main>
       </div>
 
-      <BottomTabs slug={slug} role={role} />
-      {office && <NewButton slug={slug} variant="fab" />}
+      <Suspense>
+        <PhoneNav params={params} />
+      </Suspense>
     </div>
-  );
-}
-
-function ShellFallback() {
-  return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]" aria-busy="true">
-      <aside className="hidden border-r border-line lg:block" />
-      <div className="mx-auto w-full max-w-[1200px] px-4 pt-20 sm:px-6 lg:px-10">
-        <div className="h-9 w-56 animate-pulse rounded-lg bg-ink/6" />
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-[var(--radius-card)] bg-ink/5" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[slug]">) {
-  return (
-    <Suspense fallback={<ShellFallback />}>
-      <Shell params={params}>{children}</Shell>
-    </Suspense>
   );
 }

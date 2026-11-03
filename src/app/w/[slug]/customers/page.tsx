@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { FilterPills, SearchBar } from "@/components/search-bar";
 import { Card, Chip, EmptyState, PageHeader } from "@/components/ui/bits";
 import { ButtonLink } from "@/components/ui/button";
-import { authorize } from "@/lib/dal";
+import { pageWorkspace } from "@/lib/dal";
 import { SOURCE_LABEL } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
 import { cleanSearch, searchDigits } from "@/lib/search";
@@ -18,7 +18,7 @@ const PAGE = 50;
 async function CustomerList({ params, searchParams }: PageProps<"/w/[slug]/customers">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const { business } = await authorize(slug);
+  const { business } = await pageWorkspace(slug);
   const q = cleanSearch(sp.q);
   const tag = typeof sp.tag === "string" ? sp.tag.slice(0, 40) : "";
   const source = typeof sp.source === "string" && sp.source in SOURCE_LABEL ? sp.source : "";
@@ -99,7 +99,10 @@ async function CustomerList({ params, searchParams }: PageProps<"/w/[slug]/custo
           {(count ?? 0) > list.length && (
             <div className="mt-4 flex justify-center">
               <ButtonLink variant="secondary" scroll={false}
-                href={`${base}?${new URLSearchParams({ ...(q && { q }), ...(tag && { tag }), limit: String(limit + PAGE) })}`}>
+                href={`${base}?${new URLSearchParams({
+                  ...(q && { q }), ...(tag && { tag }), ...(source && { source }), ...(archived && { archived: "1" }),
+                  limit: String(limit + PAGE),
+                })}`}>
                 Show more
               </ButtonLink>
             </div>

@@ -84,7 +84,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex flex-col gap-6">
-          <Card className="grid grid-cols-2 divide-x divide-line">
+          {FEATURES.orders && <Card className="grid grid-cols-2 divide-x divide-line">
             <div className="p-4">
               <p className="text-sm text-muted">Order value</p>
               <Money minor={lifetime} currency={cur} className="font-display mt-1 block text-2xl" />
@@ -93,7 +93,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
               <p className="text-sm text-muted">Still owed</p>
               <Money minor={owed} currency={cur} className={`font-display mt-1 block text-2xl ${owed > 0 ? "text-danger" : ""}`} />
             </div>
-          </Card>
+          </Card>}
 
           <section>
             <SectionTitle>Contact</SectionTitle>
@@ -142,7 +142,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
         </div>
 
         <div className="flex flex-col gap-6">
-          <section>
+          {FEATURES.orders && <section>
             <SectionTitle>Orders</SectionTitle>
             {(orders.data ?? []).length === 0 ? (
               <Card className="px-4 py-5 text-muted">No orders yet.</Card>
@@ -151,8 +151,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                 <ul>
                   {(orders.data ?? []).map((o) => (
                     <li key={o.id} className="border-b border-line last:border-b-0">
-                      <Link href={FEATURES.orders ? `${base}/orders/${o.id}` : "#"} aria-disabled={!FEATURES.orders || undefined}
-                        className={`flex min-h-16 items-center justify-between gap-3 px-4 py-3 ${FEATURES.orders ? "hover:bg-ink/[0.03] active:bg-ink/5" : "pointer-events-none"}`}>
+                      <Link href={`${base}/orders/${o.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5">
                         <span className="min-w-0">
                           <span className="block font-medium">{o.order_number}</span>
                           <span className="block text-sm text-muted">
@@ -169,7 +168,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                 </ul>
               </Card>
             )}
-          </section>
+          </section>}
 
           <section>
             <SectionTitle>Enquiries</SectionTitle>
@@ -191,7 +190,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
             )}
           </section>
 
-          <section>
+          {FEATURES.payments && <section>
             <SectionTitle>Payments</SectionTitle>
             {(payments.data ?? []).length === 0 ? (
               <Card className="px-4 py-5 text-muted">No payments recorded.</Card>
@@ -213,9 +212,9 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                 </ul>
               </Card>
             )}
-          </section>
+          </section>}
 
-          <section>
+          {FEATURES.tasks && <section>
             <SectionTitle action={FEATURES.tasks && <Link href={`${base}/tasks/new?customer=${c.id}`} className="text-sm text-gold-ink underline underline-offset-4">Add follow-up</Link>}>
               Follow-ups
             </SectionTitle>
@@ -236,7 +235,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                 </ul>
               </Card>
             )}
-          </section>
+          </section>}
 
           {can.manage(role) && (
             <div className="flex justify-end">

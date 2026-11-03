@@ -28,7 +28,7 @@ export function StageStepper({ slug, id, stage, position }: { slug: string; id: 
                 if (r.ok) toast.success(`Moved to ${ENQUIRY_STAGE_LABEL[s]}`);
                 else toast.error(r.message);
               })}
-              className={cn("h-10 rounded-full px-3.5 text-sm transition-[transform,background-color] duration-150 active:scale-95",
+              className={cn("min-h-11 rounded-full px-4 text-sm transition-[transform,background-color] duration-150 active:scale-95",
                 current ? "bg-ink text-ivory" : "bg-ink/5 hover:bg-ink/10")}>
               {ENQUIRY_STAGE_LABEL[s]}
             </button>

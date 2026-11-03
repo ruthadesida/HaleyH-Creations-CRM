@@ -13,6 +13,12 @@ _Last updated: 2026-11-03_
 - **Spec 2 received** (full business management system). Gap analysis and phase plan: `docs/GAP-ANALYSIS.md`.
 - Dev server: `npm run dev` (also via the preview config in `..\.claude\launch.json`).
 
+## Review follow-ups still open
+
+- **Signed-in end-to-end tests** (`e2e/workflow.spec.ts`): sign up via the local Supabase Mailpit in CI, create a customer, use the enquiry board, and probe another business's URLs. CI already exports `SUPABASE_SECRET_KEY` and `MAILPIT_URL` for this.
+- Customer archive is manager-only in the app, but the `customers` UPDATE policy allows office roles, so sales staff could archive through the API. Enforce in the database when roles are reworked in Phase 1.
+- Set `SITE_URL` in production (auth email links use it; never request headers).
+
 ## Next steps (Phase 1 of Spec 2)
 
 1. Migration: roles → `owner` (+ title), `front_office`, `production_manager`; owner-granted `can_view_costs`; `makers` directory; update RLS helpers, RPCs and all pgTAP tests.

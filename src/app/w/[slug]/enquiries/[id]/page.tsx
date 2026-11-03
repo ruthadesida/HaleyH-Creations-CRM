@@ -10,7 +10,7 @@ import { Card, Chip, Detail } from "@/components/ui/bits";
 import { ButtonLink } from "@/components/ui/button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { cn } from "@/lib/cn";
-import { authorize } from "@/lib/dal";
+import { pageWorkspace } from "@/lib/dal";
 import { FEATURES } from "@/lib/features";
 import { formatDateTime } from "@/lib/dates";
 import { ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE, SOURCE_LABEL } from "@/lib/labels";
@@ -24,7 +24,7 @@ export const metadata: Metadata = { title: "Enquiry" };
 
 async function EnquiryDetail({ params }: PageProps<"/w/[slug]/enquiries/[id]">) {
   const { slug, id } = await params;
-  const { business } = await authorize(slug);
+  const { business } = await pageWorkspace(slug);
   const supabase = await createClient();
   const { data: e } = await supabase
     .from("enquiries")

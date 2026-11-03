@@ -6,7 +6,7 @@ import {
   DragOverlay,
   type DragStartEvent,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   closestCorners,
   useDroppable,
@@ -23,6 +23,7 @@ import { Sheet } from "@/app/w/[slug]/nav";
 import { Chip } from "@/components/ui/bits";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { dropPosition } from "@/lib/board";
 import { cn } from "@/lib/cn";
 import { FEATURES } from "@/lib/features";
 import { ENQUIRY_STAGE_LABEL } from "@/lib/labels";
@@ -51,8 +52,9 @@ export function PipelineBoard({ slug, cards }: { slug: string; cards: BoardCard[
   const [wonCard, setWonCard] = useState<BoardCard | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    // Touch: press and hold briefly so vertical scrolling still works.
+    // Mouse only (not touch pointers), so a finger flick scrolls instead of dragging.
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    // Touch: press and hold briefly so scrolling still works.
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
@@ -77,16 +79,8 @@ export function PipelineBoard({ slug, cards }: { slug: string; cards: BoardCard[
     const stage = (overCard ? overCard.stage : overId.replace("col:", "")) as Stage;
     if (!COLUMNS.includes(stage)) return;
 
-    // Position: just above the card dropped on, or at the end of the column.
-    const column = byStage(stage).filter((c) => c.id !== card.id);
-    let position: number;
-    if (overCard && overCard.id !== card.id) {
-      const idx = column.findIndex((c) => c.id === overCard.id);
-      const before = column[idx - 1]?.position ?? overCard.position - 1;
-      position = (before + overCard.position) / 2;
-    } else {
-      position = (column.at(-1)?.position ?? 0) + 1;
-    }
+    // Between the new neighbours: below the card when moving down a column, above it otherwise.
+    const position = dropPosition(byStage(stage), card.id, overCard ? overCard.id : null);
     if (stage === card.stage && position === card.position) return;
 
     if (stage === "lost" && card.stage !== "lost") {
