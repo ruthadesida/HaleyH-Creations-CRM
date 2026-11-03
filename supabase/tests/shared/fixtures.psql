@@ -1,0 +1,67 @@
+-- Shared fixtures for database tests. Each test file runs `\ir ../shared/fixtures.psql`
+-- inside its own transaction, which is rolled back at the end.
+--
+-- Business A (prefix HA): owner A, sales A, production A, deactivated former A.
+-- Business B (prefix HB): owner B.
+-- A platform admin who is not a member of either.
+
+create schema if not exists tests;
+
+create or replace function tests.login(p_uid uuid)
+returns void
+language plpgsql
+as $$
+declare
+  v_email text;
+begin
+  select email into v_email from auth.users where id = p_uid;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', p_uid, 'email', v_email, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+end;
+$$;
+
+-- Fixed ids keep the tests readable.
+-- Users
+insert into auth.users (id, email, aud, role) values
+  ('a0000000-0000-0000-0000-000000000001', 'owner.a@test.dev', 'authenticated', 'authenticated'),
+  ('a0000000-0000-0000-0000-000000000002', 'sales.a@test.dev', 'authenticated', 'authenticated'),
+  ('a0000000-0000-0000-0000-000000000003', 'production.a@test.dev', 'authenticated', 'authenticated'),
+  ('a0000000-0000-0000-0000-000000000004', 'former.a@test.dev', 'authenticated', 'authenticated'),
+  ('b0000000-0000-0000-0000-000000000001', 'owner.b@test.dev', 'authenticated', 'authenticated'),
+  ('c0000000-0000-0000-0000-000000000001', 'admin@test.dev', 'authenticated', 'authenticated');
+
+insert into public.businesses (id, name, slug, order_prefix) values
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'Business A', 'business-a', 'HA'),
+  ('bbbbbbbb-0000-0000-0000-000000000000', 'Business B', 'business-b', 'HB');
+
+insert into public.memberships (business_id, user_id, role, status) values
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000001', 'owner', 'active'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000002', 'sales', 'active'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000003', 'production', 'active'),
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000004', 'sales', 'deactivated'),
+  ('bbbbbbbb-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000001', 'owner', 'active');
+
+insert into public.platform_admins (user_id) values ('c0000000-0000-0000-0000-000000000001');
+
+-- Records in business A, created as owner A (payments record who entered them).
+select set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001"}', true);
+
+insert into public.customers (id, business_id, full_name, phone, email, bust, waist, hip, measurement_unit, fit_notes) values
+  ('cccccccc-0000-0000-0000-00000000000a', 'aaaaaaaa-0000-0000-0000-000000000000', 'Amaka Test', '0803 111 2222',
+   'amaka@test.dev', 90, 72, 98, 'cm', 'Loose at the waist');
+insert into public.customers (id, business_id, full_name, phone) values
+  ('cccccccc-0000-0000-0000-00000000000b', 'bbbbbbbb-0000-0000-0000-000000000000', 'Bola Test', '0803 111 2222');
+
+insert into public.orders (id, business_id, customer_id) values
+  ('dddddddd-0000-0000-0000-00000000000a', 'aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a');
+insert into public.order_items (id, business_id, order_id, description, quantity, unit_price_minor, item_type) values
+  ('eeeeeeee-0000-0000-0000-00000000000a', 'aaaaaaaa-0000-0000-0000-000000000000', 'dddddddd-0000-0000-0000-00000000000a',
+   'Wrap dress', 1, 4500000, 'made_to_order');
+insert into public.payments (business_id, order_id, amount_minor, method) values
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'dddddddd-0000-0000-0000-00000000000a', 1000000, 'bank_transfer');
+insert into public.production_jobs (business_id, order_item_id, assigned_to, due_date) values
+  ('aaaaaaaa-0000-0000-0000-000000000000', 'eeeeeeee-0000-0000-0000-00000000000a',
+   'a0000000-0000-0000-0000-000000000003', current_date + 3);
+
+select set_config('request.jwt.claims', '', true);
