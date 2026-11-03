@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Boxes,
+  ClipboardCheck,
+  FileUp,
+  History,
+  MapPin,
+  Scissors,
+  Truck,
   ClipboardList,
   Inbox,
   type LucideIcon,
@@ -27,22 +34,32 @@ type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean };
 
 function items(slug: string, role: Role) {
   const base = `/w/${slug}`;
+  const stock = `${base}/stock`;
   if (role === "production_manager") {
-    return {
-      tabs: FEATURES.production ? [{ href: `${base}/production`, label: "My work", icon: Package }] : [],
-      extra: [] as Item[],
-    };
+    const tabs: (Item | false)[] = [
+      FEATURES.inventory && { href: stock, label: "Stock", icon: Boxes, exact: true },
+      FEATURES.inventory && { href: `${stock}/counts`, label: "Counts", icon: ClipboardCheck },
+      FEATURES.inventory && { href: `${stock}/makers`, label: "Makers", icon: Scissors },
+    ];
+    const extra: (Item | false)[] = [
+      FEATURES.inventory && { href: `${stock}/movements`, label: "Movements", icon: History },
+      FEATURES.inventory && { href: `${stock}/opening`, label: "Opening stock", icon: FileUp },
+      FEATURES.inventory && { href: `${stock}/products`, label: "Products", icon: Package },
+      FEATURES.inventory && { href: `${stock}/suppliers`, label: "Suppliers", icon: Truck },
+      FEATURES.inventory && { href: `${stock}/locations`, label: "Locations", icon: MapPin },
+    ];
+    return { tabs: tabs.filter(Boolean) as Item[], extra: extra.filter(Boolean) as Item[] };
   }
   const tabs: (Item | false)[] = [
     { href: base, label: "Today", icon: Sun, exact: true },
     { href: `${base}/enquiries`, label: "Enquiries", icon: Inbox },
     FEATURES.orders && { href: `${base}/orders`, label: "Orders", icon: ShoppingBag },
     { href: `${base}/customers`, label: "Customers", icon: Users },
+    FEATURES.inventory && { href: stock, label: "Stock", icon: Boxes },
   ];
   const extra: (Item | false)[] = [
     FEATURES.tasks && { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
-    FEATURES.products && { href: `${base}/products`, label: "Products", icon: Package },
-    FEATURES.settings && { href: `${base}/settings`, label: "Settings", icon: Settings },
+    FEATURES.settings && role === "owner" && { href: `${base}/settings`, label: "Settings", icon: Settings },
   ];
   return { tabs: tabs.filter(Boolean) as Item[], extra: extra.filter(Boolean) as Item[] };
 }

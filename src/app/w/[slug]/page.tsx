@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card, Chip, Money, PageHeader } from "@/components/ui/bits";
 import { cn } from "@/lib/cn";
@@ -31,7 +32,8 @@ function periodRange(period: Period, today: string): [string, string] {
 async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   const { slug } = await params;
   const { business, role } = await getWorkspace(slug);
-  if (role === "production_manager") return <ProductionHomeComingSoon />;
+  // Production manager home is the Stock area until production jobs arrive (Phase 2).
+  if (role === "production_manager") redirect(`/w/${slug}/stock`);
 
   const sp = await searchParams;
   const period: Period = (typeof sp.period === "string" && sp.period in PERIODS ? sp.period : "month") as Period;
@@ -227,13 +229,3 @@ export default function DashboardPage(props: PageProps<"/w/[slug]">) {
   );
 }
 
-function ProductionHomeComingSoon() {
-  return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
-      <h1 className="font-display text-3xl font-medium">Your production screen is coming</h1>
-      <p className="text-muted">
-        Production jobs, materials and quality checks are being built next. Until then, your manager will share your work directly.
-      </p>
-    </div>
-  );
-}

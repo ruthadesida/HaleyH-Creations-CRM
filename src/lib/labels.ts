@@ -138,3 +138,10 @@ export const STOCK_DOC_LABEL: Record<string, string> = {
   adjustment: "Count adjustment",
   reversal: "Reversal",
 };
+
+export const BATCH_STATUS = {
+  draft: { label: "Waiting for owner approval", tone: "warn" },
+  posted: { label: "Posted", tone: "success" },
+  reversed: { label: "Reversed", tone: "neutral" },
+  discarded: { label: "Discarded", tone: "neutral" },
+} as const;

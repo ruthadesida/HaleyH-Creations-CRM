@@ -4,10 +4,13 @@
  * Flip a flag only when the feature works end to end and is tested.
  */
 export const FEATURES = {
+  /** Phase 1: catalogue, locations, ledger, transfers, counts, opening stock, makers, suppliers. */
+  inventory: true,
+  /** Business settings, staff and permissions. */
+  settings: true,
+  // Later phases:
   orders: false,
   payments: false,
   tasks: false,
-  products: false,
-  settings: false,
   production: false,
 } as const;

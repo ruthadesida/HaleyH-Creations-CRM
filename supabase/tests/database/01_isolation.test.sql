@@ -43,7 +43,7 @@ select throws_ok(
   '23503', null, 'B cannot attach A''s customer to a B order (composite foreign key)');
 
 select throws_ok(
-  $$ select public.create_invitation('aaaaaaaa-0000-0000-0000-000000000000', 'spy@test.dev', 'manager') $$,
+  $$ select public.create_invitation('aaaaaaaa-0000-0000-0000-000000000000', 'spy@test.dev', 'front_office') $$,
   '42501', null, 'B cannot invite itself into A');
 
 -- Updates silently match nothing under RLS; verify the row is unchanged afterwards.
