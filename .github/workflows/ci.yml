@@ -84,7 +84,9 @@ jobs:
           docker exec "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "truncate $tables cascade"
           psql "$URL" -At -c "select count(*) from public.businesses" | grep -qx 0
           # Restore, exactly as the runbook says: one transaction, triggers off.
-          psql "$URL" --single-transaction -v ON_ERROR_STOP=1 -q -c "set session_replication_role = replica" -f data.sql
+          # (Run as the local superuser: the local image doesn't let "postgres" write Supabase's internal storage tables.)
+          docker cp data.sql "$DB:/tmp/data.sql"
+          docker exec "$DB" psql -U supabase_admin -d postgres --single-transaction -v ON_ERROR_STOP=1 -q -c "set session_replication_role = replica" -f /tmp/data.sql
           psql "$URL" -At -f supabase/tests/restore/snapshot.psql > after.txt
           echo "Before: $(cat before.txt)"
           diff before.txt after.txt
