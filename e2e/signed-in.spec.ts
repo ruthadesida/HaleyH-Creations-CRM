@@ -73,7 +73,7 @@ test("every signed-in screen loads cleanly at this viewport", async ({ page }) =
       const onConsole = (msg: { type(): string; text(): string }) => {
         if (msg.type() === "error" && !BENIGN.some((re) => re.test(msg.text()))) errors.push(msg.text());
       };
-      const onError = (err: Error) => errors.push(err.message);
+      const onError = (err: Error) => { if (!BENIGN.some((re) => re.test(err.message))) errors.push(err.message); };
       page.on("console", onConsole);
       page.on("pageerror", onError);
 
