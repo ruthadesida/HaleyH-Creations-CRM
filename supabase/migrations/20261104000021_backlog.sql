@@ -10,6 +10,20 @@ returns text language sql stable security definer set search_path = '' as $$
   select coalesce((select timezone from public.businesses where id = p_business_id), 'Africa/Lagos')
 $$;
 revoke all on function app.business_tz from public, anon, authenticated;
+
+-- A time zone Postgres doesn't know would break every report for that business: refuse it when saved.
+create or replace function app.check_business_timezone()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if not exists (select 1 from pg_catalog.pg_timezone_names where name = new.timezone) then
+    raise exception 'Unknown time zone: %.', new.timezone using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists businesses_timezone_check on public.businesses;
+create trigger businesses_timezone_check before insert or update of timezone on public.businesses
+  for each row execute function app.check_business_timezone();
 -- Report, overview and notification functions, unchanged except for the time zone.
 create or replace function public.my_notifications(p_business_id uuid)
 returns table (kind text, severity text, title text, detail text, ref_type text, ref_id uuid)
@@ -305,11 +319,15 @@ begin
   if v_new.id is null or v_new.id = r.order_id then
     raise exception 'Choose the new order that replaces the exchanged items.' using errcode = 'P0001';
   end if;
+  if v_new.status = 'cancelled' then
+    raise exception 'That order is cancelled. Choose an open order.' using errcode = 'P0001';
+  end if;
   select customer_id into v_original_customer from public.orders where id = r.order_id;
   if v_new.customer_id <> v_original_customer then
     raise exception 'The replacement order must be for the same customer.' using errcode = 'P0001';
   end if;
-  if r.replacement_order_id is not null then
+  -- A replacement that was later cancelled can be swapped for a new one; an open one stays.
+  if r.replacement_order_id is not null and exists (select 1 from public.orders where id = r.replacement_order_id and status <> 'cancelled') then
     if r.replacement_order_id = p_order then return; end if;
     raise exception 'This exchange already has a replacement order.' using errcode = 'P0001';
   end if;

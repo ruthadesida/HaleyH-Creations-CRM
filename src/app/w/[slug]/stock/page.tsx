@@ -29,10 +29,9 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
     .select("id, kind, code, name, category, colour, base_unit, reorder_level, cost_missing")
     .eq("business_id", business.id).eq("kind", kind).is("archived_at", null).order("name").limit(500);
   if (q) itemsQuery = itemsQuery.or(`name.ilike.*${q}*,code.ilike.*${q}*`);
-  const [{ data: items }, { data: balances }, { data: availability }, locations, showCosts] = await Promise.all([
+  const [{ data: items }, { data: balances }, locations, showCosts] = await Promise.all([
     itemsQuery,
     supabase.from("stock_balances").select("stock_item_id, location_id, on_hand").eq("business_id", business.id),
-    supabase.from("stock_availability").select("stock_item_id, reserved, available").eq("business_id", business.id),
     getLocations(business.id),
     canViewCosts(business.id, user.id, role),
   ]);
@@ -47,6 +46,11 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
     list.push({ location: locName.get(b.location_id!) ?? "Unknown", qty: Number(b.on_hand) });
     byItem.set(b.stock_item_id!, list);
   }
+  // Availability for the items on this tab only (the view adds up the ledger per item).
+  const listedIds = (items ?? []).map((i) => i.id);
+  const { data: availability } = listedIds.length
+    ? await supabase.from("stock_availability").select("stock_item_id, reserved, available").eq("business_id", business.id).in("stock_item_id", listedIds)
+    : { data: [] };
   const reservedByItem = new Map((availability ?? []).map((a) => [a.stock_item_id!, { reserved: Number(a.reserved ?? 0), available: Number(a.available ?? 0) }]));
   const valueByItem = new Map<string, number>();
   for (const v of values) valueByItem.set(v.stock_item_id, (valueByItem.get(v.stock_item_id) ?? 0) + Number(v.value_kobo));
@@ -80,7 +84,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
       </div>
 
       <p className="mb-3 text-sm text-muted">
-        Physical stock on hand. Where some is reserved for orders or jobs, the row also shows how much is still available.
+        Physical stock on hand. Where some is reserved or waiting in Quarantine, the row also shows how much is available.
         {showCosts && values.length > 0 && <> Value of the items listed (moving average cost): <Money minor={Math.round(totalValue)} currency={business.currency} className="font-medium text-ink" />.</>}
       </p>
 
@@ -109,7 +113,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
                   <span className="flex items-center gap-3 text-right">
                     <span>
                       <span className="tabular block font-medium">{formatQty(r.total, r.base_unit)}</span>
-                      {r.hold && r.hold.reserved > 0 && (
+                      {r.hold && r.hold.available !== r.total && (
                         <span className="tabular block text-sm text-muted">{formatQty(r.hold.available, r.base_unit)} available</span>
                       )}
                       {showCosts && valueByItem.has(r.id) && (

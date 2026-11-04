@@ -2,7 +2,7 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-04 (Phase 4 built and reviewed)_
+_Last updated: 2026-11-04 (Phase 4 built and reviewed; backlog pass)_
 
 ## Where things stand
 
@@ -41,16 +41,15 @@ _Last updated: 2026-11-04 (Phase 4 built and reviewed)_
 - Signed-in browser tests run only in CI (no Docker on this machine); locally they are skipped.
 - True concurrency (two simultaneous requests) is designed for (business-row lock, item locks, idempotency) but tested only with sequential retries.
 - Supabase advisors flag the intentional SECURITY DEFINER RPCs (each checks roles inside; commented in SQL).
-- Reports use the Lagos time zone for "today" and confirmed dates, whatever the business's time-zone setting. Fine for HaleyH; needs work before other businesses in other zones.
+- Reports, the owner overview and notifications use the business's own time zone (migration 0021). Stock-posting checks that refuse future dates still use Lagos time; a business far from Lagos could be refused a same-day posting for a few hours. Fix by passing the business time zone into those checks before onboarding such a business.
 - Imports: a 2 MB file limit (about 5,000 rows) per import; larger files must be split.
 - Backups don't include Supabase Storage files (logos).
 
 ## Next steps
 
 1. Second critic review done (2026-11-04: design 8, phone 7, worst-case data 7, money 8, laptop 7); it found quotations counted as owed on the customer page (fixed). Remaining ideas: line up the big numbers on Today; make "Void" a clear destructive control; shorter explanations above the Stock and Purchasing lists on phones; "No price" instead of ₦0 on products; proper stage labels in the orders-attention report. Earlier: (the 2026-11-04 critic follow-ups are done: status chips coloured by meaning, "More actions" on the phone order page, scroll shadows and a hint on report tables, section tabs keep the current page in view and fall back to the parent tab).
-2. Per-business time zone in reports (see Known gaps).
 Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
-3. Phase 3 follow-ups: edit a confirmed order with impact shown; link exchange replacements (`order_returns.replacement_order_id`); a production-side list of returns to inspect.
+3. Phase 3 follow-up still open: edit a confirmed order with its impact shown (stock, reservations, jobs, money). Done: exchange replacements are linked; production has a Returns to inspect list.
 3. Done in Phase 2 (kept for reference): **Phase 2** (`docs/GAP-ANALYSIS.md`): purchasing (PO → partial/rejected receipts → supplier returns; quick purchase; landed costs), BOMs with versions, production jobs with WIP, material allocation/issue/return, external maker jobs and fees (owner-only payments), QC checklists and outcomes, rework, production home screen. Extend `docs/COSTING.md`.
 
 ## Waiting on the owner

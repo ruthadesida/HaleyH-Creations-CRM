@@ -62,6 +62,13 @@ export async function createOrder(slug: string, input: z.input<typeof orderSchem
     });
   }
   const supabase = await createClient();
+  if (o.exchange) {
+    // Check the customer before saving: once saved, the same request always returns this order.
+    const { data: ex } = await supabase.from("order_returns").select("orders!order_returns_business_id_order_id_fkey(customer_id)")
+      .eq("id", o.exchange).eq("business_id", business.id).maybeSingle();
+    if (!ex) return bad();
+    if (ex.orders?.customer_id !== o.customer) return { ok: false, message: "A replacement order must be for the same customer as the exchange." };
+  }
   let productIds = new Map<string, string>();
   const variantIds = items.map((i) => i.variant_id).filter(Boolean);
   if (variantIds.length) {

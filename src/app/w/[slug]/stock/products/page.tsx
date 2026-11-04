@@ -40,7 +40,8 @@ async function Products({ params, searchParams }: PageProps<"/w/[slug]/stock/pro
           {(products ?? []).map((p) => {
             const live = p.product_variants.filter((v) => !v.archived_at);
             const prices = live.map((v) => v.price_minor ?? p.base_price_minor);
-            const min = Math.min(...prices, p.base_price_minor), max = Math.max(...prices, p.base_price_minor);
+            const priced = [...prices, p.base_price_minor].filter((x) => x > 0);
+            const min = priced.length ? Math.min(...priced) : 0, max = priced.length ? Math.max(...priced) : 0;
             return (
               <li key={p.id} className="border-b border-line last:border-b-0">
                 <Link href={`/w/${slug}/stock/products/${p.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">

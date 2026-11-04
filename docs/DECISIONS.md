@@ -53,6 +53,12 @@ Newest first. Each entry: what was decided, and why.
 - **Makers are a directory without logins** for now; restricted maker logins are optional later.
 - **Production manager can read products** (needed for BOMs); costs remain hidden unless permitted.
 
+## 2026-11-04 (backlog)
+
+- **Business time zone, reports first.** Reports, the owner overview and notifications now turn timestamps into days with the business's own time zone (`app.business_tz`). The ~20 stock-posting functions that refuse future dates still use Lagos: changing them all is riskier than the gain while every business is in Nigeria. Revisit before onboarding a business far from Lagos.
+- **Production inspects returns without customer details.** `returns_to_inspect` returns only the item, quantity, reason and condition, so the production manager can restock or scrap without seeing who returned it or what they paid.
+- **Exchanges link one way, once.** An exchange points at one replacement order for the same customer; it can't be re-pointed, so the history stays clear.
+
 ## 2026-11-04 (Phase 4 review)
 
 - **The restore test uses the real backup format.** The first version dumped with `pg_dump -n public -t auth.users`; pg_dump ignores `-n` when `-t` is given, so it only backed up logins and proved nothing. CI now runs the same `supabase db dump --data-only` as the nightly backup and restores with the runbook's command, and fails if the dump lacks business data or logins.

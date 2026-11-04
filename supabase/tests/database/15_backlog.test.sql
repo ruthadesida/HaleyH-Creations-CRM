@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 \ir ../shared/fixtures.psql
 
-select plan(10);
+select plan(13);
 
 grant usage on schema tests to authenticated;
 create or replace function tests.loc(p_name text) returns uuid language sql stable security definer as $$
@@ -75,11 +75,22 @@ insert into t select 'other', public.create_order('aaaaaaaa-0000-0000-0000-00000
   jsonb_build_array(jsonb_build_object('description', 'Kaftan', 'quantity', 1, 'unit_price_minor', 1000000)), gen_random_uuid());
 select throws_like($$ select public.link_exchange_replacement((select id from t where k = 'exchange'), (select id from t where k = 'other')) $$,
   'This exchange already has%', 'An exchange keeps the replacement it was linked to');
+select public.cancel_order((select id from t where k = 'other'), 'Customer changed her mind');
+select throws_like($$ select public.link_exchange_replacement((select id from t where k = 'exchange'), (select id from t where k = 'other')) $$,
+  'That order is cancelled%', 'A cancelled order cannot be the replacement');
+select public.cancel_order((select id from t where k = 'replacement'), 'Wrong item');
+insert into t select 'replacement2', public.create_order('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a',
+  jsonb_build_array(jsonb_build_object('description', 'Wrap dress L', 'quantity', 1, 'unit_price_minor', 1500000)), gen_random_uuid());
+select lives_ok($$ select public.link_exchange_replacement((select id from t where k = 'exchange'), (select id from t where k = 'replacement2')) $$,
+  'If the replacement is cancelled, a new one can take its place');
 select public.decide_return_line((select l.id from public.order_return_lines l join public.order_returns r on r.id = l.return_id
   where r.id = (select id from t where k = 'exchange')), 'restock', tests.loc('Finished goods / showroom'), gen_random_uuid());
 select is_empty($$ select 1 from public.returns_to_inspect('aaaaaaaa-0000-0000-0000-000000000000') $$,
   'Once inspected, it leaves the list');
 reset role;
+
+select throws_like($$ update public.businesses set timezone = 'Lagos/Nowhere' where id = 'aaaaaaaa-0000-0000-0000-000000000000' $$,
+  'Unknown time zone%', 'An unknown time zone is refused (it would break every report)');
 
 select * from finish();
 rollback;

@@ -145,7 +145,7 @@ export function ReturnSheet({ slug, orderId, lines, today }: { slug: string; ord
             </div>
           ))}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Reason" htmlFor="rt-reason"><Input id="rt-reason" name="reason" placeholder="e.g. Too small" /></Field>
+            <Field label="Reason" htmlFor="rt-reason" hint="The production team sees this when inspecting: don't include phone numbers or addresses."><Input id="rt-reason" name="reason" placeholder="e.g. Too small" /></Field>
             <Field label="Date received" htmlFor="rt-date"><Input id="rt-date" name="effective_date" type="date" defaultValue={today} max={today} /></Field>
           </div>
           <Button type="submit" size="lg" block disabled={pending}>{pending ? "Saving…" : "Record return"}</Button>

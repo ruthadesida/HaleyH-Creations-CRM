@@ -12,7 +12,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 |---|---|---|
 | Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Dev project; migrations 0001–0020 applied |
+| Supabase project | ✅ | Dev project; migrations 0001–0021 applied |
 | Sign up / in / out / reset | ✅ | |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | Nightly encrypted backup workflow ready; needs two GitHub secrets (`docs/BACKUPS.md`). Restore tested in CI (Spec 2 test O) |
@@ -85,7 +85,8 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Invoice / quotation (print or save as PDF) | ✅ | |
 | Estimated gross profit per order (owners) | ✅ | Labelled estimated; flagged when costs are missing |
 | Order edits after confirmation | ⬜ | Cancel and re-create for now |
-| Exchange replacement linking, owner home overview, reports | ⬜ | Phase 4 |
+| Exchange linked to its replacement order (both orders show the link) | ✅ | Front office or owner; same customer only |
+| Returns to inspect list for production (Production → Returns to inspect) | ✅ | No customer, price or payment details |
 
 ## Reports and tools (Phase 4)
 

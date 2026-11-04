@@ -45,6 +45,7 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `12_notifications_search` — notifications and search by role.
 - `13_imports` — preview writes nothing; idempotent by external ID; no duplicate people; product variants get stock items; role limits.
 - `14_phase4_review` — gross profit split by period; owner overview agrees; SKU-less products update on re-import and are flagged when repeated in one file; the same phone twice in one file creates one customer; archived customers untouched by import; job search only for production.
+- `15_backlog` — reports count days in the business's own time zone; the Returns to inspect list (production sees it, other businesses can't, no customer or price fields, inspected items leave it); linking an exchange to its replacement (front office only, not the original order, never re-linked).
 - `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
 
 Total: **300+** database tests (see CI for the exact count).
