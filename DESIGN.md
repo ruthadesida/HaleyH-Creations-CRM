@@ -42,6 +42,9 @@ Screenshot:  An order page: big naira balance, the seam half-sewn to "Quality ch
 | gold-ink | `#76592A` | Gold used as text (AA on ivory) |
 | success | `#2F6B4F` | Paid, delivered |
 | warn | `#8A5A00` | Due soon, part-paid |
+| info | `#33557D` | Work under way: confirmed, in production, in QC, ordered from a supplier |
+
+**Status chips by meaning:** grey = not started or finished with (quotation, cancelled, planned); indigo = under way; gold = the next move is ours (ready to dispatch); amber = needs attention or part-paid; red = unpaid or late; green = done (paid, delivered, received). Chips are 28px tall with 13px text. Soft chip backgrounds stay at 10% tint so the coloured text keeps AA contrast.
 | danger | `#A63A2B` | Overdue, cancelled, errors |
 
 The brief asked for cream and gold, which is close to a palette the art-direction guide warns is generic. Here it's the owner's brand direction, so we commit to it: muted gold instead of terracotta, and charcoal instead of pure black. The type pairing below gives it a fashion voice rather than a newspaper one.

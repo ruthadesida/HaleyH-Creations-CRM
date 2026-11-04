@@ -47,7 +47,7 @@ _Last updated: 2026-11-04 (Phase 4 built and reviewed)_
 
 ## Next steps
 
-1. Design follow-ups from the 2026-11-04 critic review (scores 7 design, 6 phone usability, 7 money clarity, 6 laptop; robustness 4 before fixes): colour status chips by meaning (owed amber, paid green, in production blue) and make them larger; on phone order detail show one main action with the rest under "More"; a scroll hint (edge fade) on wide report tables; on the makers page, highlight Production rather than Stock. Re-run `e2e/worst-case.spec.ts` screenshots and a fresh critic afterwards.
+1. Re-score the design with a fresh critic on the latest `worst-case-screens` artifact (the 2026-11-04 critic follow-ups are done: status chips coloured by meaning, "More actions" on the phone order page, scroll shadows and a hint on report tables, section tabs keep the current page in view and fall back to the parent tab).
 2. Per-business time zone in reports (see Known gaps).
 Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
 3. Phase 3 follow-ups: edit a confirmed order with impact shown; link exchange replacements (`order_returns.replacement_order_id`); a production-side list of returns to inspect.

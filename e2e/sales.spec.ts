@@ -131,14 +131,13 @@ test("front office sells, dispatches and takes a return; the owner approves and 
     await page.goto(orderUrl);
     // On phones the less-used actions sit behind "More actions".
     // (The first tap can land before the page is interactive, so retry until the menu is open.)
-    const more = page.getByRole("button", { name: /More actions|Fewer actions/ });
-    if (await more.isVisible()) {
-      await expect(async () => {
-        if ((await more.getAttribute("aria-expanded")) !== "true") await more.click();
-        await expect(more).toHaveAttribute("aria-expanded", "true", { timeout: 2000 });
-      }).toPass({ timeout: 20_000 });
-    }
-    await page.getByRole("button", { name: "Record refund" }).click();
+    const more = page.getByRole("button", { name: "More actions" });
+    const refund = page.getByRole("button", { name: "Record refund" });
+    await expect(async () => {
+      if (!(await refund.isVisible()) && (await more.isVisible())) await more.click();
+      await expect(refund).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 30_000 });
+    await refund.click();
     await dialog(page).getByLabel("Amount refunded (₦)").fill("10000");
     await dialog(page).getByRole("button", { name: "Record refund" }).click();
     await expect(page.getByText("Refund recorded manually.", { exact: false })).toBeVisible();
