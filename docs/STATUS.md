@@ -1,4 +1,4 @@
-﻿# Feature status
+# Feature status
 
 What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
