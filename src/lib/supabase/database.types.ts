@@ -4037,14 +4037,14 @@ export type Database = {
       returns_to_inspect: {
         Args: { p_business_id: string }
         Returns: {
-          condition: string | null
+          condition: string
           item: string
           kind: string
           line_id: string
           order_number: string
           quantity: number
           reason: string
-          received_on: string | null
+          received_on: string
           return_number: string
         }[]
       }
