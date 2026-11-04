@@ -77,6 +77,16 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/orders/${p3.order}/invoice`, heading: "Invoice" },
     { path: `${w}/payments`, heading: "Payments" },
     { path: `${w}/customers/${p3.customer}`, heading: "Ngozi Okafor" },
+    { path: `${w}/reports`, heading: "Reports" },
+    { path: `${w}/reports/sales-by-product`, heading: "Sales by product" },
+    { path: `${w}/reports/stock-by-location`, heading: "Stock by location" },
+    { path: `${w}/reports/wip`, heading: "Work in progress by job" },
+    { path: `${w}/notifications`, heading: "Notifications" },
+    { path: `${w}/search?q=Ngozi`, heading: "Search" },
+    { path: `${w}/production/${p2.job}/sheet`, heading: "" },
+    { path: `${w}/settings/messages`, heading: "Message templates" },
+    { path: `${w}/settings/import`, heading: "Import customers or products" },
+    { path: `${w}/settings/integrations`, heading: "Integrations and backups" },
     { path: "/workspaces", heading: "" },
   ];
   const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });

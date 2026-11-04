@@ -1,0 +1,28 @@
+-- Spec 2 test O: a fingerprint of the data, taken before the backup and after the restore. They must match.
+select jsonb_build_object(
+  'users', (select count(*) from auth.users),
+  'businesses', (select count(*) from public.businesses),
+  'memberships', (select count(*) from public.memberships),
+  'customers', (select count(*) from public.customers),
+  'orders', (select count(*) from public.orders),
+  'order_items', (select count(*) from public.order_items),
+  'payments', (select count(*) from public.payments),
+  'order_balance_total', (select sum(balance_minor) from public.order_summaries),
+  'dispatches', (select count(*) from public.order_dispatches),
+  'returns', (select count(*) from public.order_return_lines),
+  'stock_items', (select count(*) from public.stock_items),
+  'avg_cost_total', (select round(sum(avg_cost), 4) from public.stock_items),
+  'stock_documents', (select count(*) from public.stock_documents),
+  'stock_movements', (select count(*) from public.stock_movements),
+  'ledger_quantity', (select sum(quantity) from public.stock_movements),
+  'ledger_value', (select round(sum(quantity * unit_cost), 2) from public.stock_movements),
+  'reservations_active', (select coalesce(sum(qty_base), 0) from public.stock_reservations where status = 'active'),
+  'purchase_orders', (select count(*) from public.purchase_orders),
+  'receipts', (select count(*) from public.goods_receipt_lines),
+  'supplier_balance', (select sum(balance) from public.supplier_balances),
+  'jobs', (select count(*) from public.production_jobs),
+  'wip_total', (select round(sum(app.job_wip_value(id)), 2) from public.production_jobs),
+  'qc', (select count(*) from public.qc_inspections),
+  'audit_log', (select count(*) from public.audit_log),
+  'next_numbers', (select string_agg(concat_ws('/', next_order_number, next_stock_doc_number, next_po_number, next_job_number), ',' order by id) from public.businesses)
+)::text;

@@ -459,6 +459,7 @@ export type Database = {
           created_by: string | null
           email: string | null
           email_normalized: string | null
+          external_id: string | null
           fit_notes: string | null
           full_name: string
           hip: number | null
@@ -497,6 +498,7 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           email_normalized?: string | null
+          external_id?: string | null
           fit_notes?: string | null
           full_name: string
           hip?: number | null
@@ -535,6 +537,7 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           email_normalized?: string | null
+          external_id?: string | null
           fit_notes?: string | null
           full_name?: string
           hip?: number | null
@@ -1149,6 +1152,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "memberships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          body: string
+          business_id: string
+          id: string
+          key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          business_id: string
+          id?: string
+          key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          business_id?: string
+          id?: string
+          key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -3532,6 +3570,22 @@ export type Database = {
           line_id: string
           unit_cost: number
           unit_price: number
+        }[]
+      }
+      import_customers: {
+        Args: { p_business_id: string; p_dry_run: boolean; p_rows: Json }
+        Returns: {
+          action: string
+          line: number
+          message: string
+        }[]
+      }
+      import_products: {
+        Args: { p_business_id: string; p_dry_run: boolean; p_rows: Json }
+        Returns: {
+          action: string
+          line: number
+          message: string
         }[]
       }
       invitation_preview: {

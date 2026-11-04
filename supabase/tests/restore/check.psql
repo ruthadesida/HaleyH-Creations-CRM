@@ -1,0 +1,40 @@
+-- Spec 2 test O, final step: after restoring, every link is intact and the app still works.
+\set ON_ERROR_STOP on
+do $$
+begin
+  if exists (select 1 from public.stock_movements m left join public.stock_documents d on d.id = m.document_id where d.id is null) then
+    raise exception 'Restore check failed: ledger lines without their document';
+  end if;
+  if exists (select 1 from public.order_items i left join public.orders o on o.id = i.order_id where o.id is null) then
+    raise exception 'Restore check failed: order items without their order';
+  end if;
+  if exists (select 1 from public.payments p left join public.orders o on o.id = p.order_id where o.id is null) then
+    raise exception 'Restore check failed: payments without their order';
+  end if;
+  if exists (select 1 from public.memberships m left join auth.users u on u.id = m.user_id where u.id is null) then
+    raise exception 'Restore check failed: staff without their login';
+  end if;
+  if exists (select 1 from public.stock_reservations r left join public.stock_items i on i.id = r.stock_item_id where i.id is null) then
+    raise exception 'Restore check failed: reservations without their item';
+  end if;
+  if exists (select 1 from public.job_materials m left join public.production_jobs j on j.id = m.job_id where j.id is null) then
+    raise exception 'Restore check failed: job materials without their job';
+  end if;
+  if exists (select 1 from public.stock_balances b where b.on_hand < 0) then
+    raise exception 'Restore check failed: negative stock';
+  end if;
+  if exists (select 1 from public.stock_availability a where a.available < 0) then
+    raise exception 'Restore check failed: reserved more than is on hand';
+  end if;
+end $$;
+
+-- The app still works on the restored data: an owner posts a transfer, and numbering carries on without clashing.
+select set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', false);
+set role authenticated;
+select public.post_transfer('aaaaaaaa-0000-0000-0000-000000000000',
+  (select id from public.stock_items where code = 'FAB'),
+  (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'store'),
+  (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'production'),
+  1, current_date, 'After restore', gen_random_uuid());
+reset role;
+select 'Restore check passed' as result;

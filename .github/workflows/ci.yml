@@ -53,6 +53,40 @@ jobs:
       - name: Run pgTAP tests
         run: supabase test db
 
+  backup-restore:
+    name: Backup and restore (Spec 2 test O)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      - name: Start Postgres with all migrations applied
+        run: supabase db start
+      - name: Build a business, back it up, wipe it, restore it, compare
+        env:
+          URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          DB: supabase_db_HaleyH-Creations-CRM
+        run: |
+          set -euo pipefail
+          psql "$URL" -v ON_ERROR_STOP=1 -q -f supabase/tests/restore/seed.psql
+          psql "$URL" -At -f supabase/tests/restore/snapshot.psql > before.txt
+          # The backup: all business data, plus the logins it links to.
+          docker exec "$DB" pg_dump -U supabase_admin -Fc --data-only -n public -t auth.users -t auth.identities -f /tmp/backup.dump postgres
+          docker cp "$DB:/tmp/backup.dump" backup.dump
+          # Wipe: a fresh database from the migrations.
+          supabase db reset
+          docker exec "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
+            "do \$\$ declare t text; begin select string_agg(format('%I.%I', schemaname, tablename), ', ') into t from pg_tables where schemaname = 'public'; execute 'truncate ' || t || ', auth.users, auth.identities cascade'; end \$\$;"
+          # Restore.
+          docker cp backup.dump "$DB:/tmp/backup.dump"
+          docker exec "$DB" pg_restore -U supabase_admin --data-only --disable-triggers -d postgres /tmp/backup.dump
+          psql "$URL" -At -f supabase/tests/restore/snapshot.psql > after.txt
+          echo "Before: $(cat before.txt)"
+          diff before.txt after.txt
+          psql "$URL" -v ON_ERROR_STOP=1 -f supabase/tests/restore/check.psql
+
   build-and-e2e:
     name: Build and browser tests
     runs-on: ubuntu-latest

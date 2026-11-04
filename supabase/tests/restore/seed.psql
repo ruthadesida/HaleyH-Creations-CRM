@@ -1,0 +1,61 @@
+-- Spec 2 test O, step 1: a business with linked records across every area, committed (not rolled back).
+\set ON_ERROR_STOP on
+-- One transaction: the test login (role and claims) lasts for the transaction.
+begin;
+\ir ../shared/fixtures.psql
+
+select tests.login('a0000000-0000-0000-0000-000000000001');
+update public.businesses set cutover_date = current_date - 5 where id = 'aaaaaaaa-0000-0000-0000-000000000000';
+insert into public.products (business_id, name, category) values ('aaaaaaaa-0000-0000-0000-000000000000', 'Wrap dress', 'clothing');
+insert into public.product_variants (business_id, product_id, size, sku)
+  select 'aaaaaaaa-0000-0000-0000-000000000000', id, 'M', 'DRESS-M' from public.products where name = 'Wrap dress';
+select public.post_opening_batch(public.save_opening_batch('aaaaaaaa-0000-0000-0000-000000000000', 'o.csv', null, jsonb_build_array(
+  jsonb_build_object('line', 2, 'code', 'DRESS-M', 'location_id',
+    (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'),
+    'quantity', 5, 'unit', 'pc', 'unit_cost', '600000'),
+  jsonb_build_object('line', 3, 'code', 'FAB', 'name', 'Ankara', 'kind', 'raw_material', 'base_unit', 'm',
+    'location_id', (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'store'),
+    'quantity', 20, 'unit', 'm', 'unit_cost', '40000'))), gen_random_uuid());
+
+-- Purchasing: a supplier, an approved order, a partial receipt, a bill and a payment.
+insert into public.suppliers (business_id, name) values ('aaaaaaaa-0000-0000-0000-000000000000', 'Balogun Fabrics');
+select public.save_purchase_order('aaaaaaaa-0000-0000-0000-000000000000', null, (select id from public.suppliers where name = 'Balogun Fabrics'),
+  null, null, jsonb_build_array(jsonb_build_object('item', (select id from public.stock_items where code = 'FAB'), 'qty', 10, 'unit', 'm', 'unit_price', 45000)));
+select public.approve_purchase_order((select id from public.purchase_orders limit 1));
+select public.receive_goods('aaaaaaaa-0000-0000-0000-000000000000', (select id from public.purchase_orders limit 1), null,
+  (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'store'), current_date, 'INV-1', 0,
+  jsonb_build_array(jsonb_build_object('po_line', (select id from public.purchase_order_lines limit 1), 'accepted', 6)), true, gen_random_uuid());
+select public.record_supplier_payment('aaaaaaaa-0000-0000-0000-000000000000', (select id from public.suppliers where name = 'Balogun Fabrics'),
+  null, current_date, 100000, 'cash', 'R-1');
+
+-- Sales: an order confirmed, part-paid, approved, partly dispatched and a return inspected.
+select public.create_order('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a',
+  jsonb_build_array(jsonb_build_object('description', 'Wrap dress M', 'variant_id', (select id from public.product_variants where sku = 'DRESS-M'),
+    'quantity', 3, 'unit_price_minor', 1500000)), '00000000-0000-0000-0000-00000000aa01');
+select public.confirm_order((select id from public.orders where idempotency_key = '00000000-0000-0000-0000-00000000aa01'));
+insert into public.payments (business_id, order_id, amount_minor, method)
+  select 'aaaaaaaa-0000-0000-0000-000000000000', id, 2000000, 'bank_transfer' from public.orders where idempotency_key = '00000000-0000-0000-0000-00000000aa01';
+select public.approve_unpaid_dispatch((select id from public.orders where idempotency_key = '00000000-0000-0000-0000-00000000aa01'), 'Regular customer');
+select public.dispatch_order((select id from public.orders where idempotency_key = '00000000-0000-0000-0000-00000000aa01'),
+  (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'), current_date, 'GIG', 'T-1',
+  (select jsonb_agg(jsonb_build_object('item', i.id, 'qty', 2)) from public.order_items i join public.orders o on o.id = i.order_id
+    where o.idempotency_key = '00000000-0000-0000-0000-00000000aa01'), gen_random_uuid());
+select public.receive_customer_return((select id from public.orders where idempotency_key = '00000000-0000-0000-0000-00000000aa01'), 'return', 'Too small',
+  current_date, (select jsonb_agg(jsonb_build_object('item', i.id, 'qty', 1)) from public.order_items i join public.orders o on o.id = i.order_id
+    where o.idempotency_key = '00000000-0000-0000-0000-00000000aa01'), gen_random_uuid());
+
+-- Production: a job with materials issued and one unit through QC.
+select public.create_production_job('aaaaaaaa-0000-0000-0000-000000000000', (select id from public.product_variants where sku = 'DRESS-M'),
+  2, null, null, current_date + 5, null, '00000000-0000-0000-0000-00000000bb01');
+select public.set_job_material((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+  (select id from public.stock_items where code = 'FAB'), 5, 'm');
+select public.allocate_job_materials((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'));
+select public.issue_job_materials((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+  (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'store'), current_date,
+  jsonb_build_array(jsonb_build_object('item', (select id from public.stock_items where code = 'FAB'), 'qty', 5)), gen_random_uuid());
+select public.submit_job_for_qc((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'));
+select public.record_qc_inspection((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+  1, 1, 0, '{}', 'Hem uneven', 'Redo', (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'),
+  current_date, gen_random_uuid());
+reset role;
+commit;

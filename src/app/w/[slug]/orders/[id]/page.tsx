@@ -17,6 +17,8 @@ import { orderProgress } from "@/lib/orders";
 import { getLocations } from "@/lib/stock";
 import { createClient } from "@/lib/supabase/server";
 import { approveUnpaid, cancelOrder, confirmOrder, markDelivered, reserveStock, voidPayment } from "../actions";
+import { formatMoney } from "@/lib/money";
+import { MessageSheet } from "./message-sheet";
 import { DispatchSheet, InspectButtons, PaymentSheet, ReturnSheet } from "./order-forms";
 
 export const metadata: Metadata = { title: "Order" };
@@ -26,7 +28,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
   const { business, role } = await pageWorkspace(slug, can.office);
   const supabase = await createClient();
   const { data: o } = await supabase.from("order_summaries")
-    .select("*, customers(id, full_name, phone)").eq("id", id).eq("business_id", business.id).maybeSingle();
+    .select("*, customers(id, full_name, phone, whatsapp)").eq("id", id).eq("business_id", business.id).maybeSingle();
   if (!o) notFound();
   const { data: items } = await supabase.from("order_items")
     .select("id, description, size, colour, quantity, unit_price_minor, item_type, variant_id, dispatched_quantity").eq("order_id", id).order("created_at");
@@ -39,6 +41,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
     supabase.from("order_returns").select("id, number, kind, status, reason, received_on, order_return_lines(id, order_item_id, quantity, condition, decision)").eq("order_id", id).order("created_at"),
     getLocations(business.id),
   ]);
+  const { data: templates } = await supabase.from("message_templates").select("key, title, body").eq("business_id", business.id).order("key");
   const profit = can.own(role) && o.confirmed_at ? (await supabase.rpc("order_profit", { p_order: id })).data?.[0] : undefined;
 
   const itemIds = new Set((items ?? []).map((i) => i.id));
@@ -102,6 +105,13 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
               lines={(items ?? []).filter((i) => i.dispatched_quantity - (returnedOf.get(i.id) ?? 0) > 0)
                 .map((i) => ({ id: i.id, description: i.description, remaining: i.dispatched_quantity - (returnedOf.get(i.id) ?? 0) }))} />}
             {confirmed && can.own(role) && Number(o.net_paid_minor) > 0 && <PaymentSheet slug={slug} orderId={id} kind="refund" today={today} />}
+            <MessageSheet phone={o.customers?.whatsapp || o.customers?.phone || null} templates={templates ?? []}
+              suggested={o.fulfilment_stage === "dispatched" ? "order_dispatched" : o.fulfilment_stage === "ready_for_dispatch" ? "order_ready" : (o.balance_minor ?? 0) > 0 && o.confirmed_at ? "payment_reminder" : "order_confirmed"}
+              values={{
+                first_name: (o.customers?.full_name ?? "").split(" ")[0], customer: o.customers?.full_name ?? "", order_number: o.order_number ?? "",
+                business: business.name, total: formatMoney(o.total_minor ?? 0, cur), paid: formatMoney(o.net_paid_minor ?? 0, cur),
+                balance: formatMoney(Math.max(o.balance_minor ?? 0, 0), cur), courier: o.courier_name ? ` with ${o.courier_name}` : "",
+              }} />
             {!anyOut && (
               <ReasonButton label="Cancel order" title={`Cancel ${o.order_number}`} variant="ghost"
                 explain="Releases reserved stock. Production jobs not yet started are cancelled; jobs already under way carry on for stock. Money received stays recorded as a refund due."

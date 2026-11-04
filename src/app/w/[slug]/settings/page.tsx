@@ -33,6 +33,21 @@ async function Settings({ params }: PageProps<"/w/[slug]/settings">) {
           <ChevronRight aria-hidden className="size-5 text-muted" />
         </Card>
       </Link>
+      {[
+        { href: `/w/${slug}/settings/messages`, title: "Message templates", note: "WhatsApp messages staff can prepare from an order" },
+        { href: `/w/${slug}/settings/import`, title: "Import customers or products", note: "From a CSV export (e.g. Zoho or WooCommerce). Safe to re-import" },
+        { href: `/w/${slug}/settings/integrations`, title: "Integrations and backups", note: "What's connected, and how your data is backed up" },
+      ].map((l) => (
+        <Link key={l.href} href={l.href} className="group -mt-5">
+          <Card className="flex min-h-16 items-center justify-between px-5 py-4 transition-colors duration-150 group-hover:border-gold">
+            <span>
+              <span className="block font-medium">{l.title}</span>
+              <span className="text-sm text-muted">{l.note}</span>
+            </span>
+            <ChevronRight aria-hidden className="size-5 text-muted" />
+          </Card>
+        </Link>
+      ))}
 
       <section>
         <SectionTitle>Business details</SectionTitle>

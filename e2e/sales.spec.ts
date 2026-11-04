@@ -139,5 +139,20 @@ test("front office sells, dispatches and takes a return; the owner approves and 
     await expect(page.getByText("Not net profit.", { exact: false })).toBeVisible();
   });
 
+  await test.step("reports: the owner downloads sales as CSV; the front office never sees profit in it", async () => {
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date());
+    const ownerCsv = await page.request.get(`${w()}/reports/sales-by-product/export?from=${day}&to=${day}`);
+    expect(ownerCsv.status()).toBe(200);
+    expect(ownerCsv.headers()["content-type"]).toContain("text/csv");
+    const text = await ownerCsv.text();
+    expect(text).toContain("Est. gross profit");
+    expect(text).toContain("Ankara wrap dress");
+    const officeCsv = await officePage.request.get(`${w()}/reports/sales-by-product/export?from=${day}&to=${day}`);
+    expect(officeCsv.status()).toBe(200);
+    expect(await officeCsv.text()).not.toContain("Est. gross profit"); // the column is dropped, not just blank
+    const officeProfit = await officePage.request.get(`${w()}/reports/gross-profit/export`);
+    expect(officeProfit.status()).toBe(403);
+  });
+
   await officePage.context().close();
 });

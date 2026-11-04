@@ -102,3 +102,20 @@ export async function updateMember(slug: string, membershipId: string, patch: z.
   refresh();
   return { ok: true, message: "Staff access updated." };
 }
+
+export async function saveTemplate(slug: string, id: string, title: string, body: string) {
+  const { business } = await authorize(slug, can.own);
+  const parsed = z.object({
+    id: z.string().uuid(),
+    title: z.string().trim().min(1, "Give it a name.").max(80),
+    body: z.string().trim().min(1, "Write the message.").max(1000, "Keep it under 1,000 characters."),
+  }).safeParse({ id, title, body });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the form." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("message_templates").update({ title: parsed.data.title, body: parsed.data.body })
+    .eq("id", parsed.data.id).eq("business_id", business.id).select("id");
+  if (error) return { ok: false, message: friendlyDbError(error) };
+  if (!data?.length) return { ok: false, message: "That template is no longer available." };
+  refresh();
+  return { ok: true, message: "Template saved." };
+}

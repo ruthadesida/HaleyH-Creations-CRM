@@ -39,9 +39,17 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `07_production` — Spec 2 tests C (recipe copied into the job, reservation, shortages, issue, maker), D (returns at issue cost), E (rework keeps items unavailable, rejected to Quarantine), F (completion consumes nothing again; finished cost = materials used + labour), L (materials with an external maker stay business stock), WIP ends at zero, fee approval, cancellation, cost privacy, isolation.
 - `08_phase2_review` — regressions for the Phase 2 review (reserved stock can't be eaten by other jobs, write-offs or moves to Quarantine; returns to finished jobs refused; Quarantine can't be issued; zero-cost completion flagged; maker pay owner-only; bill/supplier mismatch; supplier return reopens the order).
 - `09_sales` — Spec 2 tests G (confirm reserves; dispatch reduces once), H (deposits and balances, sale counted once), I (partial dispatch and retries), J (cancellation releases reservations; unstarted jobs cancelled; started job finishes for stock), K (refund never restocks; returns to Quarantine; inspection restocks), M (overselling refused), plus QC-passed items reserved for their order, gross profit, and role/business limits.
+- `10_phase3_review` — regressions for the Phase 3 review (custom made-to-order stage, empty orders, discount in profit, re-dispatch refused, return dates, zero-cost returns, stage bypass).
+- `11_reports` — report figures and who may run each (front office: no cost/profit; production: no sales or payments; costs need permission; owners only for supplier money and the overview).
+- `12_notifications_search` — notifications and search by role.
+- `13_imports` — preview writes nothing; idempotent by external ID; no duplicate people; product variants get stock items; role limits.
 - `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
 
-Total: **254** database tests.
+Total: **300+** database tests (see CI for the exact count).
+
+### Backup and restore (Spec 2 test O)
+
+`backup-restore` job: `supabase/tests/restore/seed.psql` builds linked records in every area, `snapshot.psql` fingerprints them, the job backs up (public schema + logins), wipes with `supabase db reset`, restores, requires an identical fingerprint, then `check.psql` checks for orphaned links, negative stock and over-reservation and posts a transfer as an owner on the restored data.
 
 ## Notes
 

@@ -94,8 +94,18 @@ You can import in several batches (e.g. one per location). The same item can't b
 8. **Invoice** prints the quotation or invoice (or saves it as a PDF).
 9. Owners see each order's estimated gross profit (fulfilled sales less cost of goods; not net profit).
 
+## 9. Reports, search and tools (Phase 4)
+
+- **Reports** (menu → Reports): each says exactly what it counts. Pick dates, then **Download CSV** for a spreadsheet. Owners see profit, supplier money and stock values; the front office and production manager see only what their role allows.
+- **Today** shows owners a business overview: cash received, orders confirmed, fulfilled sales, estimated gross profit, what customers owe and what you owe suppliers, stock value and work in progress.
+- **The bell** lists what needs attention now: late orders, overdue jobs, items waiting for QC, shortages, approvals.
+- **Search** finds customers (by name or phone), orders, products/SKUs, jobs and purchase orders.
+- **Job sheets**: open a job → Print job sheet.
+- **Message templates** (Settings): edit the WhatsApp messages staff can prepare from an order.
+- **Import** (Settings): bring customers and products in from Zoho or WooCommerce CSV exports. Preview first; re-importing never duplicates.
+
 ## Before going live with real data
 
-- Decide on backups: the free Supabase plan has none (Supabase Pro, or a scheduled backup in Phase 4).
+- Set up backups: follow `docs/BACKUPS.md` (two GitHub secrets for the nightly encrypted backup, and/or Supabase Pro).
 - Use a clean production Supabase project (the current one is used for development and testing).
 - Set up a custom email provider if staff need emails beyond the Supabase team (invites work by link without it).

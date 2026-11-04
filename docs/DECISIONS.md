@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-04 (Phase 4)
+
+- **Reports are database functions that re-check the role**; the screen and the CSV export share them, so an export can never show more than the screen. Columns a role can't see come back empty and are dropped. Definitions live in `src/lib/reports.ts` and are written into every CSV.
+- **Notifications are computed, not stored**: they're derived from the records on each view, so they can't go stale or be missed by a failed job. No push or email notifications yet.
+- **Search runs in one role-aware database function**; production staff never see customers or orders.
+- **Message templates only prepare WhatsApp messages**; staff check and send them. No WhatsApp API.
+- **CSV imports** (customers, products) are previewed first and idempotent by external ID (or SKU); a customer with the same phone or email is never duplicated. Historical orders and payments are not imported (would double-count stock and cash).
+- **Backups**: nightly encrypted (AES-256) GitHub workflow, inactive until secrets are set; the repo is public, so nothing unencrypted is ever uploaded. Restore is proven on every CI run.
+- **Live integrations stay "Not connected"** until configured and tested, per the honesty rules.
+
 ## 2026-11-04 (Phase 3)
 
 - **Quotation = an order with `confirmed_at` null.** Not a sale; reserves nothing; excluded from order value. Existing (Spec 1) orders were backfilled as confirmed, and those already marked dispatched by hand had their dispatched quantities filled in.

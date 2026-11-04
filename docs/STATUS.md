@@ -2,7 +2,7 @@
 
 What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
-_Last updated: 2026-11-04 (Phase 3 built)_
+_Last updated: 2026-11-04 (Phase 4 built)_
 
 Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in progress · ⬜ not started · ⚙️ needs configuration · 🔌 external integration (not connected) · 🙈 hidden in the UI until built
 
@@ -12,10 +12,10 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 |---|---|---|
 | Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Dev project; migrations 0001–0015 applied |
+| Supabase project | ✅ | Dev project; migrations 0001–0019 applied |
 | Sign up / in / out / reset | ✅ | |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
-| Backups / restore | ⚙️ | None on the free plan (Phase 4 or Supabase Pro) |
+| Backups / restore | ⚙️ | Nightly encrypted backup workflow ready; needs two GitHub secrets (`docs/BACKUPS.md`). Restore tested in CI (Spec 2 test O) |
 | Hosting | ⚙️ | Not deployed |
 | Signed-in browser tests | ✅ | Every signed-in screen at 6 viewports + the Phase 1 workflow with four roles, in CI against a local Supabase |
 
@@ -87,6 +87,20 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Order edits after confirmation | ⬜ | Cancel and re-create for now |
 | Exchange replacement linking, owner home overview, reports | ⬜ | Phase 4 |
 
+## Reports and tools (Phase 4)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Reports with definitions, date filters and CSV export (17 reports) | ✅ | Role-limited in the database; costs/profit/supplier money only for permitted roles |
+| Owner overview on Today | ✅ | Cash, confirmed and fulfilled sales, estimated gross profit, balances, stock value, WIP, overdue jobs, shortages |
+| Notifications (bell + page) | ✅ | Worked out live from the records, by role |
+| Global search (customers, orders, items, jobs, POs) | ✅ | By role; production never sees customers |
+| Printable job sheets | ✅ | No prices; customer first name and measurements only for order jobs |
+| Message templates (WhatsApp, prepared only) | ✅ | Owners edit; staff check and send themselves |
+| CSV import: customers, products (external IDs, preview, idempotent) | ✅ | Orders/payments not imported (would double-count) |
+| Backup/restore | ✅ / ⚙️ | Restore proven in CI; nightly backup needs secrets |
+| Live Zoho / WooCommerce / payment provider integrations | 🔌 | Not connected (Settings → Integrations says so) |
+
 ## CRM
 
 | Feature | Status | Notes |
@@ -94,14 +108,13 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Dashboard (front office) | ✅ | Order and money cards live; order value counts confirmed orders only |
 | Customers + duplicate warning | ✅ | |
 | Enquiries list + pipeline | ✅ | |
-| Follow-up tasks | 🙈 | Phase 4 |
+| Follow-up tasks | 🙈 | Later (enquiry follow-ups and notifications cover the daily need) |
 | "Open in WhatsApp" | ✅ | Opens WhatsApp only |
 
 ## Later phases
 
 | Feature | Phase |
 |---|---|
-| Reports, exports, templates, notifications, imports with external IDs, backups | 4 |
 
 ## Integrations (none connected)
 

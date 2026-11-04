@@ -101,6 +101,7 @@ async function Job({ params }: PageProps<"/w/[slug]/production/[id]">) {
         {job.notes && <p>{job.notes}</p>}
         {job.instructions && <p className="rounded-lg bg-ink/5 px-3 py-2 text-sm">Recipe instructions: {job.instructions}</p>}
         {job.cancelled_reason && <p className="rounded-lg bg-ink/5 px-3 py-2">Cancelled: {job.cancelled_reason}</p>}
+        <Link href={`${base}/production/${id}/sheet`} className="inline-flex min-h-11 items-center self-start text-sm text-gold-ink underline underline-offset-4">Print job sheet</Link>
 
         {open && (
           <div className="flex flex-wrap gap-2">
