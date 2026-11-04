@@ -48,6 +48,7 @@ test("purchasing and production run end to end", async ({ page, browser }) => {
 
   await test.step("the production manager lands on production and raises a purchase request (no prices)", async () => {
     await signIn(pmPage, pm);
+    await pmPage.goto(w()); // their workspace home redirects to their job list
     await expect(pmPage).toHaveURL(new RegExp(`${w()}/production`));
     await pmPage.goto(`${w()}/purchasing/new`);
     await pmPage.getByLabel("Supplier", { exact: true }).selectOption({ label: "Balogun Market Fabrics" });
