@@ -47,7 +47,7 @@ _Last updated: 2026-11-04 (Phase 4 built and reviewed)_
 
 ## Next steps
 
-1. Re-score the design with a fresh critic on the latest `worst-case-screens` artifact (the 2026-11-04 critic follow-ups are done: status chips coloured by meaning, "More actions" on the phone order page, scroll shadows and a hint on report tables, section tabs keep the current page in view and fall back to the parent tab).
+1. Second critic review done (2026-11-04: design 8, phone 7, worst-case data 7, money 8, laptop 7); it found quotations counted as owed on the customer page (fixed). Remaining ideas: line up the big numbers on Today; make "Void" a clear destructive control; shorter explanations above the Stock and Purchasing lists on phones; "No price" instead of ₦0 on products; proper stage labels in the orders-attention report. Earlier: (the 2026-11-04 critic follow-ups are done: status chips coloured by meaning, "More actions" on the phone order page, scroll shadows and a hint on report tables, section tabs keep the current page in view and fall back to the parent tab).
 2. Per-business time zone in reports (see Known gaps).
 Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
 3. Phase 3 follow-ups: edit a confirmed order with impact shown; link exchange replacements (`order_returns.replacement_order_id`); a production-side list of returns to inspect.
@@ -60,4 +60,5 @@ Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): repo
 - Dependabot PRs: #1 and #3 pass real checks; #2 (TypeScript 7) breaks lint.
 - Backups: the nightly encrypted backup is built but does nothing until the owner adds two GitHub secrets (`docs/BACKUPS.md`). Or Supabase Pro ($25/month). Do this before real data goes in.
 - A clean production Supabase project before real data (the current one is used for development).
-- Production domain, custom SMTP (optional: invites work by link).
+- **Email sending (needed before going live):** Supabase's built-in sender only reaches members of the Supabase organization's team, at most 2 emails an hour, so sign-up confirmations to other addresses never arrive (seen 2026-11-04). Connect custom SMTP (e.g. Resend or Brevo) under Authentication → Emails → SMTP Settings. For testing on the dev project the owner can switch off "Confirm email" (Authentication → Sign In / Providers → Email), then switch it back on before real use. Staff invites work by link and don't need email.
+- Production domain.
