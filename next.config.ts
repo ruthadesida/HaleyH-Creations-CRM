@@ -1,6 +1,12 @@
+import { networkInterfaces } from "node:os";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
+
+// In development only: let a phone on the same Wi-Fi open the dev server by this computer's network address.
+const lanAddresses = isDev
+  ? Object.values(networkInterfaces()).flat().filter((a) => a && a.family === "IPv4" && !a.internal).map((a) => a!.address)
+  : [];
 
 // Baseline CSP without nonces so pages can stay statically prerendered.
 // Tighten (nonces via proxy.ts) once authenticated routes exist, and add the
@@ -38,6 +44,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  allowedDevOrigins: lanAddresses,
   experimental: {
     // CSV imports send up to 5,000 rows (a 2 MB file) in one call; the default limit is 1 MB.
     serverActions: { bodySizeLimit: "4mb" },

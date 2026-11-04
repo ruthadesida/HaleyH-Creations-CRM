@@ -42,6 +42,18 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   redirect(safeNext(formData.get("next")));
 }
 
+/** Plain-language reasons for the common Supabase sign-up errors. */
+function signUpErrorMessage(code: string | undefined): string {
+  switch (code) {
+    case "weak_password": return "Choose a stronger password: at least 10 characters with letters and numbers.";
+    case "over_email_send_rate_limit": return "Too many sign-up emails were sent in the last hour. Please wait and try again later.";
+    case "email_address_invalid": return "That email address can't be used. Check it, or try a different one.";
+    case "user_already_exists": case "email_exists": return "An account with this email already exists. Sign in instead, or reset your password.";
+    case "signup_disabled": case "email_provider_disabled": return "New sign-ups are switched off for this app. Ask the owner for an invite link.";
+    default: return "We couldn't create your account. Please try again.";
+  }
+}
+
 export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -58,15 +70,9 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     },
   });
   if (error) {
-    const weak = error.code === "weak_password";
-    return {
-      message: weak
-        ? "Choose a stronger password: at least 10 characters with letters and numbers."
-        : error.code === "over_email_send_rate_limit"
-          ? "Too many sign-up emails were sent recently. Please wait a few minutes and try again."
-          : "We couldn't create your account. Please try again.",
-      values: formValues(formData),
-    };
+    // The reason only (no email or password), so a failed sign-up can be diagnosed from the server log.
+    console.error("sign-up failed", { code: error.code, status: error.status, message: error.message });
+    return { message: signUpErrorMessage(error.code), values: formValues(formData) };
   }
   if (data.session) redirect(safeNext(formData.get("next")));
   return {
