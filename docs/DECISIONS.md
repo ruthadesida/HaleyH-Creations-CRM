@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-04 (Phase 3)
+
+- **Quotation = an order with `confirmed_at` null.** Not a sale; reserves nothing; excluded from order value. Existing (Spec 1) orders were backfilled as confirmed, and those already marked dispatched by hand had their dispatched quantities filled in.
+- **Confirm reserves, then plans production**: ready-made lines reserve what is available; the shortfall and made-to-order lines get one linked job per line (`production_jobs.order_item_id`). Custom lines without a catalogue product aren't stock-tracked.
+- **Order stage is derived** (`app.refresh_order_stage`): confirmed → in production → ready for dispatch → dispatched; delivered is confirmed by staff. Stage/status columns are no longer directly updatable; the derived-stage path is recognised by the function's own identity (`current_user`), not a session setting.
+- **Confirmed orders are fixed** (items, discount, delivery fee). To change one: cancel and re-create (an edit-with-impact screen is later work).
+- **Dispatch before full payment** needs an owner's recorded approval (reason kept on the order).
+- **Fulfilled sales are recognised at dispatch**; estimated gross profit (owners) = fulfilled sales (after the order discount) − COGS from dispatch and return movements; labelled estimated, flagged incomplete when any unit had no cost; never called net profit.
+- **Customer returns go to Quarantine at the order's dispatch cost**; inspection restocks (transfer) or scraps (write-off). Refunds are money only.
+- **Cancelling** releases reservations; unstarted jobs are cancelled; started jobs are unlinked and finish for stock. Orders with anything dispatched can't be cancelled.
+
 ## 2026-11-04 (Phase 2)
 
 - **Purchasing:** a draft PO is the purchase request; an owner prices and approves it. Prices are cost data (hidden column, `purchase_order_prices()`), so a production manager without cost permission can raise requests and receive goods but never sees prices. Quick purchases set prices and need cost permission.

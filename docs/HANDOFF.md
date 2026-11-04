@@ -2,9 +2,14 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-04 (Phase 2 built)_
+_Last updated: 2026-11-04 (Phase 3 built)_
 
 ## Where things stand
+
+- **Phase 3 of Spec 2 is built** (migrations 0014–0015 applied to the dev project):
+  - Orders: quotations → confirm (reserves stock, creates linked production jobs) → payments ("Recorded manually"; owner refunds/voids) → dispatch (partial; QC-passed stock only; owner approval when money is owed) → delivered → returns to Quarantine → inspection (restock/scrap). Cancel releases reservations and handles jobs. Printable invoice/quotation. Payments list. Owners see estimated gross profit per order. Screens under `/w/[slug]/orders` and `/w/[slug]/payments`.
+  - **261 database tests** (09_sales covers Spec 2 tests G–K and M; 10_phase3_review regressions). Browser tests: order screens at 6 viewports, plus `e2e/sales.spec.ts` (sales workflow on laptop and phone).
+  - The Phase 3 reviewer found no stock double-counting or permission leaks; it found legacy-order, empty-order, custom-line stage, discount-in-profit, zero-cost-return and query-scope issues, all fixed in 0015 / UI with tests.
 
 - **Phase 2 of Spec 2 is built** (migrations 0011–0013 applied to the dev project):
   - Purchasing: requests → owner approval → goods received (partial/rejected) → supplier returns; landed cost; quick purchases; owner-only supplier bills, payments and balances. Screens under `/w/[slug]/purchasing`.
@@ -34,7 +39,8 @@ _Last updated: 2026-11-04 (Phase 2 built)_
 ## Next steps
 
 1. `break-ui` + `jury` on the stock, purchasing and production screens; QA agent click-through of Phase 2 with real data.
-2. **Phase 3** (`docs/GAP-ANALYSIS.md`): quotations → sales orders with finished-goods reservations (the `stock_reservations` table already supports `sales_order`), linked production jobs (`production_jobs.kind = 'order'`), dispatch, payments UI, returns, COGS. Spec 2 tests G–K, M.
+2. **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
+3. Phase 3 follow-ups: edit a confirmed order with impact shown; link exchange replacements (`order_returns.replacement_order_id`); a production-side list of returns to inspect.
 3. Done in Phase 2 (kept for reference): **Phase 2** (`docs/GAP-ANALYSIS.md`): purchasing (PO → partial/rejected receipts → supplier returns; quick purchase; landed costs), BOMs with versions, production jobs with WIP, material allocation/issue/return, external maker jobs and fees (owner-only payments), QC checklists and outcomes, rework, production home screen. Extend `docs/COSTING.md`.
 
 ## Waiting on the owner
