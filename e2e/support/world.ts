@@ -146,6 +146,23 @@ export async function seedPhase2(owner: TestUser, businessId: string) {
   return { supplier, po, receipt, product, variant, bom, maker, job };
 }
 
+/** Phase 3 data (needs seedPhase2): a customer and a confirmed order for one dress, part-paid. */
+export async function seedPhase3(owner: TestUser, businessId: string, variant: string) {
+  const c = owner.client;
+  const { data: customer, error } = await c.from("customers")
+    .insert({ business_id: businessId, full_name: "Ngozi Okafor", phone: "0803 555 0101" }).select("id").single();
+  if (error || !customer) throw new Error(`customer failed: ${error?.message}`);
+  const { data: order, error: oError } = await c.rpc("create_order", {
+    p_business_id: businessId, p_customer_id: customer.id, p_idempotency_key: randomUUID(),
+    p_items: [{ description: "Ankara wrap dress M", variant_id: variant, quantity: 1, unit_price_minor: 4500000, item_type: "ready_made" }],
+  });
+  if (oError || !order) throw new Error(`create_order failed: ${oError?.message}`);
+  const { error: cError } = await c.rpc("confirm_order", { p_order: order });
+  if (cError) throw new Error(`confirm_order failed: ${cError.message}`);
+  await c.from("payments").insert({ business_id: businessId, order_id: order, amount_minor: 2000000, method: "bank_transfer" });
+  return { customer: customer.id as string, order: order as string };
+}
+
 export async function itemId(businessId: string, code: string) {
   const { data } = await admin().from("stock_items").select("id").eq("business_id", businessId).eq("code", code).maybeSingle();
   return (data?.id as string | undefined) ?? null;

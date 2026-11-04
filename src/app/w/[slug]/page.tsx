@@ -64,17 +64,18 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
       .eq("business_id", bid).eq("status", "open").lt("due_at", endToday),
     supabase.from("tasks").select("id", { count: "exact", head: true })
       .eq("business_id", bid).eq("status", "open").lt("due_at", nowIso),
-    openOrders().in("payment_status", ["unpaid", "part_paid"]),
+    openOrders().not("confirmed_at", "is", null).in("payment_status", ["unpaid", "part_paid"]),
     supabase.from("order_summaries").select("balance_minor")
-      .eq("business_id", bid).eq("status", "open").is("archived_at", null).gt("balance_minor", 0),
+      .eq("business_id", bid).eq("status", "open").is("archived_at", null).not("confirmed_at", "is", null).gt("balance_minor", 0),
     openOrders().eq("fulfilment_stage", "in_production"),
     openOrders().not("fulfilment_stage", "in", "(dispatched,delivered)").gte("promised_date", today).lte("promised_date", soon),
     openOrders().not("fulfilment_stage", "in", "(dispatched,delivered)").lt("promised_date", today),
     openOrders().eq("fulfilment_stage", "ready_for_dispatch"),
     supabase.from("payments").select("kind, amount_minor")
       .eq("business_id", bid).is("voided_at", null).gte("paid_on", from).lte("paid_on", to),
+    // Confirmed orders only: a quotation is not a sale.
     supabase.from("order_summaries").select("total_minor")
-      .eq("business_id", bid).eq("status", "open").gte("order_date", from).lte("order_date", to),
+      .eq("business_id", bid).eq("status", "open").not("confirmed_at", "is", null).gte("order_date", from).lte("order_date", to),
     supabase.from("enquiries").select("id, product_interest, follow_up_at, next_action, customers(full_name)")
       .eq("business_id", bid).is("archived_at", null).not("stage", "in", "(won,lost)")
       .not("follow_up_at", "is", null).lt("follow_up_at", endToday).order("follow_up_at").limit(6),
@@ -152,7 +153,7 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
               </p>
               <Money minor={orderValue} currency={cur} className="font-display mt-2 block text-4xl text-muted" />
               <p className="mt-2 text-sm text-muted">
-                Total of orders placed, whether paid or not · excludes cancelled
+                Confirmed orders, paid or not · excludes quotations and cancelled orders
               </p>
             </Card>
           </MaybeLink>

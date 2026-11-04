@@ -38,7 +38,7 @@ async function TopBar({ params }: SlugParams) {
           Demo workspace — fictional sample data, separate from live records.
         </div>
       )}
-      <header className="material sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-ivory/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">
+      <header className="material sticky top-0 z-20 flex h-14 print:hidden items-center justify-between gap-3 border-b border-line bg-ivory/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">
         <Link href={`/w/${slug}`} className="min-w-0">
           <Wordmark name={business.name} className="block truncate text-lg" />
         </Link>
@@ -54,21 +54,21 @@ async function PhoneNav({ params }: SlugParams) {
   const { slug } = await params;
   const { role } = await getWorkspace(slug);
   return (
-    <>
+    <div className="print:hidden">
       <BottomTabs slug={slug} role={role} />
       {role !== "production_manager" && <NewButton slug={slug} variant="fab" />}
-    </>
+    </div>
   );
 }
 
 export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[slug]">) {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] print:block">
       <a href="#content" className="sr-only z-50 rounded bg-ink px-4 py-2 text-ivory focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         Skip to content
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line px-4 py-6 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line px-4 py-6 lg:flex print:hidden">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-ink/5" />}>
           <SidebarContent params={params} />
         </Suspense>
@@ -88,7 +88,7 @@ export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[s
         <Suspense fallback={<div className="h-14 border-b border-line lg:hidden" />}>
           <TopBar params={params} />
         </Suspense>
-        <main id="content" className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] sm:px-6 lg:px-10 lg:pt-10 lg:pb-16">
+        <main id="content" className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] sm:px-6 lg:px-10 lg:pt-10 lg:pb-16 print:p-0">
           {children}
         </main>
       </div>

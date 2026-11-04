@@ -372,11 +372,13 @@ export type Database = {
           logo_path: string | null
           name: string
           next_batch_number: number
+          next_dispatch_number: number
           next_job_number: number
           next_order_number: number
           next_po_number: number
           next_qc_number: number
           next_receipt_number: number
+          next_return_number: number
           next_stock_doc_number: number
           next_supplier_return_number: number
           order_prefix: string
@@ -397,11 +399,13 @@ export type Database = {
           logo_path?: string | null
           name: string
           next_batch_number?: number
+          next_dispatch_number?: number
           next_job_number?: number
           next_order_number?: number
           next_po_number?: number
           next_qc_number?: number
           next_receipt_number?: number
+          next_return_number?: number
           next_stock_doc_number?: number
           next_supplier_return_number?: number
           order_prefix?: string
@@ -422,11 +426,13 @@ export type Database = {
           logo_path?: string | null
           name?: string
           next_batch_number?: number
+          next_dispatch_number?: number
           next_job_number?: number
           next_order_number?: number
           next_po_number?: number
           next_qc_number?: number
           next_receipt_number?: number
+          next_return_number?: number
           next_stock_doc_number?: number
           next_supplier_return_number?: number
           order_prefix?: string
@@ -1294,6 +1300,126 @@ export type Database = {
           },
         ]
       }
+      order_dispatch_lines: {
+        Row: {
+          business_id: string
+          dispatch_id: string
+          id: string
+          order_item_id: string
+          quantity: number
+        }
+        Insert: {
+          business_id: string
+          dispatch_id: string
+          id?: string
+          order_item_id: string
+          quantity: number
+        }
+        Update: {
+          business_id?: string
+          dispatch_id?: string
+          id?: string
+          order_item_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_dispatch_lines_business_id_dispatch_id_fkey"
+            columns: ["business_id", "dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "order_dispatches"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_dispatch_lines_business_id_order_item_id_fkey"
+            columns: ["business_id", "order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      order_dispatches: {
+        Row: {
+          business_id: string
+          courier_name: string | null
+          created_at: string
+          dispatched_by: string
+          dispatched_on: string
+          document_id: string | null
+          id: string
+          idempotency_key: string
+          location_id: string
+          number: string
+          order_id: string
+          tracking_reference: string | null
+        }
+        Insert: {
+          business_id: string
+          courier_name?: string | null
+          created_at?: string
+          dispatched_by: string
+          dispatched_on: string
+          document_id?: string | null
+          id?: string
+          idempotency_key: string
+          location_id: string
+          number: string
+          order_id: string
+          tracking_reference?: string | null
+        }
+        Update: {
+          business_id?: string
+          courier_name?: string | null
+          created_at?: string
+          dispatched_by?: string
+          dispatched_on?: string
+          document_id?: string | null
+          id?: string
+          idempotency_key?: string
+          location_id?: string
+          number?: string
+          order_id?: string
+          tracking_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_dispatches_business_id_document_id_fkey"
+            columns: ["business_id", "document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_dispatches_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_dispatches_business_id_location_id_fkey"
+            columns: ["business_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_dispatches_business_id_order_id_fkey"
+            columns: ["business_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "order_summaries"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_dispatches_business_id_order_id_fkey"
+            columns: ["business_id", "order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           business_id: string
@@ -1377,15 +1503,82 @@ export type Database = {
           },
         ]
       }
+      order_return_lines: {
+        Row: {
+          business_id: string
+          condition: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          decision_document_id: string | null
+          id: string
+          order_item_id: string
+          quantity: number
+          return_id: string
+        }
+        Insert: {
+          business_id: string
+          condition?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_document_id?: string | null
+          id?: string
+          order_item_id: string
+          quantity: number
+          return_id: string
+        }
+        Update: {
+          business_id?: string
+          condition?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_document_id?: string | null
+          id?: string
+          order_item_id?: string
+          quantity?: number
+          return_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_return_lines_business_id_decision_document_id_fkey"
+            columns: ["business_id", "decision_document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_return_lines_business_id_order_item_id_fkey"
+            columns: ["business_id", "order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_return_lines_business_id_return_id_fkey"
+            columns: ["business_id", "return_id"]
+            isOneToOne: false
+            referencedRelation: "order_returns"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       order_returns: {
         Row: {
           business_id: string
           created_at: string
           created_by: string
+          document_id: string | null
           id: string
+          idempotency_key: string | null
           kind: Database["public"]["Enums"]["return_kind"]
+          location_id: string | null
+          number: string | null
           order_id: string
           reason: string
+          received_on: string | null
+          replacement_order_id: string | null
           resolution_notes: string | null
           resolved_at: string | null
           status: Database["public"]["Enums"]["return_status"]
@@ -1395,10 +1588,16 @@ export type Database = {
           business_id: string
           created_at?: string
           created_by?: string
+          document_id?: string | null
           id?: string
+          idempotency_key?: string | null
           kind: Database["public"]["Enums"]["return_kind"]
+          location_id?: string | null
+          number?: string | null
           order_id: string
           reason: string
+          received_on?: string | null
+          replacement_order_id?: string | null
           resolution_notes?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["return_status"]
@@ -1408,10 +1607,16 @@ export type Database = {
           business_id?: string
           created_at?: string
           created_by?: string
+          document_id?: string | null
           id?: string
+          idempotency_key?: string | null
           kind?: Database["public"]["Enums"]["return_kind"]
+          location_id?: string | null
+          number?: string | null
           order_id?: string
           reason?: string
+          received_on?: string | null
+          replacement_order_id?: string | null
           resolution_notes?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["return_status"]
@@ -1432,6 +1637,34 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["business_id", "id"]
           },
+          {
+            foreignKeyName: "order_returns_document_fk"
+            columns: ["business_id", "document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_returns_location_fk"
+            columns: ["business_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_returns_replacement_fk"
+            columns: ["business_id", "replacement_order_id"]
+            isOneToOne: false
+            referencedRelation: "order_summaries"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "order_returns_replacement_fk"
+            columns: ["business_id", "replacement_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["business_id", "id"]
+          },
         ]
       }
       orders: {
@@ -1443,6 +1676,8 @@ export type Database = {
           cancelled_at: string | null
           cancelled_by: string | null
           channel: Database["public"]["Enums"]["contact_source"] | null
+          confirmed_at: string | null
+          confirmed_by: string | null
           courier_name: string | null
           created_at: string
           created_by: string | null
@@ -1467,6 +1702,9 @@ export type Database = {
           promised_date: string | null
           status: Database["public"]["Enums"]["order_status"]
           tracking_reference: string | null
+          unpaid_dispatch_approved_at: string | null
+          unpaid_dispatch_approved_by: string | null
+          unpaid_dispatch_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -1477,6 +1715,8 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by?: string | null
           channel?: Database["public"]["Enums"]["contact_source"] | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           courier_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -1503,6 +1743,9 @@ export type Database = {
           promised_date?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           tracking_reference?: string | null
+          unpaid_dispatch_approved_at?: string | null
+          unpaid_dispatch_approved_by?: string | null
+          unpaid_dispatch_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -1513,6 +1756,8 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by?: string | null
           channel?: Database["public"]["Enums"]["contact_source"] | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           courier_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -1539,6 +1784,9 @@ export type Database = {
           promised_date?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           tracking_reference?: string | null
+          unpaid_dispatch_approved_at?: string | null
+          unpaid_dispatch_approved_by?: string | null
+          unpaid_dispatch_reason?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2985,6 +3233,8 @@ export type Database = {
           cancelled_at: string | null
           cancelled_by: string | null
           channel: Database["public"]["Enums"]["contact_source"] | null
+          confirmed_at: string | null
+          confirmed_by: string | null
           courier_name: string | null
           created_at: string | null
           created_by: string | null
@@ -3020,6 +3270,9 @@ export type Database = {
           subtotal_minor: number | null
           total_minor: number | null
           tracking_reference: string | null
+          unpaid_dispatch_approved_at: string | null
+          unpaid_dispatch_approved_by: string | null
+          unpaid_dispatch_reason: string | null
           updated_at: string | null
         }
         Relationships: [
@@ -3144,6 +3397,10 @@ export type Database = {
         Returns: undefined
       }
       approve_purchase_order: { Args: { p_po_id: string }; Returns: undefined }
+      approve_unpaid_dispatch: {
+        Args: { p_order: string; p_reason: string }
+        Returns: undefined
+      }
       assign_job_maker: {
         Args: { p_due_date: string; p_job: string; p_maker_id: string }
         Returns: undefined
@@ -3155,6 +3412,10 @@ export type Database = {
           other_cost: number
         }[]
       }
+      cancel_order: {
+        Args: { p_order: string; p_reason: string }
+        Returns: string
+      }
       cancel_production_job: {
         Args: { p_job: string; p_reason: string }
         Returns: undefined
@@ -3163,6 +3424,7 @@ export type Database = {
         Args: { p_po_id: string; p_reason: string }
         Returns: string
       }
+      confirm_order: { Args: { p_order: string }; Returns: number }
       copy_bom: { Args: { p_bom_id: string }; Returns: string }
       create_business: {
         Args: {
@@ -3238,9 +3500,30 @@ export type Database = {
         }
         Returns: string
       }
+      decide_return_line: {
+        Args: {
+          p_decision: string
+          p_idempotency_key: string
+          p_line: string
+          p_to: string
+        }
+        Returns: undefined
+      }
       discard_opening_batch: {
         Args: { p_batch_id: string }
         Returns: undefined
+      }
+      dispatch_order: {
+        Args: {
+          p_courier: string
+          p_effective_date: string
+          p_idempotency_key: string
+          p_lines: Json
+          p_location: string
+          p_order: string
+          p_tracking: string
+        }
+        Returns: string
       }
       goods_receipt_costs: {
         Args: { p_receipt_id: string }
@@ -3283,6 +3566,7 @@ export type Database = {
         }[]
       }
       maker_location: { Args: { p_maker_id: string }; Returns: string }
+      mark_order_delivered: { Args: { p_order: string }; Returns: undefined }
       move_job_materials: {
         Args: {
           p_effective_date: string
@@ -3323,6 +3607,15 @@ export type Database = {
           unit_cost: number
         }[]
       }
+      order_profit: {
+        Args: { p_order: string }
+        Returns: {
+          cogs: number
+          cost_complete: boolean
+          fulfilled_value: number
+          gross_profit: number
+        }[]
+      }
       post_opening_batch: {
         Args: { p_batch_id: string; p_idempotency_key: string }
         Returns: string
@@ -3346,6 +3639,17 @@ export type Database = {
           line_id: string
           unit_price: number
         }[]
+      }
+      receive_customer_return: {
+        Args: {
+          p_effective_date: string
+          p_idempotency_key: string
+          p_kind: Database["public"]["Enums"]["return_kind"]
+          p_lines: Json
+          p_order: string
+          p_reason: string
+        }
+        Returns: string
       }
       receive_goods: {
         Args: {
@@ -3427,6 +3731,7 @@ export type Database = {
         }
         Returns: string
       }
+      reserve_order_stock: { Args: { p_order: string }; Returns: number }
       return_job_materials: {
         Args: {
           p_effective_date: string

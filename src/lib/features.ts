@@ -12,8 +12,9 @@ export const FEATURES = {
   purchasing: true,
   /** Phase 2: recipes (BOMs), production jobs, reservations, WIP, external makers, QC. */
   production: true,
+  /** Phase 3: quotations, orders, reservations, dispatch, returns; customer payments and refunds. */
+  orders: true,
+  payments: true,
   // Later phases:
-  orders: false,
-  payments: false,
   tasks: false,
 } as const;

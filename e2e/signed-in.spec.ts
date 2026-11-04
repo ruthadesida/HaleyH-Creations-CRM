@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Cookie, expect, test } from "@playwright/test";
 import {
-  SKIP_REASON, type TestUser, createBusiness, createUser, hasLocalSupabase, itemId, seedOpeningStock, seedPhase2, signIn,
+  SKIP_REASON, type TestUser, createBusiness, createUser, hasLocalSupabase, itemId, seedOpeningStock, seedPhase2, seedPhase3, signIn,
 } from "./support/world";
 
 /**
@@ -29,6 +29,7 @@ test.beforeAll(async ({ browser }) => {
   const batch = await seedOpeningStock(owner, business.id);
   const zip = (await itemId(business.id, "ZIP-20"))!;
   const p2 = await seedPhase2(owner, business.id);
+  const p3 = await seedPhase3(owner, business.id, p2.variant);
   const w = `/w/${slug}`;
   paths = [
     { path: w, heading: "" },
@@ -69,6 +70,13 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/production/recipes/new`, heading: "New recipe" },
     { path: `${w}/production/recipes/${p2.bom}`, heading: "Wrap dress" },
     { path: `${w}/production/qc`, heading: "QC checklists" },
+    { path: `${w}/orders`, heading: "Orders" },
+    { path: `${w}/orders?view=quotes`, heading: "Orders" },
+    { path: `${w}/orders/new`, heading: "New order" },
+    { path: `${w}/orders/${p3.order}`, heading: "" },
+    { path: `${w}/orders/${p3.order}/invoice`, heading: "Invoice" },
+    { path: `${w}/payments`, heading: "Payments" },
+    { path: `${w}/customers/${p3.customer}`, heading: "Ngozi Okafor" },
     { path: "/workspaces", heading: "" },
   ];
   const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
