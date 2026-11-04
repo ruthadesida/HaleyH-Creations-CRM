@@ -81,7 +81,7 @@ async function WorkspaceList({ searchParams }: { searchParams: Promise<{ error?:
           </Link>
         ) : (
           <form action={openDemoWorkspace}>
-            <Button type="submit" variant="secondary" className="w-full sm:w-auto">Open demo</Button>
+            <Button type="submit" variant="secondary" className="w-full whitespace-nowrap sm:w-auto">Open demo</Button>
           </form>
         )}
       </Card>

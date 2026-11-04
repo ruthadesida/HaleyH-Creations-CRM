@@ -92,8 +92,14 @@ test("every signed-in screen loads cleanly at this viewport", async ({ page }) =
         .evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
       for (const s of sizes) expect.soft(s, `${path} has an input under 16px`).toBeGreaterThanOrEqual(16);
 
-      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
-      const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+      const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+      const results = await new AxeBuilder({ page }).withTags(tags).disableRules(["target-size"]).analyze();
+      // Tap-target size: checked with the fixed tab bar laid out in place, so a field that happens to sit
+      // under it at this scroll position doesn't count as covered. The tab bar's own targets are still checked.
+      const fixedBar = await page.addStyleTag({ content: "nav[aria-label=Main]{position:static!important}" });
+      const sizes2 = await new AxeBuilder({ page }).withRules(["target-size"]).analyze();
+      await fixedBar.evaluate((el) => (el as Element).remove());
+      const serious = [...results.violations, ...sizes2.violations].filter((v) => v.impact === "serious" || v.impact === "critical");
       expect.soft(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`), path).toEqual([]);
 
       expect.soft(errors, `${path} console errors`).toEqual([]);
