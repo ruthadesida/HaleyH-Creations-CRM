@@ -1,8 +1,8 @@
 # Starting the HaleyH pilot
 
-_Last updated: 2026-11-04 (Phase 2)_
+_Last updated: 2026-11-04 (Phase 3)_
 
-A step-by-step guide for the owners. Phases 1 and 2 cover staff, the catalogue, stock, opening stock, purchasing and production. Sales orders, payments from customers and dispatch arrive in Phase 3.
+A step-by-step guide for the owners. It covers staff, the catalogue, stock, opening stock, purchasing, production, and selling (orders, payments, dispatch, returns). Reports and integrations arrive in Phase 4.
 
 ## 1. Set up the workspace (owner, ~10 minutes)
 
@@ -81,6 +81,18 @@ You can import in several batches (e.g. one per location). The same item can't b
 7. **Ready for QC** → **Record QC**: tick the checklist, then enter how many passed, need rework or are rejected. Passed items become finished stock you can sell. Rejected items go to Quarantine. Rework goes back to the maker; record QC again when it's fixed.
 8. Owners see each job's costs (materials used, labour, what's still in work in progress), approve what the maker is owed, and record maker payments.
 9. Edit the QC checklists under **Production → QC checklists**.
+
+## 8. Selling (Phase 3)
+
+1. **Orders → New order**: choose the customer, then the products (or a custom item that isn't stock-tracked), quantities and prices. The form shows how many are available.
+2. **Save as quotation** if the customer hasn't agreed yet: it's not a sale and reserves nothing. **Confirm order** when they agree: stock that's in is reserved for them, and a production job is created for anything that must be made.
+3. **Record payment** for deposits and balances. Every payment is marked "Recorded manually". Owners record refunds and void mistakes (they stay in the history).
+4. **Dispatch** when goods go out (in parts if needed). Only QC-passed stock can go, and it uses the order's reserved stock first. If money is still owed, an owner must first tap **Approve dispatch before payment**.
+5. **Mark delivered** once the customer has it.
+6. Something comes back? **Record a return**: it goes to Quarantine, then **Restock** or **Scrap** after inspection. A refund is recorded separately and never puts anything back in stock.
+7. **Cancel order** before anything is dispatched: reservations are released; production jobs not started are cancelled, and jobs already in work finish for stock.
+8. **Invoice** prints the quotation or invoice (or saves it as a PDF).
+9. Owners see each order's estimated gross profit (fulfilled sales less cost of goods; not net profit).
 
 ## Before going live with real data
 

@@ -1,6 +1,6 @@
 # Inventory and costing
 
-_Last updated: 2026-11-04 (Phase 2: purchasing, production, WIP, QC)_
+_Last updated: 2026-11-04 (Phase 3: sales, dispatch, returns, COGS)_
 
 ## Source of truth
 
@@ -67,6 +67,14 @@ Owners always. A production manager only if an owner ticks **Can see production 
 - Production documents (issues, returns, completions) are corrected from the job, not reversed from the Movements page.
 - **Maker pay**: an owner approves the amount owed after completion and records payments manually. Production staff can't record payments.
 
-## Coming in later phases
+## Sales, dispatch and returns (Phase 3)
 
-- Dispatch (cost of goods sold), customer returns via quarantine, sales reservations. They will use the same posting engine and average-cost rules.
+- **A quotation is not a sale** and reserves nothing. **Confirming** an order reserves finished goods that are available (ready-made lines) and creates one linked production job for whatever must be made (made-to-order lines, or the shortfall). Confirming twice does nothing.
+- Items **passed by QC on an order's job** are reserved for that order, so they can't be sold to someone else.
+- **Dispatch** posts a `customer_dispatch` document: finished goods leave a saleable location (never Quarantine) at the current average cost, using up the line's reservation first. This is the only time finished goods leave for a sale, once. Material was consumed at issue to production and is never consumed again.
+- **Cost of goods sold (COGS)** = the value of dispatch movements for the order, less the value of customer returns. **Fulfilled sales** are recognised at dispatch: price × (dispatched − returned) per line, with the order discount shared across lines by value (delivery fees excluded).
+- **Estimated gross profit** = fulfilled sales − COGS, shown to owners only, labelled "estimated", and flagged incomplete when any unit went out without a recorded cost. It is never net profit (no overheads, no tax).
+- **Unpaid balance**: dispatching while money is owed needs an owner's approval (recorded with a reason).
+- **Customer returns** go into Quarantine at the average cost they left this order at. Inspection either restocks them (a transfer back to a saleable location) or scraps them (a write-off). **A refund is money only and never restocks anything.**
+- **Cancelling** a confirmed order releases its reservations. Linked jobs not yet started are cancelled; jobs already holding work in progress carry on for stock (unlinked) so nothing is wasted. Orders with anything dispatched can't be cancelled: record a return.
+- The order's stage (confirmed, in production, ready for dispatch, dispatched) is derived from these records; delivered is confirmed by staff once everything is out.

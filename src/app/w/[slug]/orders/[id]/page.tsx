@@ -28,11 +28,13 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
   const { data: o } = await supabase.from("order_summaries")
     .select("*, customers(id, full_name, phone)").eq("id", id).eq("business_id", business.id).maybeSingle();
   if (!o) notFound();
-  const [{ data: items }, { data: payments }, { data: reservations }, { data: jobs }, { data: dispatches }, { data: returns }, locations] = await Promise.all([
-    supabase.from("order_items").select("id, description, size, colour, quantity, unit_price_minor, item_type, variant_id, dispatched_quantity").eq("order_id", id).order("created_at"),
+  const { data: items } = await supabase.from("order_items")
+    .select("id, description, size, colour, quantity, unit_price_minor, item_type, variant_id, dispatched_quantity").eq("order_id", id).order("created_at");
+  const ids = (items ?? []).map((i) => i.id);
+  const [{ data: payments }, { data: reservations }, { data: jobs }, { data: dispatches }, { data: returns }, locations] = await Promise.all([
     supabase.from("payments").select("id, kind, amount_minor, paid_on, method, reference, notes, voided_at, void_reason").eq("order_id", id).order("paid_on", { ascending: false }),
-    supabase.from("stock_reservations").select("source_id, qty_base").eq("source_type", "sales_order").eq("status", "active").eq("business_id", business.id),
-    supabase.from("production_jobs").select("id, number, status, order_item_id, planned_qty, qty_passed, due_date").eq("business_id", business.id).not("order_item_id", "is", null),
+    supabase.from("stock_reservations").select("source_id, qty_base").eq("source_type", "sales_order").eq("status", "active").in("source_id", ids),
+    supabase.from("production_jobs").select("id, number, status, order_item_id, planned_qty, qty_passed, due_date").in("order_item_id", ids),
     supabase.from("order_dispatches").select("id, number, dispatched_on, courier_name, tracking_reference, order_dispatch_lines(order_item_id, quantity)").eq("order_id", id).order("created_at"),
     supabase.from("order_returns").select("id, number, kind, status, reason, received_on, order_return_lines(id, order_item_id, quantity, condition, decision)").eq("order_id", id).order("created_at"),
     getLocations(business.id),
@@ -240,7 +242,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                   <Detail label="Gross profit (estimated)"><Money minor={Math.round(Number(profit.gross_profit))} currency={cur} className="font-medium" /></Detail>
                 </dl>
                 <p className="pb-3 text-sm text-muted">
-                  {profit.cost_complete ? "Before discounts, delivery and overheads. Not net profit." : "Some items have no recorded cost, so this is incomplete. Not net profit."}
+                  {profit.cost_complete ? "After the order discount; before delivery and overheads. Not net profit." : "Some items have no recorded cost, so this is incomplete. Not net profit."}
                 </p>
               </Card>
             </section>

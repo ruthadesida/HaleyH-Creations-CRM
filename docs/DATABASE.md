@@ -71,6 +71,18 @@ Posting RPCs: `post_transfer`, `reverse_stock_document`, `validate_opening_lines
 
 Phase 2 RPCs: `save_purchase_order`, `approve_purchase_order`, `close_purchase_order`, `receive_goods`, `reverse_goods_receipt`, `return_to_supplier`, `record_supplier_bill`, `record_supplier_payment`, `void_supplier_record`; `save_bom`, `activate_bom`, `copy_bom`, `create_production_job`, `set_job_material`, `assign_job_maker`, `set_job_costs`, `allocate_job_materials`, `release_job_materials`, `issue_job_materials`, `return_job_materials`, `maker_location`, `move_job_materials`, `submit_job_for_qc`, `record_qc_inspection`, `cancel_production_job`, `approve_maker_fee`, `record_maker_payment`. Cost readers (return rows only to people who may see costs): `purchase_order_prices`, `goods_receipt_costs`, `bom_costs`, `job_costs`. All writes go through these functions; the tables have no insert/update grants (except QC checklist items).
 
+## Phase 3 (migration 0014)
+
+| Table / column | Purpose |
+|---|---|
+| `orders.confirmed_at` | Null = quotation (not a sale). Set by `confirm_order` |
+| `orders.unpaid_dispatch_*` | Owner approval to dispatch with money still owed |
+| `order_dispatches`, `order_dispatch_lines` | Dispatch notes (DN-…) with courier/tracking; linked `customer_dispatch` stock document |
+| `order_returns` (extended), `order_return_lines` | Returns/exchanges (RT-…) received into Quarantine; per-line inspection decision (restock/scrap) |
+| `stock_reservations` (`source_type = sales_order`) | Per order line |
+
+RPCs: `confirm_order`, `reserve_order_stock`, `approve_unpaid_dispatch` (owner), `dispatch_order`, `mark_order_delivered`, `cancel_order`, `receive_customer_return`, `decide_return_line`, `order_profit` (owners). Orders' stage and status columns are no longer directly updatable: they change only through these functions (`app.refresh_order_stage` derives the stage). Confirmed orders' items, discount and delivery fee are fixed. `order_summaries` was recreated to carry the new columns (same figures).
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).
@@ -95,6 +107,9 @@ The enum values `manager` and `production` were renamed to `front_office` and `p
 | Recipes, production jobs, reserve/issue/return materials, QC | ✅ | ❌ | ✅ | ❌ |
 | Job labour and other costs; approve and pay makers | ✅ | ❌ | ❌ | ❌ |
 | Production progress (job list) | ✅ | read (no costs) | ✅ | ❌ |
+| Quotations, confirm, dispatch, deliver, cancel, returns, payments | ✅ | ✅ | ❌ | ❌ |
+| Approve dispatch before full payment; refunds; void payments; gross profit | ✅ | ❌ | ❌ | ❌ |
+| Inspect returned items (restock/scrap) | ✅ | ✅ | ✅ | ❌ |
 | Customer payments, order values | ✅ | ✅ | ❌ | ❌ |
 | Audit log | ✅ | ❌ | ❌ | ❌ |
 | Invite, change role/title, deactivate staff; settings | ✅ | ❌ | ❌ | ❌ |

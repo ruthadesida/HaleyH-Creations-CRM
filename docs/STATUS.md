@@ -2,7 +2,7 @@
 
 What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
-_Last updated: 2026-11-04 (Phase 2 built)_
+_Last updated: 2026-11-04 (Phase 3 built)_
 
 Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in progress · ⬜ not started · ⚙️ needs configuration · 🔌 external integration (not connected) · 🙈 hidden in the UI until built
 
@@ -12,7 +12,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 |---|---|---|
 | Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Dev project; migrations 0001–0012 applied |
+| Supabase project | ✅ | Dev project; migrations 0001–0014 applied |
 | Sign up / in / out / reset | ✅ | |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | None on the free plan (Phase 4 or Supabase Pro) |
@@ -71,11 +71,27 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Maker fee approval and payments | ✅ | Owners only |
 | Job sheets (printable), attachments, partial close of a job | ⬜ | Phase 4 / later |
 
+## Sales and fulfilment (Phase 3)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Quotations (not sales, reserve nothing) | ✅ | Database-tested; browser workflow test |
+| Confirm order: reserve available stock, linked production job for the rest | ✅ | Spec 2 test G; no duplicate jobs or reservations |
+| Customer payments and deposits ("Recorded manually"); refunds and voids (owners) | ✅ | Spec 2 test H |
+| Dispatch: partial, from QC-passed stock only, reservation used first; owner approval when money is owed | ✅ | Spec 2 tests G, I, M |
+| Delivery confirmation | ✅ | |
+| Cancellation releases reservations; unstarted jobs cancelled, started jobs finish for stock | ✅ | Spec 2 test J |
+| Customer returns and exchanges → Quarantine → inspection (restock or scrap) | ✅ | Spec 2 test K (refunds never restock) |
+| Invoice / quotation (print or save as PDF) | ✅ | |
+| Estimated gross profit per order (owners) | ✅ | Labelled estimated; flagged when costs are missing |
+| Order edits after confirmation | ⬜ | Cancel and re-create for now |
+| Exchange replacement linking, owner home overview, reports | ⬜ | Phase 4 |
+
 ## CRM
 
 | Feature | Status | Notes |
 |---|---|---|
-| Dashboard (front office) | ✅ | Order cards hidden until Phase 3 |
+| Dashboard (front office) | ✅ | Order and money cards live; order value counts confirmed orders only |
 | Customers + duplicate warning | ✅ | |
 | Enquiries list + pipeline | ✅ | |
 | Follow-up tasks | 🙈 | Phase 4 |
@@ -85,7 +101,6 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 
 | Feature | Phase |
 |---|---|
-| Quotations, sales orders, reservations, dispatch, payments UI, returns, costing/COGS | 3 |
 | Reports, exports, templates, notifications, imports with external IDs, backups | 4 |
 
 ## Integrations (none connected)

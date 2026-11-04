@@ -68,8 +68,8 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
     supabase.from("order_summaries").select("balance_minor")
       .eq("business_id", bid).eq("status", "open").is("archived_at", null).not("confirmed_at", "is", null).gt("balance_minor", 0),
     openOrders().eq("fulfilment_stage", "in_production"),
-    openOrders().not("fulfilment_stage", "in", "(dispatched,delivered)").gte("promised_date", today).lte("promised_date", soon),
-    openOrders().not("fulfilment_stage", "in", "(dispatched,delivered)").lt("promised_date", today),
+    openOrders().not("confirmed_at", "is", null).not("fulfilment_stage", "in", "(dispatched,delivered)").gte("promised_date", today).lte("promised_date", soon),
+    openOrders().not("confirmed_at", "is", null).not("fulfilment_stage", "in", "(dispatched,delivered)").lt("promised_date", today),
     openOrders().eq("fulfilment_stage", "ready_for_dispatch"),
     supabase.from("payments").select("kind, amount_minor")
       .eq("business_id", bid).is("voided_at", null).gte("paid_on", from).lte("paid_on", to),
