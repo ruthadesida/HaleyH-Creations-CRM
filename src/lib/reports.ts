@@ -4,7 +4,8 @@
  */
 import type { Role } from "./dal";
 
-export type ColumnType = "text" | "money" | "qty" | "int" | "date" | "pct" | "bool";
+/** "label": a stored code such as in_production, shown as "In production". */
+export type ColumnType = "text" | "label" | "money" | "qty" | "int" | "date" | "pct" | "bool";
 export type Column = {
   key: string; label: string; type: ColumnType;
   /** Show a total under this column. Default: money columns only; quantities only when every row has the same unit. */
@@ -32,7 +33,7 @@ export const REPORTS: Report[] = [
     definition: "Confirmed, open orders not yet dispatched that are past or within 3 days of their promised date, ready to dispatch, or still owe money.",
     columns: [
       { key: "order_number", label: "Order", type: "text" }, { key: "customer", label: "Customer", type: "text" },
-      { key: "promised", label: "Promised", type: "date" }, { key: "progress", label: "Stage", type: "text" },
+      { key: "promised", label: "Promised", type: "date" }, { key: "progress", label: "Stage", type: "label" },
       { key: "owed", label: "Owed", type: "money" }, { key: "needs", label: "Needs", type: "text" },
     ],
   },
@@ -80,7 +81,7 @@ export const REPORTS: Report[] = [
       { key: "order_number", label: "Order", type: "text" }, { key: "customer", label: "Customer", type: "text" },
       { key: "ordered", label: "Ordered", type: "date" }, { key: "order_value", label: "Order value", type: "money" },
       { key: "received", label: "Received", type: "money" }, { key: "owed", label: "Owed", type: "money" },
-      { key: "progress", label: "Stage", type: "text" },
+      { key: "progress", label: "Stage", type: "label" },
     ],
   },
   {
@@ -107,7 +108,7 @@ export const REPORTS: Report[] = [
     key: "stock-by-location", title: "Stock by location", group: "Stock", audience: "stock", range: false, fn: "report_stock_by_location",
     definition: "Physical stock on hand from the ledger, by item and location (including stock held by external makers and in Quarantine). Value at moving average, for people allowed to see costs. The front office sees finished goods only.",
     columns: [
-      { key: "kind", label: "Kind", type: "text" }, { key: "code", label: "Code", type: "text" }, { key: "item", label: "Item", type: "text" },
+      { key: "kind", label: "Kind", type: "label" }, { key: "code", label: "Code", type: "text" }, { key: "item", label: "Item", type: "text" },
       { key: "location", label: "Location", type: "text" }, { key: "on_hand", label: "On hand", type: "qty" },
       { key: "unit", label: "Unit", type: "text" }, { key: "value", label: "Value", type: "money" },
     ],
@@ -116,7 +117,7 @@ export const REPORTS: Report[] = [
     key: "availability", title: "Available vs reserved", group: "Stock", audience: "stock", range: false, fn: "report_availability",
     definition: "On hand outside Quarantine, reserved for production jobs and customer orders, and available (on hand − reserved). Stock in Quarantine is shown separately and is never available.",
     columns: [
-      { key: "kind", label: "Kind", type: "text" }, { key: "code", label: "Code", type: "text" }, { key: "item", label: "Item", type: "text" },
+      { key: "kind", label: "Kind", type: "label" }, { key: "code", label: "Code", type: "text" }, { key: "item", label: "Item", type: "text" },
       { key: "on_hand", label: "On hand", type: "qty" }, { key: "reserved", label: "Reserved", type: "qty" },
       { key: "available", label: "Available", type: "qty" }, { key: "in_quarantine", label: "In Quarantine", type: "qty" },
       { key: "unit", label: "Unit", type: "text" },
@@ -126,7 +127,7 @@ export const REPORTS: Report[] = [
     key: "valuation", title: "Inventory valuation", group: "Stock", audience: "costs", range: false, fn: "report_valuation",
     definition: "Stock on hand × moving average cost, by kind. Items flagged \"cost missing\" are counted so you know the value is incomplete.",
     columns: [
-      { key: "kind", label: "Kind", type: "text" }, { key: "items", label: "Items", type: "int" },
+      { key: "kind", label: "Kind", type: "label" }, { key: "items", label: "Items", type: "int" },
       { key: "value", label: "Value", type: "money" }, { key: "items_missing_cost", label: "Items with missing cost", type: "int" },
     ],
   },
@@ -156,7 +157,7 @@ export const REPORTS: Report[] = [
     definition: "Open jobs, how long since work started, units still to finish, and value in work in progress (materials issued less returned + labour − value already finished), for people allowed to see costs.",
     columns: [
       { key: "job", label: "Job", type: "text" }, { key: "item", label: "Making", type: "text" }, { key: "maker", label: "Maker", type: "text" },
-      { key: "status", label: "Status", type: "text" }, { key: "started", label: "Started", type: "date" },
+      { key: "status", label: "Status", type: "label" }, { key: "started", label: "Started", type: "date" },
       { key: "age_days", label: "Days in work", type: "int" }, { key: "due", label: "Due", type: "date" },
       { key: "units_left", label: "Units left", type: "qty", total: true }, { key: "wip_value", label: "WIP value", type: "money" },
     ],
@@ -221,6 +222,7 @@ export function formatCell(value: unknown, type: ColumnType, currency = "NGN"): 
     case "int": return new Intl.NumberFormat("en-NG").format(Number(value));
     case "pct": return `${Number(value)}%`;
     case "bool": return value ? "Yes" : "No";
+    case "label": { const s = String(value).replaceAll("_", " "); return s.charAt(0).toUpperCase() + s.slice(1); }
     default: return String(value).replaceAll("_", " ");
   }
 }

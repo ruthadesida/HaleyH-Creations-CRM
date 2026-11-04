@@ -45,12 +45,13 @@ async function Products({ params, searchParams }: PageProps<"/w/[slug]/stock/pro
               <li key={p.id} className="border-b border-line last:border-b-0">
                 <Link href={`/w/${slug}/stock/products/${p.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">{p.name}</span>
+                    <span className="line-clamp-2 font-medium [overflow-wrap:anywhere]">{p.name}</span>
                     <span className="text-sm text-muted">{CATEGORY_LABEL[p.category]} · {live.length} variant{live.length === 1 ? "" : "s"}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-right text-sm">
-                      <Money minor={min} currency={business.currency} />{max !== min && <> – <Money minor={max} currency={business.currency} /></>}
+                      {max === 0 ? <span className="text-muted">No price</span>
+                        : <><Money minor={min} currency={business.currency} />{max !== min && <> – <Money minor={max} currency={business.currency} /></>}</>}
                     </span>
                     <ChevronRight aria-hidden className="size-4 text-muted" />
                   </span>

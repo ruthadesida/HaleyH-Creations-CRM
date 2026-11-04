@@ -233,7 +233,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                       <span className="flex items-center gap-2">
                         <Money minor={p.amount_minor} currency={cur} className={p.kind === "refund" ? "text-danger" : "text-success"} />
                         {!p.voided_at && can.own(role) && (
-                          <ReasonButton label="Void" title="Void this payment" variant="ghost" confirmLabel="Void payment"
+                          <ReasonButton label="Void" title="Void this payment" variant="danger" confirmLabel="Void payment"
                             explain="It stays in the history, marked void, and stops counting toward the balance." action={voidPayment.bind(null, slug, p.id)} />
                         )}
                       </span>

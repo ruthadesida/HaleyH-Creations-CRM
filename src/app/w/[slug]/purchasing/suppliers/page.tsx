@@ -84,7 +84,7 @@ async function Balances({ params }: PageProps<"/w/[slug]/purchasing/suppliers">)
                     <span className="flex items-center gap-2">
                       <Money minor={x.amount} currency={business.currency} className={x.kind === "payment" ? "text-success" : ""} />
                       {!x.voided && (
-                        <ReasonButton label="Void" title={`Void this ${x.kind}`} variant="ghost"
+                        <ReasonButton label="Void" title={`Void this ${x.kind}`} variant="danger"
                           explain={`The ${x.kind} stays in the history, marked void, and stops counting in the balance.`}
                           action={voidSupplierRecord.bind(null, slug, x.kind, x.id)} confirmLabel={`Void ${x.kind}`} />
                       )}

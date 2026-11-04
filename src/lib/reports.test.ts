@@ -26,6 +26,7 @@ describe("report catalogue", () => {
     expect(formatCell(null, "money")).toBe("—");
     expect(formatCell(109.728, "qty")).toBe("109.728");
     expect(formatCell("finished_good", "text")).toBe("finished good");
+    expect(formatCell("in_production", "label")).toBe("In production");
   });
   it("never totals unit costs or quantities in mixed units", () => {
     const col = (report: string, key: string) => findReport(report)!.columns.find((c) => c.key === key)!;

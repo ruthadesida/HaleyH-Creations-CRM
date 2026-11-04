@@ -251,7 +251,8 @@ function Stat({ href, label, value, money, currency, note, alert }: {
           ) : (
             <span className="font-display tabular block text-4xl leading-none">{value}</span>
           )}
-          {note && <span className={cn("mt-1.5 block text-sm", alert ? "text-danger" : "text-muted")}>{note}</span>}
+          {/* Every card keeps the note line, so the big numbers line up across a row. */}
+          <span className={cn("mt-1.5 block text-sm", alert ? "text-danger" : "text-muted")}>{note || " "}</span>
         </div>
       </Card>
     </MaybeLink>
