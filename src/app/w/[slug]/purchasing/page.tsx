@@ -55,7 +55,7 @@ async function Orders({ params, searchParams }: PageProps<"/w/[slug]/purchasing"
                   <li key={o.id} className="border-b border-line last:border-b-0">
                     <Link href={`${base}/${o.id}`} className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                       <span className="min-w-0">
-                        <span className="flex min-w-0 gap-1 font-medium"><span className="shrink-0 tabular">{o.number}</span><span className="truncate">· {o.suppliers?.name ?? "Supplier"}</span></span>
+                        <span className="flex min-w-0 items-baseline gap-1 font-medium"><span className="shrink-0 tabular">{o.number}</span><span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">· {o.suppliers?.name ?? "Supplier"}</span></span>
                         <span className="block truncate text-sm text-muted">
                           {lines.length} item{lines.length === 1 ? "" : "s"}
                           {["ordered", "part_received"].includes(o.status) && ` · ${outstanding} still to come`}

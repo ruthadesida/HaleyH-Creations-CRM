@@ -99,7 +99,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
                 <Link href={`${base}/items/${r.id}`}
                   className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">{r.name}</span>
+                    <span className="line-clamp-2 font-medium [overflow-wrap:anywhere]">{r.name}</span>
                     <span className="block truncate text-sm text-muted">
                       {r.code}{r.locs.length > 0 && ` · ${r.locs.map((l) => `${l.location}: ${formatQty(l.qty)}`).join(" · ")}`}
                     </span>

@@ -86,6 +86,11 @@ test("busy screens survive worst-case data", async ({ page }) => {
       await page.waitForLoadState("networkidle");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect.soft(overflow, `${name} overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(0);
+      if (name === "customer-long") {
+        // This customer's only order is a quotation: not a sale, so nothing is owed.
+        await expect.soft(page.getByRole("main").getByText(/· Quotation/)).toBeVisible();
+        await expect.soft(page.getByRole("main").getByText("Unpaid", { exact: true })).toHaveCount(0);
+      }
       await page.screenshot({ path: `e2e-shots/${project}/${name}.png`, fullPage: true });
     });
   }

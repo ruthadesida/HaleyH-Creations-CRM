@@ -35,7 +35,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
   const [enquiries, orders, tasks, staff] = await Promise.all([
     supabase.from("enquiries").select("id, stage, product_interest, follow_up_at, created_at")
       .eq("business_id", business.id).eq("customer_id", id).is("archived_at", null).order("created_at", { ascending: false }),
-    supabase.from("order_summaries").select("id, order_number, order_date, status, fulfilment_stage, total_minor, balance_minor, payment_status")
+    supabase.from("order_summaries").select("id, order_number, order_date, status, confirmed_at, fulfilment_stage, total_minor, balance_minor, payment_status")
       .eq("business_id", business.id).eq("customer_id", id).order("order_date", { ascending: false }),
     supabase.from("tasks").select("id, kind, title, due_at, status")
       .eq("business_id", business.id).eq("customer_id", id).order("due_at", { ascending: true, nullsFirst: false }).limit(20),
@@ -51,8 +51,10 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
   const cur = business.currency;
   const firstName = c.full_name.split(" ")[0];
   const assigned = staff.find((s) => s.id === c.assigned_to)?.name;
-  const lifetime = (orders.data ?? []).filter((o) => o.status === "open").reduce((s, o) => s + (o.total_minor ?? 0), 0);
-  const owed = (orders.data ?? []).filter((o) => o.status === "open").reduce((s, o) => s + Math.max(o.balance_minor ?? 0, 0), 0);
+  // Quotations aren't sales yet: they count towards neither order value nor money owed (as everywhere else).
+  const sales = (orders.data ?? []).filter((o) => o.status === "open" && o.confirmed_at);
+  const lifetime = sales.reduce((s, o) => s + (o.total_minor ?? 0), 0);
+  const owed = sales.reduce((s, o) => s + Math.max(o.balance_minor ?? 0, 0), 0);
   const orderNumber = new Map((orders.data ?? []).map((o) => [o.id, o.order_number]));
 
   return (
@@ -155,12 +157,12 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
                         <span className="min-w-0">
                           <span className="block font-medium">{o.order_number}</span>
                           <span className="block text-sm text-muted">
-                            {formatDate(o.order_date)} · {o.status === "cancelled" ? "Cancelled" : stageLabel(o.fulfilment_stage!, business.stage_labels)}
+                            {formatDate(o.order_date)} · {o.status === "cancelled" ? "Cancelled" : !o.confirmed_at ? "Quotation" : stageLabel(o.fulfilment_stage!, business.stage_labels)}
                           </span>
                         </span>
                         <span className="flex flex-col items-end gap-1">
                           <Money minor={o.total_minor ?? 0} currency={cur} className="font-medium" />
-                          <Chip tone={PAYMENT_TONE[o.payment_status as PaymentStatus]}>{PAYMENT_STATUS_LABEL[o.payment_status as PaymentStatus]}</Chip>
+                          {o.status === "open" && o.confirmed_at && <Chip tone={PAYMENT_TONE[o.payment_status as PaymentStatus]}>{PAYMENT_STATUS_LABEL[o.payment_status as PaymentStatus]}</Chip>}
                         </span>
                       </Link>
                     </li>
