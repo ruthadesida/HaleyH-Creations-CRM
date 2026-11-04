@@ -32,8 +32,8 @@ function periodRange(period: Period, today: string): [string, string] {
 async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
   const { slug } = await params;
   const { business, role } = await getWorkspace(slug);
-  // Production manager home is the Stock area until production jobs arrive (Phase 2).
-  if (role === "production_manager") redirect(`/w/${slug}/stock`);
+  // The production manager's home is their job list.
+  if (role === "production_manager") redirect(`/w/${slug}/production`);
 
   const sp = await searchParams;
   const period: Period = (typeof sp.period === "string" && sp.period in PERIODS ? sp.period : "month") as Period;

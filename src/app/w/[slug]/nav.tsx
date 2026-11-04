@@ -3,6 +3,7 @@
 import {
   Boxes,
   ClipboardCheck,
+  Factory,
   FileUp,
   History,
   MapPin,
@@ -37,11 +38,13 @@ function items(slug: string, role: Role) {
   const stock = `${base}/stock`;
   if (role === "production_manager") {
     const tabs: (Item | false)[] = [
+      FEATURES.production && { href: `${base}/production`, label: "Production", icon: Factory },
       FEATURES.inventory && { href: stock, label: "Stock", icon: Boxes, exact: true },
+      FEATURES.purchasing && { href: `${base}/purchasing`, label: "Purchasing", icon: Truck },
       FEATURES.inventory && { href: `${stock}/counts`, label: "Counts", icon: ClipboardCheck },
-      FEATURES.inventory && { href: `${stock}/makers`, label: "Makers", icon: Scissors },
     ];
     const extra: (Item | false)[] = [
+      FEATURES.inventory && { href: `${stock}/makers`, label: "Makers", icon: Scissors },
       FEATURES.inventory && { href: `${stock}/movements`, label: "Movements", icon: History },
       FEATURES.inventory && { href: `${stock}/opening`, label: "Opening stock", icon: FileUp },
       FEATURES.inventory && { href: `${stock}/products`, label: "Products", icon: Package },
@@ -58,6 +61,8 @@ function items(slug: string, role: Role) {
     FEATURES.inventory && { href: stock, label: "Stock", icon: Boxes },
   ];
   const extra: (Item | false)[] = [
+    FEATURES.production && role === "owner" && { href: `${base}/production`, label: "Production", icon: Factory },
+    FEATURES.purchasing && role === "owner" && { href: `${base}/purchasing`, label: "Purchasing", icon: Truck },
     FEATURES.tasks && { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
     FEATURES.settings && role === "owner" && { href: `${base}/settings`, label: "Settings", icon: Settings },
   ];
@@ -167,7 +172,7 @@ const NEW_ACTIONS = (slug: string) =>
     FEATURES.payments && { href: `/w/${slug}/orders?pay=1`, label: "Record a payment", hint: "Find the order, then record it", icon: Wallet },
   ].filter(Boolean) as { href: string; label: string; hint: string; icon: LucideIcon }[];
 
-const FORM_SEGMENTS = new Set(["new", "edit", "transfer", "counts", "settings"]);
+const FORM_SEGMENTS = new Set(["new", "edit", "transfer", "counts", "settings", "receive", "qc"]);
 
 /** One-thumb "New" button on phones; a full-width button in the sidebar on laptops. */
 export function NewButton({ slug, variant }: { slug: string; variant: "fab" | "sidebar" }) {

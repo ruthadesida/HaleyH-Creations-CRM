@@ -142,8 +142,8 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     await signIn(pmPage, pm, new URL(inviteLink).pathname);
     await expect(pmPage.getByRole("heading", { level: 1, name: "Join E2E Atelier" })).toBeVisible();
     await pmPage.getByRole("button", { name: "Accept and open workspace" }).click();
-    // Their home is the Stock area.
-    await expect(pmPage).toHaveURL(new RegExp(`${base()}/stock`));
+    // Their home is their production jobs.
+    await expect(pmPage).toHaveURL(new RegExp(`${base()}/production`));
     await pmPage.goto(`${base()}/stock?kind=raw_material`);
     await expect(pmPage.getByRole("link", { name: /Metal zip 20 cm/ })).toContainText("300 pc"); // 280 in the store + 20 on the floor
     await expect(pmPage.getByRole("main")).not.toContainText("₦");

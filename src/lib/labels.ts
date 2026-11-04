@@ -145,3 +145,27 @@ export const BATCH_STATUS = {
   reversed: { label: "Reversed", tone: "neutral" },
   discarded: { label: "Discarded", tone: "neutral" },
 } as const;
+
+export const PO_STATUS = {
+  draft: { label: "Request: waiting for owner approval", short: "Request", tone: "warn" },
+  ordered: { label: "Ordered", short: "Ordered", tone: "gold" },
+  part_received: { label: "Part received", short: "Part received", tone: "gold" },
+  received: { label: "Received", short: "Received", tone: "success" },
+  cancelled: { label: "Cancelled", short: "Cancelled", tone: "neutral" },
+  closed: { label: "Closed (rest not coming)", short: "Closed", tone: "neutral" },
+} as const;
+
+export const JOB_STATUS = {
+  planned: { label: "Planned", tone: "neutral" },
+  allocated: { label: "Materials allocated", tone: "gold" },
+  in_progress: { label: "In progress", tone: "gold" },
+  in_qc: { label: "Waiting for QC", tone: "warn" },
+  completed: { label: "Completed", tone: "success" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
+} as const;
+
+export const BOM_STATUS = {
+  draft: { label: "Draft", tone: "warn" },
+  active: { label: "In use", tone: "success" },
+  archived: { label: "Archived", tone: "neutral" },
+} as const;

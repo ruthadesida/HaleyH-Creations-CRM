@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -46,6 +46,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "adjustment_requests"
             referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "adjustment_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
           },
           {
             foreignKeyName: "adjustment_lines_business_id_stock_item_id_fkey"
@@ -168,6 +175,140 @@ export type Database = {
         }
         Relationships: []
       }
+      bom_lines: {
+        Row: {
+          bom_id: string
+          business_id: string
+          id: string
+          line_no: number
+          notes: string | null
+          qty: number
+          qty_base: number
+          stock_item_id: string
+          unit: string
+          variant_id: string | null
+          wastage_pct: number
+        }
+        Insert: {
+          bom_id: string
+          business_id: string
+          id?: string
+          line_no: number
+          notes?: string | null
+          qty: number
+          qty_base: number
+          stock_item_id: string
+          unit: string
+          variant_id?: string | null
+          wastage_pct?: number
+        }
+        Update: {
+          bom_id?: string
+          business_id?: string
+          id?: string
+          line_no?: number
+          notes?: string | null
+          qty?: number
+          qty_base?: number
+          stock_item_id?: string
+          unit?: string
+          variant_id?: string | null
+          wastage_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_lines_business_id_bom_id_fkey"
+            columns: ["business_id", "bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "bom_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "bom_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "bom_lines_business_id_variant_id_fkey"
+            columns: ["business_id", "variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      boms: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          instructions: string | null
+          is_one_off: boolean
+          labour_cost: number
+          name: string
+          other_cost: number
+          product_id: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          instructions?: string | null
+          is_one_off?: boolean
+          labour_cost?: number
+          name: string
+          other_cost?: number
+          product_id: string
+          status?: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          instructions?: string | null
+          is_one_off?: boolean
+          labour_cost?: number
+          name?: string
+          other_cost?: number
+          product_id?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boms_business_id_product_id_fkey"
+            columns: ["business_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       business_subscriptions: {
         Row: {
           business_id: string
@@ -231,8 +372,13 @@ export type Database = {
           logo_path: string | null
           name: string
           next_batch_number: number
+          next_job_number: number
           next_order_number: number
+          next_po_number: number
+          next_qc_number: number
+          next_receipt_number: number
           next_stock_doc_number: number
+          next_supplier_return_number: number
           order_prefix: string
           slug: string
           stage_labels: Json
@@ -251,8 +397,13 @@ export type Database = {
           logo_path?: string | null
           name: string
           next_batch_number?: number
+          next_job_number?: number
           next_order_number?: number
+          next_po_number?: number
+          next_qc_number?: number
+          next_receipt_number?: number
           next_stock_doc_number?: number
+          next_supplier_return_number?: number
           order_prefix?: string
           slug: string
           stage_labels?: Json
@@ -271,8 +422,13 @@ export type Database = {
           logo_path?: string | null
           name?: string
           next_batch_number?: number
+          next_job_number?: number
           next_order_number?: number
+          next_po_number?: number
+          next_qc_number?: number
+          next_receipt_number?: number
           next_stock_doc_number?: number
+          next_supplier_return_number?: number
           order_prefix?: string
           slug?: string
           stage_labels?: Json
@@ -506,6 +662,177 @@ export type Database = {
           },
         ]
       }
+      goods_receipt_lines: {
+        Row: {
+          business_id: string
+          id: string
+          po_line_id: string | null
+          qty_accepted_base: number
+          qty_rejected_base: number
+          qty_returned_base: number
+          receipt_id: string
+          reject_reason: string | null
+          stock_item_id: string
+          unit_cost: number
+          unit_price: number
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          po_line_id?: string | null
+          qty_accepted_base?: number
+          qty_rejected_base?: number
+          qty_returned_base?: number
+          receipt_id: string
+          reject_reason?: string | null
+          stock_item_id: string
+          unit_cost?: number
+          unit_price?: number
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          po_line_id?: string | null
+          qty_accepted_base?: number
+          qty_rejected_base?: number
+          qty_returned_base?: number
+          receipt_id?: string
+          reject_reason?: string | null
+          stock_item_id?: string
+          unit_cost?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_receipt_lines_business_id_po_line_id_fkey"
+            columns: ["business_id", "po_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_lines"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "goods_receipt_lines_business_id_receipt_id_fkey"
+            columns: ["business_id", "receipt_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "goods_receipt_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "goods_receipt_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      goods_receipts: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_id: string | null
+          effective_date: string
+          id: string
+          idempotency_key: string
+          landed_cost: number
+          location_id: string
+          notes: string | null
+          number: string
+          po_id: string | null
+          posted_by: string
+          reversal_reason: string | null
+          status: string
+          supplier_id: string | null
+          supplier_ref: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_id?: string | null
+          effective_date: string
+          id?: string
+          idempotency_key: string
+          landed_cost?: number
+          location_id: string
+          notes?: string | null
+          number: string
+          po_id?: string | null
+          posted_by: string
+          reversal_reason?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_ref?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_id?: string | null
+          effective_date?: string
+          id?: string
+          idempotency_key?: string
+          landed_cost?: number
+          location_id?: string
+          notes?: string | null
+          number?: string
+          po_id?: string | null
+          posted_by?: string
+          reversal_reason?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_receipts_business_id_document_id_fkey"
+            columns: ["business_id", "document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_business_id_location_id_fkey"
+            columns: ["business_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_business_id_po_id_fkey"
+            columns: ["business_id", "po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_balances"
+            referencedColumns: ["business_id", "supplier_id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -556,6 +883,61 @@ export type Database = {
           },
         ]
       }
+      job_materials: {
+        Row: {
+          business_id: string
+          id: string
+          issued_qty_base: number
+          job_id: string
+          planned_qty_base: number
+          returned_qty_base: number
+          source: string
+          stock_item_id: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          issued_qty_base?: number
+          job_id: string
+          planned_qty_base?: number
+          returned_qty_base?: number
+          source?: string
+          stock_item_id: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          issued_qty_base?: number
+          job_id?: string
+          planned_qty_base?: number
+          returned_qty_base?: number
+          source?: string
+          stock_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_materials_business_id_job_id_fkey"
+            columns: ["business_id", "job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "job_materials_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "job_materials_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           archived_at: string | null
@@ -594,6 +976,76 @@ export type Database = {
           },
           {
             foreignKeyName: "locations_business_id_maker_id_fkey"
+            columns: ["business_id", "maker_id"]
+            isOneToOne: false
+            referencedRelation: "makers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      maker_payments: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          job_id: string | null
+          maker_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          reference: string | null
+          verification: Database["public"]["Enums"]["payment_verification"]
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          job_id?: string | null
+          maker_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          reference?: string | null
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          job_id?: string | null
+          maker_id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          paid_on?: string
+          reference?: string | null
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maker_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maker_payments_business_id_job_id_fkey"
+            columns: ["business_id", "job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "maker_payments_business_id_maker_id_fkey"
             columns: ["business_id", "maker_id"]
             isOneToOne: false
             referencedRelation: "makers"
@@ -755,6 +1207,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "opening_batch_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
           },
           {
             foreignKeyName: "opening_batch_lines_business_id_stock_item_id_fkey"
@@ -1286,38 +1745,111 @@ export type Database = {
       production_jobs: {
         Row: {
           assigned_to: string | null
+          bom_id: string | null
+          bom_version: number | null
           business_id: string
+          cancelled_reason: string | null
+          completed_at: string | null
           created_at: string
+          created_by: string | null
           due_date: string | null
+          fee_approved: number | null
+          fee_approved_at: string | null
+          fee_approved_by: string | null
+          finished_item_id: string | null
           id: string
+          idempotency_key: string | null
+          instructions: string | null
+          kind: string
+          labour_cost: number
+          maker_id: string | null
           notes: string | null
-          order_item_id: string
+          number: string | null
+          order_item_id: string | null
+          other_cost: number
+          planned_qty: number
+          product_id: string | null
+          qty_passed: number
+          qty_rejected: number
+          start_date: string | null
           status: string
           updated_at: string
+          variant_id: string | null
         }
         Insert: {
           assigned_to?: string | null
+          bom_id?: string | null
+          bom_version?: number | null
           business_id: string
+          cancelled_reason?: string | null
+          completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           due_date?: string | null
+          fee_approved?: number | null
+          fee_approved_at?: string | null
+          fee_approved_by?: string | null
+          finished_item_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          instructions?: string | null
+          kind?: string
+          labour_cost?: number
+          maker_id?: string | null
           notes?: string | null
-          order_item_id: string
+          number?: string | null
+          order_item_id?: string | null
+          other_cost?: number
+          planned_qty?: number
+          product_id?: string | null
+          qty_passed?: number
+          qty_rejected?: number
+          start_date?: string | null
           status?: string
           updated_at?: string
+          variant_id?: string | null
         }
         Update: {
           assigned_to?: string | null
+          bom_id?: string | null
+          bom_version?: number | null
           business_id?: string
+          cancelled_reason?: string | null
+          completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           due_date?: string | null
+          fee_approved?: number | null
+          fee_approved_at?: string | null
+          fee_approved_by?: string | null
+          finished_item_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          instructions?: string | null
+          kind?: string
+          labour_cost?: number
+          maker_id?: string | null
           notes?: string | null
-          order_item_id?: string
+          number?: string | null
+          order_item_id?: string | null
+          other_cost?: number
+          planned_qty?: number
+          product_id?: string | null
+          qty_passed?: number
+          qty_rejected?: number
+          start_date?: string | null
           status?: string
           updated_at?: string
+          variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "production_jobs_bom_fk"
+            columns: ["business_id", "bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["business_id", "id"]
+          },
           {
             foreignKeyName: "production_jobs_business_id_assigned_to_fkey"
             columns: ["business_id", "assigned_to"]
@@ -1330,6 +1862,41 @@ export type Database = {
             columns: ["business_id", "order_item_id"]
             isOneToOne: false
             referencedRelation: "order_items"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "production_jobs_item_fk"
+            columns: ["business_id", "finished_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "production_jobs_item_fk"
+            columns: ["business_id", "finished_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "production_jobs_maker_fk"
+            columns: ["business_id", "maker_id"]
+            isOneToOne: false
+            referencedRelation: "makers"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "production_jobs_product_fk"
+            columns: ["business_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "production_jobs_variant_fk"
+            columns: ["business_id", "variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -1407,6 +1974,247 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_order_lines: {
+        Row: {
+          business_id: string
+          factor: number
+          id: string
+          line_no: number
+          po_id: string
+          qty: number
+          qty_base: number
+          qty_received_base: number
+          qty_rejected_base: number
+          stock_item_id: string
+          unit: string
+          unit_price: number | null
+        }
+        Insert: {
+          business_id: string
+          factor: number
+          id?: string
+          line_no: number
+          po_id: string
+          qty: number
+          qty_base: number
+          qty_received_base?: number
+          qty_rejected_base?: number
+          stock_item_id: string
+          unit: string
+          unit_price?: number | null
+        }
+        Update: {
+          business_id?: string
+          factor?: number
+          id?: string
+          line_no?: number
+          po_id?: string
+          qty?: number
+          qty_base?: number
+          qty_received_base?: number
+          qty_rejected_base?: number
+          stock_item_id?: string
+          unit?: string
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_business_id_po_id_fkey"
+            columns: ["business_id", "po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          closed_reason: string | null
+          created_at: string
+          created_by: string
+          expected_date: string | null
+          id: string
+          notes: string | null
+          number: string
+          status: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          closed_reason?: string | null
+          created_at?: string
+          created_by: string
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          number: string
+          status?: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          closed_reason?: string | null
+          created_at?: string
+          created_by?: string
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          number?: string
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_balances"
+            referencedColumns: ["business_id", "supplier_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      qc_checklists: {
+        Row: {
+          business_id: string
+          category: Database["public"]["Enums"]["product_category"]
+          id: string
+          items: string[]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          category: Database["public"]["Enums"]["product_category"]
+          id?: string
+          items: string[]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          category?: Database["public"]["Enums"]["product_category"]
+          id?: string
+          items?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qc_checklists_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qc_inspections: {
+        Row: {
+          business_id: string
+          created_at: string
+          defects: string | null
+          document_id: string | null
+          id: string
+          idempotency_key: string
+          inspected_on: string
+          inspector: string
+          instructions: string | null
+          job_id: string
+          number: string
+          qty_inspected: number
+          qty_passed: number
+          qty_rejected: number
+          qty_rework: number
+          results: Json
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          defects?: string | null
+          document_id?: string | null
+          id?: string
+          idempotency_key: string
+          inspected_on: string
+          inspector: string
+          instructions?: string | null
+          job_id: string
+          number: string
+          qty_inspected: number
+          qty_passed?: number
+          qty_rejected?: number
+          qty_rework?: number
+          results?: Json
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          defects?: string | null
+          document_id?: string | null
+          id?: string
+          idempotency_key?: string
+          inspected_on?: string
+          inspector?: string
+          instructions?: string | null
+          job_id?: string
+          number?: string
+          qty_inspected?: number
+          qty_passed?: number
+          qty_rejected?: number
+          qty_rework?: number
+          results?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qc_inspections_business_id_document_id_fkey"
+            columns: ["business_id", "document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "qc_inspections_business_id_job_id_fkey"
+            columns: ["business_id", "job_id"]
+            isOneToOne: false
+            referencedRelation: "production_jobs"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
       }
       stock_documents: {
         Row: {
@@ -1567,6 +2375,13 @@ export type Database = {
             foreignKeyName: "stock_items_business_id_default_supplier_id_fkey"
             columns: ["business_id", "default_supplier_id"]
             isOneToOne: false
+            referencedRelation: "supplier_balances"
+            referencedColumns: ["business_id", "supplier_id"]
+          },
+          {
+            foreignKeyName: "stock_items_business_id_default_supplier_id_fkey"
+            columns: ["business_id", "default_supplier_id"]
+            isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["business_id", "id"]
           },
@@ -1639,7 +2454,346 @@ export type Database = {
             foreignKeyName: "stock_movements_business_id_stock_item_id_fkey"
             columns: ["business_id", "stock_item_id"]
             isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      stock_reservations: {
+        Row: {
+          business_id: string
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          qty_base: number
+          source_id: string
+          source_type: string
+          status: string
+          stock_item_id: string
+        }
+        Insert: {
+          business_id: string
+          closed_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          qty_base: number
+          source_id: string
+          source_type: string
+          status?: string
+          stock_item_id: string
+        }
+        Update: {
+          business_id?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          qty_base?: number
+          source_id?: string
+          source_type?: string
+          status?: string
+          stock_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reservations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_reservations_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "stock_reservations_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      supplier_bills: {
+        Row: {
+          amount: number
+          bill_date: string
+          bill_ref: string | null
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          po_id: string | null
+          receipt_id: string | null
+          supplier_id: string
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          bill_date: string
+          bill_ref?: string | null
+          business_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          po_id?: string | null
+          receipt_id?: string | null
+          supplier_id: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_date?: string
+          bill_ref?: string | null
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          po_id?: string | null
+          receipt_id?: string | null
+          supplier_id?: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bills_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_business_id_po_id_fkey"
+            columns: ["business_id", "po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_business_id_receipt_id_fkey"
+            columns: ["business_id", "receipt_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_balances"
+            referencedColumns: ["business_id", "supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      supplier_payments: {
+        Row: {
+          amount: number
+          bill_id: string | null
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          reference: string | null
+          supplier_id: string
+          verification: Database["public"]["Enums"]["payment_verification"]
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          bill_id?: string | null
+          business_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          reference?: string | null
+          supplier_id: string
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_id?: string | null
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          paid_on?: string
+          reference?: string | null
+          supplier_id?: string
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_business_id_bill_id_fkey"
+            columns: ["business_id", "bill_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_bills"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_balances"
+            referencedColumns: ["business_id", "supplier_id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_business_id_supplier_id_fkey"
+            columns: ["business_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      supplier_return_lines: {
+        Row: {
+          business_id: string
+          id: string
+          qty_base: number
+          receipt_line_id: string
+          return_id: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          qty_base: number
+          receipt_line_id: string
+          return_id: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          qty_base?: number
+          receipt_line_id?: string
+          return_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_return_lines_business_id_receipt_line_id_fkey"
+            columns: ["business_id", "receipt_line_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipt_lines"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_return_lines_business_id_return_id_fkey"
+            columns: ["business_id", "return_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_returns"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      supplier_returns: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_id: string
+          effective_date: string
+          id: string
+          idempotency_key: string
+          location_id: string
+          number: string
+          posted_by: string
+          reason: string
+          receipt_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_id: string
+          effective_date: string
+          id?: string
+          idempotency_key: string
+          location_id: string
+          number: string
+          posted_by: string
+          reason: string
+          receipt_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_id?: string
+          effective_date?: string
+          id?: string
+          idempotency_key?: string
+          location_id?: string
+          number?: string
+          posted_by?: string
+          reason?: string
+          receipt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_returns_business_id_document_id_fkey"
+            columns: ["business_id", "document_id"]
+            isOneToOne: false
+            referencedRelation: "stock_documents"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_returns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_returns_business_id_location_id_fkey"
+            columns: ["business_id", "location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_returns_business_id_receipt_id_fkey"
+            columns: ["business_id", "receipt_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipts"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -1899,6 +3053,24 @@ export type Database = {
           },
         ]
       }
+      stock_availability: {
+        Row: {
+          available: number | null
+          business_id: string | null
+          on_hand: number | null
+          reserved: number | null
+          stock_item_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_balances: {
         Row: {
           business_id: string | null
@@ -1918,14 +3090,80 @@ export type Database = {
             foreignKeyName: "stock_movements_business_id_stock_item_id_fkey"
             columns: ["business_id", "stock_item_id"]
             isOneToOne: false
+            referencedRelation: "stock_availability"
+            referencedColumns: ["business_id", "stock_item_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_business_id_stock_item_id_fkey"
+            columns: ["business_id", "stock_item_id"]
+            isOneToOne: false
             referencedRelation: "stock_items"
             referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      supplier_balances: {
+        Row: {
+          balance: number | null
+          billed: number | null
+          business_id: string | null
+          paid: number | null
+          supplier_id: string | null
+        }
+        Insert: {
+          balance?: never
+          billed?: never
+          business_id?: string | null
+          paid?: never
+          supplier_id?: string | null
+        }
+        Update: {
+          balance?: never
+          billed?: never
+          business_id?: string | null
+          paid?: never
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
           },
         ]
       }
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      activate_bom: { Args: { p_bom_id: string }; Returns: undefined }
+      allocate_job_materials: { Args: { p_job: string }; Returns: undefined }
+      approve_maker_fee: {
+        Args: { p_amount: number; p_job: string }
+        Returns: undefined
+      }
+      approve_purchase_order: { Args: { p_po_id: string }; Returns: undefined }
+      assign_job_maker: {
+        Args: { p_due_date: string; p_job: string; p_maker_id: string }
+        Returns: undefined
+      }
+      bom_costs: {
+        Args: { p_bom: string }
+        Returns: {
+          labour_cost: number
+          other_cost: number
+        }[]
+      }
+      cancel_production_job: {
+        Args: { p_job: string; p_reason: string }
+        Returns: undefined
+      }
+      close_purchase_order: {
+        Args: { p_po_id: string; p_reason: string }
+        Returns: string
+      }
+      copy_bom: { Args: { p_bom_id: string }; Returns: string }
       create_business: {
         Args: {
           p_currency?: string
@@ -1978,6 +3216,19 @@ export type Database = {
         }
         Returns: string
       }
+      create_production_job: {
+        Args: {
+          p_bom_id: string
+          p_business_id: string
+          p_due_date: string
+          p_idempotency_key: string
+          p_maker_id: string
+          p_notes: string
+          p_qty: number
+          p_variant_id: string
+        }
+        Returns: string
+      }
       decide_adjustment: {
         Args: {
           p_approve: boolean
@@ -1991,6 +3242,15 @@ export type Database = {
         Args: { p_batch_id: string }
         Returns: undefined
       }
+      goods_receipt_costs: {
+        Args: { p_receipt_id: string }
+        Returns: {
+          landed_cost: number
+          line_id: string
+          unit_cost: number
+          unit_price: number
+        }[]
+      }
       invitation_preview: {
         Args: { p_token: string }
         Returns: {
@@ -1999,6 +3259,40 @@ export type Database = {
           expired: boolean
           role: Database["public"]["Enums"]["member_role"]
         }[]
+      }
+      issue_job_materials: {
+        Args: {
+          p_effective_date: string
+          p_from: string
+          p_idempotency_key: string
+          p_job: string
+          p_lines: Json
+        }
+        Returns: string
+      }
+      job_costs: {
+        Args: { p_job: string }
+        Returns: {
+          completed_value: number
+          fee_approved: number
+          labour_cost: number
+          material_value: number
+          other_cost: number
+          paid: number
+          wip_value: number
+        }[]
+      }
+      maker_location: { Args: { p_maker_id: string }; Returns: string }
+      move_job_materials: {
+        Args: {
+          p_effective_date: string
+          p_from: string
+          p_idempotency_key: string
+          p_job: string
+          p_lines: Json
+          p_to: string
+        }
+        Returns: string
       }
       my_production_jobs: {
         Args: { p_business_id: string }
@@ -2046,6 +3340,81 @@ export type Database = {
         }
         Returns: string
       }
+      purchase_order_prices: {
+        Args: { p_po_id: string }
+        Returns: {
+          line_id: string
+          unit_price: number
+        }[]
+      }
+      receive_goods: {
+        Args: {
+          p_business_id: string
+          p_effective_date: string
+          p_idempotency_key: string
+          p_landed_cost: number
+          p_lines: Json
+          p_location: string
+          p_po_id: string
+          p_record_bill: boolean
+          p_supplier_id: string
+          p_supplier_ref: string
+        }
+        Returns: string
+      }
+      record_maker_payment: {
+        Args: {
+          p_amount: number
+          p_business_id: string
+          p_job: string
+          p_maker_id: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_paid_on: string
+          p_reference: string
+        }
+        Returns: string
+      }
+      record_qc_inspection: {
+        Args: {
+          p_defects: string
+          p_effective_date: string
+          p_idempotency_key: string
+          p_instructions: string
+          p_job: string
+          p_passed: number
+          p_rejected: number
+          p_results: Json
+          p_rework: number
+          p_to: string
+        }
+        Returns: string
+      }
+      record_supplier_bill: {
+        Args: {
+          p_amount: number
+          p_bill_date: string
+          p_bill_ref: string
+          p_business_id: string
+          p_notes: string
+          p_po_id: string
+          p_receipt_id: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
+      record_supplier_payment: {
+        Args: {
+          p_amount: number
+          p_bill_id: string
+          p_business_id: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_paid_on: string
+          p_reference: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
+      release_job_materials: { Args: { p_job: string }; Returns: undefined }
       request_adjustment: {
         Args: {
           p_business_id: string
@@ -2057,6 +3426,34 @@ export type Database = {
           p_reason: string
         }
         Returns: string
+      }
+      return_job_materials: {
+        Args: {
+          p_effective_date: string
+          p_idempotency_key: string
+          p_job: string
+          p_lines: Json
+          p_to: string
+        }
+        Returns: string
+      }
+      return_to_supplier: {
+        Args: {
+          p_effective_date: string
+          p_idempotency_key: string
+          p_lines: Json
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: string
+      }
+      reverse_goods_receipt: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: undefined
       }
       reverse_opening_batch: {
         Args: {
@@ -2070,6 +3467,20 @@ export type Database = {
         Args: { p_doc_id: string; p_idempotency_key: string; p_reason: string }
         Returns: string
       }
+      save_bom: {
+        Args: {
+          p_bom_id: string
+          p_business_id: string
+          p_instructions: string
+          p_is_one_off: boolean
+          p_labour_cost: number
+          p_lines: Json
+          p_name: string
+          p_other_cost: number
+          p_product_id: string
+        }
+        Returns: string
+      }
       save_opening_batch: {
         Args: {
           p_business_id: string
@@ -2078,6 +3489,25 @@ export type Database = {
           p_notes: string
         }
         Returns: string
+      }
+      save_purchase_order: {
+        Args: {
+          p_business_id: string
+          p_expected_date: string
+          p_lines: Json
+          p_notes: string
+          p_po_id: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
+      set_job_costs: {
+        Args: { p_job: string; p_labour_cost: number; p_other_cost: number }
+        Returns: undefined
+      }
+      set_job_material: {
+        Args: { p_item: string; p_job: string; p_qty: number; p_unit: string }
+        Returns: undefined
       }
       stock_valuation: {
         Args: { p_business_id: string }
@@ -2089,6 +3519,7 @@ export type Database = {
           value_kobo: number
         }[]
       }
+      submit_job_for_qc: { Args: { p_job: string }; Returns: undefined }
       update_member: {
         Args: {
           p_active?: boolean
@@ -2111,6 +3542,10 @@ export type Database = {
           qty_base: number
           stock_item_id: string
         }[]
+      }
+      void_supplier_record: {
+        Args: { p_id: string; p_kind: string; p_reason: string }
+        Returns: undefined
       }
     }
     Enums: {

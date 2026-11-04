@@ -103,6 +103,49 @@ export async function seedOpeningStock(owner: TestUser, businessId: string) {
   return batch as string;
 }
 
+/**
+ * Phase 2 data through the real RPCs (needs seedOpeningStock first): a supplier, an approved and
+ * part-received purchase order, a product with an active recipe, and an allocated production job.
+ */
+export async function seedPhase2(owner: TestUser, businessId: string) {
+  const c = owner.client;
+  const must = <T,>(r: { data: unknown; error: { message: string } | null }, what: string): T => {
+    if (r.error || r.data === null) throw new Error(`${what} failed: ${r.error?.message}`);
+    return r.data as T;
+  };
+  const loc = await locationIds(c, businessId);
+  const fabric = (await itemId(businessId, "FAB-001"))!;
+  const zip = (await itemId(businessId, "ZIP-20"))!;
+  const supplier = must<{ id: string }>(await c.from("suppliers").insert({ business_id: businessId, name: "Balogun Market Fabrics" }).select("id").single(), "supplier").id as string;
+  const po = must(await c.rpc("save_purchase_order", {
+    p_business_id: businessId, p_po_id: null, p_supplier_id: supplier, p_expected_date: null, p_notes: "",
+    p_lines: [{ item: fabric, qty: 10, unit: "m", unit_price: 300000 }, { item: zip, qty: 50, unit: "pc", unit_price: 9000 }],
+  }), "save_purchase_order") as string;
+  must(await c.rpc("approve_purchase_order", { p_po_id: po }).then((r) => ({ ...r, data: true })), "approve");
+  const lines = must<{ id: string; line_no: number }[]>(await c.from("purchase_order_lines").select("id, line_no").eq("po_id", po).order("line_no"), "po lines");
+  const receipt = must(await c.rpc("receive_goods", {
+    p_business_id: businessId, p_po_id: po, p_supplier_id: null, p_location: loc["Raw material store"],
+    p_effective_date: lagosDaysAgo(0), p_supplier_ref: "INV-77", p_landed_cost: 0,
+    p_lines: [{ po_line: lines[0].id, accepted: 6, rejected: 1, reject_reason: "Stained" }],
+    p_record_bill: true, p_idempotency_key: randomUUID(),
+  }), "receive_goods") as string;
+  const product = must<{ id: string }>(await c.from("products").insert({ business_id: businessId, name: "Ankara wrap dress", category: "clothing" }).select("id").single(), "product").id as string;
+  const variant = must<{ id: string }>(await c.from("product_variants").insert({ business_id: businessId, product_id: product, size: "M", sku: "WRAP-M" }).select("id").single(), "variant").id as string;
+  const bom = must(await c.rpc("save_bom", {
+    p_business_id: businessId, p_bom_id: null, p_product_id: product, p_name: "Wrap dress", p_is_one_off: false,
+    p_labour_cost: 500000, p_other_cost: 0, p_instructions: "Double-stitch the hem",
+    p_lines: [{ item: fabric, qty: 2.5, unit: "m", wastage_pct: 4 }, { item: zip, qty: 1, unit: "pc" }],
+  }), "save_bom") as string;
+  must(await c.rpc("activate_bom", { p_bom_id: bom }).then((r) => ({ ...r, data: true })), "activate_bom");
+  const maker = must<{ id: string }>(await c.from("makers").insert({ business_id: businessId, name: "Tunde Adeyemi", trade: "tailor", is_external: true }).select("id").single(), "maker").id as string;
+  const job = must(await c.rpc("create_production_job", {
+    p_business_id: businessId, p_variant_id: variant, p_qty: 2, p_bom_id: bom, p_maker_id: maker,
+    p_due_date: null, p_notes: "", p_idempotency_key: randomUUID(),
+  }), "create_production_job") as string;
+  must(await c.rpc("allocate_job_materials", { p_job: job }).then((r) => ({ ...r, data: true })), "allocate");
+  return { supplier, po, receipt, product, variant, bom, maker, job };
+}
+
 export async function itemId(businessId: string, code: string) {
   const { data } = await admin().from("stock_items").select("id").eq("business_id", businessId).eq("code", code).maybeSingle();
   return (data?.id as string | undefined) ?? null;

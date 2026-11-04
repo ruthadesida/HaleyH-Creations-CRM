@@ -8,9 +8,12 @@ export const FEATURES = {
   inventory: true,
   /** Business settings, staff and permissions. */
   settings: true,
+  /** Phase 2: purchase requests and orders, goods received, supplier returns, supplier bills and payments. */
+  purchasing: true,
+  /** Phase 2: recipes (BOMs), production jobs, reservations, WIP, external makers, QC. */
+  production: true,
   // Later phases:
   orders: false,
   payments: false,
   tasks: false,
-  production: false,
 } as const;

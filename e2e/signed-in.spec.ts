@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Cookie, expect, test } from "@playwright/test";
 import {
-  SKIP_REASON, type TestUser, createBusiness, createUser, hasLocalSupabase, itemId, seedOpeningStock, signIn,
+  SKIP_REASON, type TestUser, createBusiness, createUser, hasLocalSupabase, itemId, seedOpeningStock, seedPhase2, signIn,
 } from "./support/world";
 
 /**
@@ -28,6 +28,7 @@ test.beforeAll(async ({ browser }) => {
   slug = business.slug;
   const batch = await seedOpeningStock(owner, business.id);
   const zip = (await itemId(business.id, "ZIP-20"))!;
+  const p2 = await seedPhase2(owner, business.id);
   const w = `/w/${slug}`;
   paths = [
     { path: w, heading: "" },
@@ -52,6 +53,22 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/enquiries/new`, heading: "" },
     { path: `${w}/settings`, heading: "" },
     { path: `${w}/settings/staff`, heading: "" },
+    { path: `${w}/purchasing`, heading: "Purchasing" },
+    { path: `${w}/purchasing?show=done`, heading: "Purchasing" },
+    { path: `${w}/purchasing/new`, heading: "New purchase request" },
+    { path: `${w}/purchasing/${p2.po}`, heading: "" },
+    { path: `${w}/purchasing/${p2.po}/receive`, heading: "" },
+    { path: `${w}/purchasing/receive`, heading: "Record a purchase" },
+    { path: `${w}/purchasing/receipts`, heading: "Goods received" },
+    { path: `${w}/purchasing/receipts/${p2.receipt}`, heading: "" },
+    { path: `${w}/purchasing/suppliers`, heading: "Supplier balances" },
+    { path: `${w}/production`, heading: "Production" },
+    { path: `${w}/production/new`, heading: "New production job" },
+    { path: `${w}/production/${p2.job}`, heading: "" },
+    { path: `${w}/production/recipes`, heading: "Recipes" },
+    { path: `${w}/production/recipes/new`, heading: "New recipe" },
+    { path: `${w}/production/recipes/${p2.bom}`, heading: "Wrap dress" },
+    { path: `${w}/production/qc`, heading: "QC checklists" },
     { path: "/workspaces", heading: "" },
   ];
   const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
@@ -66,7 +83,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("every signed-in screen loads cleanly at this viewport", async ({ page }) => {
-  test.setTimeout(420_000);
+  test.setTimeout(600_000);
   for (const { path, heading } of paths) {
     await test.step(path.replace(slug, "<slug>"), async () => {
       const errors: string[] = [];
