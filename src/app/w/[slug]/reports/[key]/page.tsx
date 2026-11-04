@@ -50,13 +50,16 @@ async function ReportView({ params, searchParams }: PageProps<"/w/[slug]/reports
         {report.range && <p className="text-sm text-muted">{formatDate(from)} to {formatDate(to)}</p>}
       </header>
 
+      {!error && rows.length > 0 && columns.length > 3 && (
+        <p className="mb-2 text-sm text-muted sm:hidden">Swipe the table sideways to see every column.</p>
+      )}
       {error ? (
         <p role="alert" className="rounded-[var(--radius-card)] bg-danger-soft p-4 text-danger">{error.message}</p>
       ) : rows.length === 0 ? (
         <EmptyState title="Nothing to show">Nothing matches this report{report.range ? " for these dates" : ""}.</EmptyState>
       ) : (
         // Wide tables scroll sideways on phones; focusable so keyboard users can scroll too.
-        <div className="overflow-x-auto overscroll-x-contain rounded-[var(--radius-card)] border border-line bg-surface focus-visible:outline-2 focus-visible:outline-gold" tabIndex={0} role="region" aria-label={`${report.title} table`}>
+        <div className="scroll-shadows overflow-x-auto overscroll-x-contain rounded-[var(--radius-card)] border border-line focus-visible:outline-2 focus-visible:outline-gold" tabIndex={0} role="region" aria-label={`${report.title} table`}>
           <table className="w-full min-w-max text-left text-sm">
             <thead>
               <tr className="border-b border-line text-muted">

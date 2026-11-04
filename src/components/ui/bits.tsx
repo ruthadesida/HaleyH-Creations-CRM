@@ -20,6 +20,7 @@ const tones = {
   gold: "bg-gold-soft text-gold-ink",
   success: "bg-success-soft text-success",
   warn: "bg-warn-soft text-warn",
+  info: "bg-info-soft text-info",
   danger: "bg-danger-soft text-danger",
 } as const;
 
@@ -27,7 +28,7 @@ export type Tone = keyof typeof tones;
 
 export function Chip({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cn("inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-xs font-medium", tones[tone], className)}>
+    <span className={cn("inline-flex h-7 items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium", tones[tone], className)}>
       {children}
     </span>
   );

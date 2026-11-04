@@ -17,7 +17,10 @@
   --color-success: #2f6b4f;
   --color-success-soft: #2f6b4f1a;
   --color-warn: #8a5a00;
-  --color-warn-soft: #8a5a001a;
+  --color-warn-soft: #8a5a0024;
+  /* Work under way (confirmed, in production, ordered from a supplier): a muted indigo, distinct from gold and amber. */
+  --color-info: #33557d;
+  --color-info-soft: #33557d1a;
   --color-danger: #a63a2b;
   --color-danger-soft: #a63a2b14;
 
@@ -112,4 +115,14 @@ button,
     background: var(--color-surface) !important;
     backdrop-filter: none !important;
   }
+}
+
+/* Scroll shadows: an edge shadow shows only while there is more to scroll that way (sideways tables on phones). */
+.scroll-shadows {
+  background:
+    linear-gradient(to right, var(--color-surface) 30%, transparent) left / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--color-surface) 30%, transparent) right / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(35 33 30 / 0.16), transparent) left / 0.75rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(35 33 30 / 0.16), transparent) right / 0.75rem 100% no-repeat scroll,
+    var(--color-surface);
 }

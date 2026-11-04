@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ActionButton } from "@/components/action-button";
 import { BackLink } from "@/components/back-link";
+import { MoreActions } from "@/components/more-actions";
 import { ReasonButton } from "@/components/reason-button";
 import { ToastOnParam } from "@/components/toast-on-param";
 import { Card, Chip, Detail, Money, SectionTitle } from "@/components/ui/bits";
@@ -86,6 +87,9 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
         {o.cancel_reason && <p className="rounded-lg bg-ink/5 px-3 py-2">Cancelled: {o.cancel_reason}</p>}
         {!confirmed && open && <p className="rounded-lg bg-warn-soft px-3 py-2 text-sm">A quotation: not a sale yet, and nothing is reserved. Confirm it when the customer agrees.</p>}
 
+        {open && confirmed && toGo.length > 0 && needsApproval && (
+          <p className="text-sm text-warn"><Money minor={balance} currency={cur} /> is still owed. {can.own(role) ? "Record the payment, or approve dispatching before it's paid." : "Record the payment, or ask an owner to approve dispatching first."}</p>
+        )}
         {open && (
           <div className="flex flex-wrap gap-2">
             {!confirmed && <ActionButton variant="gold" action={confirmOrder.bind(null, slug, id)}>Confirm order</ActionButton>}
@@ -99,11 +103,12 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                 explain="The order can then go out with money still owed. The balance stays on the order."
                 action={approveUnpaid.bind(null, slug, id)} confirmLabel="Approve" />
             )}
-            {confirmed && short && <ActionButton variant="ghost" action={reserveStock.bind(null, slug, id)}>Reserve newly arrived stock</ActionButton>}
             {o.fulfilment_stage === "dispatched" && <ActionButton variant="secondary" action={markDelivered.bind(null, slug, id)}>Mark delivered</ActionButton>}
             {anyOut && <ReturnSheet slug={slug} orderId={id} today={today}
               lines={(items ?? []).filter((i) => i.dispatched_quantity - (returnedOf.get(i.id) ?? 0) > 0)
                 .map((i) => ({ id: i.id, description: i.description, remaining: i.dispatched_quantity - (returnedOf.get(i.id) ?? 0) }))} />}
+            <MoreActions>
+            {confirmed && short && <ActionButton variant="ghost" action={reserveStock.bind(null, slug, id)}>Reserve newly arrived stock</ActionButton>}
             {confirmed && can.own(role) && Number(o.net_paid_minor) > 0 && <PaymentSheet slug={slug} orderId={id} kind="refund" today={today} />}
             <MessageSheet phone={o.customers?.whatsapp || o.customers?.phone || null} templates={templates ?? []}
               suggested={o.fulfilment_stage === "dispatched" ? "order_dispatched" : o.fulfilment_stage === "ready_for_dispatch" ? "order_ready" : (o.balance_minor ?? 0) > 0 && o.confirmed_at ? "payment_reminder" : "order_confirmed"}
@@ -117,10 +122,8 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                 explain="Releases reserved stock. Production jobs not yet started are cancelled; jobs already under way carry on for stock. Money received stays recorded as a refund due."
                 action={cancelOrder.bind(null, slug, id)} confirmLabel="Cancel order" />
             )}
+            </MoreActions>
           </div>
-        )}
-        {open && confirmed && toGo.length > 0 && needsApproval && (
-          <p className="text-sm text-warn"><Money minor={balance} currency={cur} /> is still owed. {can.own(role) ? "Record the payment, or approve dispatching before it's paid." : "Record the payment, or ask an owner to approve dispatching first."}</p>
         )}
         {o.unpaid_dispatch_approved_at && balance > 0 && <p className="text-sm text-muted">An owner approved dispatching before full payment: {o.unpaid_dispatch_reason}</p>}
       </header>

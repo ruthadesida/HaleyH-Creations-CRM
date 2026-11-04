@@ -129,6 +129,9 @@ test("front office sells, dispatches and takes a return; the owner approves and 
 
   await test.step("the owner refunds; a refund never restocks (test K)", async () => {
     await page.goto(orderUrl);
+    // On phones the less-used actions sit behind "More actions".
+    const more = page.getByRole("button", { name: "More actions" });
+    if (await more.isVisible()) await more.click();
     await page.getByRole("button", { name: "Record refund" }).click();
     await dialog(page).getByLabel("Amount refunded (₦)").fill("10000");
     await dialog(page).getByRole("button", { name: "Record refund" }).click();

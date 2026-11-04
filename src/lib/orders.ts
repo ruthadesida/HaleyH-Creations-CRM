@@ -9,17 +9,17 @@ export type OrderLike = {
   payment_status?: string | null;
 };
 
-export type Tone = "neutral" | "gold" | "success" | "warn" | "danger";
+export type Tone = "neutral" | "gold" | "info" | "success" | "warn" | "danger";
 
 export function orderProgress(o: OrderLike): { label: string; tone: Tone } {
   if (o.status === "cancelled") return { label: "Cancelled", tone: "neutral" };
-  if (!o.confirmed_at) return { label: "Quotation", tone: "warn" };
+  if (!o.confirmed_at) return { label: "Quotation", tone: "neutral" };
   switch (o.fulfilment_stage) {
     case "delivered": return { label: "Delivered", tone: "success" };
     case "dispatched": return { label: "Dispatched", tone: "success" };
-    case "ready_for_dispatch": return { label: "Ready to dispatch", tone: "gold" };
-    case "in_production": return { label: "In production", tone: "gold" };
-    case "quality_check": return { label: "Quality check", tone: "gold" };
-    default: return { label: "Confirmed", tone: "gold" };
+    case "ready_for_dispatch": return { label: "Ready to dispatch", tone: "gold" }; // the next move is staff's
+    case "in_production": return { label: "In production", tone: "info" };
+    case "quality_check": return { label: "Quality check", tone: "info" };
+    default: return { label: "Confirmed", tone: "info" };
   }
 }

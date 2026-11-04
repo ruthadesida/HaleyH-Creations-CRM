@@ -148,8 +148,8 @@ export const BATCH_STATUS = {
 
 export const PO_STATUS = {
   draft: { label: "Request: waiting for owner approval", short: "Request", tone: "warn" },
-  ordered: { label: "Ordered", short: "Ordered", tone: "gold" },
-  part_received: { label: "Part received", short: "Part received", tone: "gold" },
+  ordered: { label: "Ordered", short: "Ordered", tone: "info" },
+  part_received: { label: "Part received", short: "Part received", tone: "info" },
   received: { label: "Received", short: "Received", tone: "success" },
   cancelled: { label: "Cancelled", short: "Cancelled", tone: "neutral" },
   closed: { label: "Closed (rest not coming)", short: "Closed", tone: "neutral" },
@@ -157,8 +157,8 @@ export const PO_STATUS = {
 
 export const JOB_STATUS = {
   planned: { label: "Planned", tone: "neutral" },
-  allocated: { label: "Materials allocated", tone: "gold" },
-  in_progress: { label: "In progress", tone: "gold" },
+  allocated: { label: "Materials allocated", tone: "info" },
+  in_progress: { label: "In progress", tone: "info" },
   in_qc: { label: "Waiting for QC", tone: "warn" },
   completed: { label: "Completed", tone: "success" },
   cancelled: { label: "Cancelled", tone: "neutral" },
