@@ -53,7 +53,7 @@ async function Jobs({ params, searchParams }: PageProps<"/w/[slug]/production">)
                   <li key={j.id} className="border-b border-line last:border-b-0">
                     <Link href={`${base}/${j.id}`} className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                       <span className="min-w-0">
-                        <span className="block truncate font-medium">{j.number} · {j.stock_items?.name ?? "Item"}</span>
+                        <span className="flex min-w-0 gap-1 font-medium"><span className="shrink-0 tabular">{j.number}</span><span className="truncate">· {j.stock_items?.name ?? "Item"}</span></span>
                         <span className="block truncate text-sm text-muted">
                           {done > 0 ? `${done} of ${Number(j.planned_qty)} done` : `${Number(j.planned_qty)} to make`}
                           {j.makers?.name && ` · ${j.makers.name}`}

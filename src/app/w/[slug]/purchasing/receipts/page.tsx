@@ -29,7 +29,7 @@ async function Receipts({ params }: PageProps<"/w/[slug]/purchasing/receipts">) 
             <li key={r.id} className="border-b border-line last:border-b-0">
               <Link href={`${base}/receipts/${r.id}`} className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                 <span className="min-w-0">
-                  <span className="block truncate font-medium">{r.number} · {r.suppliers?.name ?? "No supplier recorded"}</span>
+                  <span className="flex min-w-0 gap-1 font-medium"><span className="shrink-0 tabular">{r.number}</span><span className="truncate">· {r.suppliers?.name ?? "No supplier recorded"}</span></span>
                   <span className="block truncate text-sm text-muted">
                     {formatDate(r.effective_date)} · {r.purchase_orders?.number ?? "Quick purchase"}{r.supplier_ref && ` · ${r.supplier_ref}`}
                   </span>

@@ -113,7 +113,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                 balance: formatMoney(Math.max(o.balance_minor ?? 0, 0), cur), courier: o.courier_name ? ` with ${o.courier_name}` : "",
               }} />
             {!anyOut && (
-              <ReasonButton label="Cancel order" title={`Cancel ${o.order_number}`} variant="ghost"
+              <ReasonButton label="Cancel order" title={`Cancel ${o.order_number}`} variant="danger"
                 explain="Releases reserved stock. Production jobs not yet started are cancelled; jobs already under way carry on for stock. Money received stays recorded as a refund due."
                 action={cancelOrder.bind(null, slug, id)} confirmLabel="Cancel order" />
             )}

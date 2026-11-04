@@ -268,7 +268,7 @@ async function Job({ params }: PageProps<"/w/[slug]/production/[id]">) {
           )}
 
           {open && Number(job.qty_passed) + Number(job.qty_rejected) === 0 && (
-            <ReasonButton label="Cancel job" title={`Cancel ${job.number}`} variant="ghost"
+            <ReasonButton label="Cancel job" title={`Cancel ${job.number}`} variant="danger"
               explain="Releases any reservations. Materials still with the job must be returned first."
               action={cancelJob.bind(null, slug, id)} confirmLabel="Cancel job" />
           )}

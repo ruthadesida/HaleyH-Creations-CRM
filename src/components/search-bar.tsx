@@ -30,7 +30,7 @@ export function SearchBar({ placeholder, className }: { placeholder: string; cla
       <Search aria-hidden className={cn("pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2", pending ? "text-gold" : "text-muted")} />
       <input
         type="search"
-        aria-label={placeholder}
+        aria-label={placeholder.startsWith("Search") ? placeholder : `Search: ${placeholder}`}
         placeholder={placeholder}
         value={value}
         enterKeyHint="search"

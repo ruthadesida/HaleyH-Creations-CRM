@@ -99,13 +99,14 @@ async function PhoneNav({ params }: SlugParams) {
 
 export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[slug]">) {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] print:block">
+    {/* The sidebar divider is drawn on the page itself so it runs the full height of long pages. */}
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:bg-[linear-gradient(var(--color-line),var(--color-line))] lg:bg-[length:1px_100%] lg:bg-[position:247px_0] lg:bg-no-repeat print:block print:bg-none">
       <a href="#content" className="sr-only z-50 rounded bg-ink px-4 py-2 text-ivory focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         Skip to content
       </a>
 
       {/* Children never shrink: on a short screen (or with a long business name) the sidebar scrolls instead of squashing buttons. */}
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto overscroll-contain border-r border-line px-4 py-6 lg:flex print:hidden [&>*]:shrink-0">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto overscroll-contain px-4 py-6 lg:flex print:hidden [&>*]:shrink-0">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-ink/5" />}>
           <SidebarContent params={params} />
         </Suspense>

@@ -71,7 +71,7 @@ async function Orders({ params, searchParams }: PageProps<"/w/[slug]/orders">) {
                 <li key={o.id} className="border-b border-line last:border-b-0">
                   <Link href={`${base}/${o.id}`} className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5 sm:px-5">
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{o.order_number} · {o.customers?.full_name}</span>
+                      <span className="flex min-w-0 gap-1 font-medium"><span className="shrink-0 tabular">{o.order_number}</span><span className="truncate">· {o.customers?.full_name}</span></span>
                       <span className="block truncate text-sm text-muted">
                         {p.label}{o.promised_date && ` · promised ${formatDate(o.promised_date)}`}
                         {o.status === "open" && o.confirmed_at && ` · ${PAYMENT_STATUS_LABEL[o.payment_status as PaymentStatus]}`}

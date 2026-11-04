@@ -49,7 +49,7 @@ async function CustomerList({ params, searchParams }: PageProps<"/w/[slug]/custo
   return (
     <>
       <div className="mb-5 flex flex-col gap-3">
-        <SearchBar placeholder="Search name, phone or email" />
+        <SearchBar placeholder="Name, phone or email" />
         <FilterPills name="tag" base={base} current={tag} options={[
           { value: "", label: "All" },
           { value: "new customer", label: "New" },
