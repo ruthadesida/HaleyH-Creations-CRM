@@ -2,9 +2,12 @@ import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 
-/** A money amount. Kept on one line, except that a very large figure may wrap after a thousands comma. */
+/** A money amount on one line; a figure of a billion or more may wrap after a thousands comma on a narrow screen. */
 export function Money({ minor, currency = "NGN", className }: { minor: number; currency?: string; className?: string }) {
-  const parts = formatMoney(minor, currency).replace(/\s/g, " ").split(",");
+  const text = formatMoney(minor, currency);
+  // Up to hundreds of millions (e.g. ₦999,999,999) never breaks; only longer figures may.
+  if (text.length <= 12) return <span className={cn("tabular whitespace-nowrap", className)}>{text}</span>;
+  const parts = text.replace(/\s/g, "\u00a0").split(",");
   return (
     <span className={cn("tabular", className)}>
       {parts.map((p, i) => <Fragment key={i}>{i > 0 && <>,<wbr /></>}{p}</Fragment>)}
