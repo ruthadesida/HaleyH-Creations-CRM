@@ -137,12 +137,14 @@ select throws_ok(
 reset role;
 
 select tests.login('b0000000-0000-0000-0000-000000000001');
-insert into public.stock_items (id, business_id, kind, code, name, base_unit)
-  values ('bbbb0000-0000-0000-0000-0000000000f1', 'bbbbbbbb-0000-0000-0000-000000000000', 'raw_material', 'B-ONLY', 'B item', 'pc');
+-- (Nobody can choose row ids: they're always generated.)
+insert into public.stock_items (business_id, kind, code, name, base_unit)
+  values ('bbbbbbbb-0000-0000-0000-000000000000', 'raw_material', 'B-ONLY', 'B item', 'pc');
+insert into t select 'bitem', id from public.stock_items where code = 'B-ONLY';
 reset role;
 select tests.login('a0000000-0000-0000-0000-000000000001');
 select throws_ok(
-  $$ select public.post_transfer('aaaaaaaa-0000-0000-0000-000000000000', 'bbbb0000-0000-0000-0000-0000000000f1',
+  $$ select public.post_transfer('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'bitem'),
        tests.loc('Raw material store'), tests.loc('Production floor'), 1, current_date, null, gen_random_uuid()) $$,
   'P0001', null, 'Another business''s item cannot be moved through this business');
 select throws_ok($$ insert into public.stock_movements (business_id, document_id, stock_item_id, location_id, quantity, effective_date)
