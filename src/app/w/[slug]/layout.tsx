@@ -1,9 +1,10 @@
-import { ArrowLeftRight, LogOut } from "lucide-react";
+import { ArrowLeftRight, Bell, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { Wordmark } from "@/components/wordmark";
 import { getWorkspace } from "@/lib/dal";
+import { createClient } from "@/lib/supabase/server";
 import { BottomTabs, NewButton, Sidebar } from "./nav";
 
 type SlugParams = { params: Promise<{ slug: string }> };
@@ -23,8 +24,34 @@ async function SidebarContent({ params }: SlugParams) {
         <Wordmark name={business.name} className="block text-xl leading-tight" />
       </Link>
       {role !== "production_manager" && <NewButton slug={slug} variant="sidebar" />}
+      <div className="flex gap-1">
+        <Link href={`/w/${slug}/search`} className="flex h-11 flex-1 items-center gap-2 rounded-[var(--radius-card)] border border-line px-3 text-sm text-muted hover:bg-ink/5">
+          <Search aria-hidden className="size-4" /> Search
+        </Link>
+        <Suspense fallback={<span className="size-11" />}>
+          <BellLink slug={slug} className="relative flex size-11 items-center justify-center rounded-[var(--radius-card)] border border-line text-muted hover:bg-ink/5" />
+        </Suspense>
+      </div>
       <Sidebar slug={slug} role={role} name={business.name} />
     </>
+  );
+}
+
+/** How many things need attention (worked out from the records). */
+async function notificationCount(slug: string) {
+  const { business } = await getWorkspace(slug);
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("my_notifications", { p_business_id: business.id });
+  return (data ?? []).length;
+}
+
+async function BellLink({ slug, className }: { slug: string; className?: string }) {
+  const n = await notificationCount(slug);
+  return (
+    <Link href={`/w/${slug}/notifications`} className={className} aria-label={n ? `Notifications, ${n} need attention` : "Notifications"}>
+      <Bell aria-hidden className="size-5" />
+      {n > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 min-w-4 rounded-full bg-danger px-1 text-center text-[10px] leading-4 font-semibold text-white">{n > 99 ? "99+" : n}</span>}
+    </Link>
   );
 }
 
@@ -42,9 +69,17 @@ async function TopBar({ params }: SlugParams) {
         <Link href={`/w/${slug}`} className="min-w-0">
           <Wordmark name={business.name} className="block truncate text-lg" />
         </Link>
-        <Link href="/workspaces" className="flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" aria-label="Switch workspace">
-          <ArrowLeftRight aria-hidden className="size-5" />
-        </Link>
+        <div className="flex items-center">
+          <Link href={`/w/${slug}/search`} className="flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" aria-label="Search">
+            <Search aria-hidden className="size-5" />
+          </Link>
+          <Suspense fallback={<span className="size-11" />}>
+            <BellLink slug={slug} className="relative flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" />
+          </Suspense>
+          <Link href="/workspaces" className="flex size-11 items-center justify-center rounded-full text-muted active:bg-ink/5" aria-label="Switch workspace">
+            <ArrowLeftRight aria-hidden className="size-5" />
+          </Link>
+        </div>
       </header>
     </>
   );

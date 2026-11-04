@@ -3578,6 +3578,17 @@ export type Database = {
         }
         Returns: string
       }
+      my_notifications: {
+        Args: { p_business_id: string }
+        Returns: {
+          detail: string
+          kind: string
+          ref_id: string
+          ref_type: string
+          severity: string
+          title: string
+        }[]
+      }
       my_production_jobs: {
         Args: { p_business_id: string }
         Returns: {
@@ -3614,6 +3625,23 @@ export type Database = {
           cost_complete: boolean
           fulfilled_value: number
           gross_profit: number
+        }[]
+      }
+      owner_overview: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          cash_received: number
+          confirmed_value: number
+          fulfilled_sales: number
+          gross_profit: number
+          open_jobs: number
+          overdue_jobs: number
+          owed_by_customers: number
+          owed_to_suppliers: number
+          profit_complete: boolean
+          shortages: number
+          stock_value: number
+          wip_value: number
         }[]
       }
       post_opening_batch: {
@@ -3719,6 +3747,202 @@ export type Database = {
         Returns: string
       }
       release_job_materials: { Args: { p_job: string }; Returns: undefined }
+      report_availability: {
+        Args: { p_business_id: string }
+        Returns: {
+          available: number
+          code: string
+          in_quarantine: number
+          item: string
+          kind: string
+          on_hand: number
+          reserved: number
+          unit: string
+        }[]
+      }
+      report_balances: {
+        Args: { p_business_id: string }
+        Returns: {
+          customer: string
+          order_number: string
+          order_value: number
+          ordered: string
+          owed: number
+          progress: string
+          received: number
+        }[]
+      }
+      report_cash: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          method: string
+          net: number
+          payments: number
+          received: number
+          refunded: number
+        }[]
+      }
+      report_gross_profit: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          cogs: number
+          cost_complete: boolean
+          customer: string
+          fulfilled_sales: number
+          gross_profit: number
+          margin_pct: number
+          order_number: string
+        }[]
+      }
+      report_makers: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          external: boolean
+          maker: string
+          open_jobs: number
+          overdue_jobs: number
+          units_completed: number
+        }[]
+      }
+      report_material_variance: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          item: string
+          job: string
+          material: string
+          planned: number
+          unit: string
+          used: number
+          variance: number
+          variance_pct: number
+        }[]
+      }
+      report_movements: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          document: string
+          effective: string
+          item: string
+          location: string
+          quantity: number
+          reason: string
+          type: string
+          unit: string
+          unit_cost: number
+        }[]
+      }
+      report_orders_attention: {
+        Args: { p_business_id: string }
+        Returns: {
+          customer: string
+          needs: string
+          order_number: string
+          owed: number
+          progress: string
+          promised: string
+        }[]
+      }
+      report_qc: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          failure_pct: number
+          inspected: number
+          item: string
+          passed: number
+          rejected: number
+          rework: number
+        }[]
+      }
+      report_sales_by_channel: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          channel: string
+          order_value: number
+          orders: number
+          received: number
+        }[]
+      }
+      report_sales_by_period: {
+        Args: {
+          p_business_id: string
+          p_from: string
+          p_grain: string
+          p_to: string
+        }
+        Returns: {
+          cash_received: number
+          confirmed_value: number
+          fulfilled_sales: number
+          period: string
+        }[]
+      }
+      report_sales_by_product: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          cogs: number
+          cost_complete: boolean
+          gross_profit: number
+          product: string
+          sales: number
+          units: number
+        }[]
+      }
+      report_shortages: {
+        Args: { p_business_id: string }
+        Returns: {
+          available: number
+          code: string
+          item: string
+          needed_by_jobs: number
+          reorder_level: number
+          short_by: number
+          unit: string
+        }[]
+      }
+      report_stock_by_location: {
+        Args: { p_business_id: string }
+        Returns: {
+          code: string
+          item: string
+          kind: string
+          location: string
+          on_hand: number
+          unit: string
+          value: number
+        }[]
+      }
+      report_supplier_balances: {
+        Args: { p_business_id: string }
+        Returns: {
+          billed: number
+          owed: number
+          paid: number
+          supplier: string
+        }[]
+      }
+      report_valuation: {
+        Args: { p_business_id: string }
+        Returns: {
+          items: number
+          items_missing_cost: number
+          kind: string
+          value: number
+        }[]
+      }
+      report_wip: {
+        Args: { p_business_id: string }
+        Returns: {
+          age_days: number
+          due: string
+          item: string
+          job: string
+          maker: string
+          started: string
+          status: string
+          units_left: number
+          wip_value: number
+        }[]
+      }
       request_adjustment: {
         Args: {
           p_business_id: string
@@ -3805,6 +4029,15 @@ export type Database = {
           p_supplier_id: string
         }
         Returns: string
+      }
+      search_everything: {
+        Args: { p_business_id: string; p_query: string }
+        Returns: {
+          kind: string
+          ref_id: string
+          subtitle: string
+          title: string
+        }[]
       }
       set_job_costs: {
         Args: { p_job: string; p_labour_cost: number; p_other_cost: number }

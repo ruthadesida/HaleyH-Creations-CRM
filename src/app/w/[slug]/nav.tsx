@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   Boxes,
   ClipboardCheck,
   Factory,
@@ -44,6 +45,7 @@ function items(slug: string, role: Role) {
       FEATURES.inventory && { href: `${stock}/counts`, label: "Counts", icon: ClipboardCheck },
     ];
     const extra: (Item | false)[] = [
+      FEATURES.reports && { href: `${base}/reports`, label: "Reports", icon: BarChart3 },
       FEATURES.inventory && { href: `${stock}/makers`, label: "Makers", icon: Scissors },
       FEATURES.inventory && { href: `${stock}/movements`, label: "Movements", icon: History },
       FEATURES.inventory && { href: `${stock}/opening`, label: "Opening stock", icon: FileUp },
@@ -63,6 +65,8 @@ function items(slug: string, role: Role) {
   const extra: (Item | false)[] = [
     FEATURES.production && role === "owner" && { href: `${base}/production`, label: "Production", icon: Factory },
     FEATURES.purchasing && role === "owner" && { href: `${base}/purchasing`, label: "Purchasing", icon: Truck },
+    FEATURES.reports && { href: `${base}/reports`, label: "Reports", icon: BarChart3 },
+    FEATURES.payments && { href: `${base}/payments`, label: "Payments", icon: Wallet },
     FEATURES.tasks && { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
     FEATURES.settings && role === "owner" && { href: `${base}/settings`, label: "Settings", icon: Settings },
   ];

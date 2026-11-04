@@ -15,6 +15,8 @@ export const FEATURES = {
   /** Phase 3: quotations, orders, reservations, dispatch, returns; customer payments and refunds. */
   orders: true,
   payments: true,
+  /** Phase 4: reports with CSV exports, owner overview, notifications, search, job sheets, templates, imports. */
+  reports: true,
   // Later phases:
   tasks: false,
 } as const;

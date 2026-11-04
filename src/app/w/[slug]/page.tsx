@@ -81,6 +81,11 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
       .not("follow_up_at", "is", null).lt("follow_up_at", endToday).order("follow_up_at").limit(6),
   ]);
 
+  // Owners: one overview of the whole business for the chosen period.
+  const overview = role === "owner"
+    ? (await supabase.rpc("owner_overview", { p_business_id: bid, p_from: from, p_to: to })).data?.[0]
+    : undefined;
+
   const outstanding = (balances.data ?? []).reduce((s, r) => s + (r.balance_minor ?? 0), 0);
   const receivedNet = (received.data ?? []).reduce(
     (s, p) => s + (p.kind === "refund" ? -p.amount_minor : p.amount_minor), 0);
@@ -121,18 +126,35 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
         </div>
       </section>}
 
-      {FEATURES.payments && <section aria-labelledby="money" className="mb-8">
+      {overview && (
+        <section aria-labelledby="overview" className="mb-8">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="overview" className="text-base font-semibold">Business overview · {PERIODS[period].toLowerCase()}</h2>
+            <PeriodNav base={base} period={period} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Stat href={`${base}/reports/cash?from=${from}&to=${to}`} label="Cash received" money={Number(overview.cash_received)} currency={cur} note="Recorded manually, net of refunds" />
+            <Stat href={`${base}/reports/sales-by-channel?from=${from}&to=${to}`} label="Orders confirmed" money={Number(overview.confirmed_value)} currency={cur} note="Quotations excluded" />
+            <Stat href={`${base}/reports/sales-by-product?from=${from}&to=${to}`} label="Fulfilled sales" money={Number(overview.fulfilled_sales)} currency={cur} note="Dispatched, after discounts, less returns" />
+            <Stat href={`${base}/reports/gross-profit?from=${from}&to=${to}`} label="Estimated gross profit" money={Number(overview.gross_profit)} currency={cur}
+              note={overview.profit_complete ? "Not net profit" : "Incomplete: some costs missing"} alert={!overview.profit_complete} />
+            <Stat href={`${base}/reports/balances`} label="Owed by customers" money={Number(overview.owed_by_customers)} currency={cur} note="Confirmed open orders" />
+            <Stat href={`${base}/reports/supplier-balances`} label="Owed to suppliers" money={Number(overview.owed_to_suppliers)} currency={cur} note="Bills less payments" />
+            <Stat href={`${base}/reports/valuation`} label="Stock value" money={Number(overview.stock_value)} currency={cur} note="At moving average cost" />
+            <Stat href={`${base}/reports/wip`} label="Work in progress" money={Number(overview.wip_value)} currency={cur}
+              note={`${overview.open_jobs} open job${Number(overview.open_jobs) === 1 ? "" : "s"}${Number(overview.overdue_jobs) > 0 ? `, ${overview.overdue_jobs} overdue` : ""}`}
+              alert={Number(overview.overdue_jobs) > 0} />
+          </div>
+          {Number(overview.shortages) > 0 && (
+            <p className="mt-3 text-sm"><Link href={`${base}/reports/shortages`} className="text-warn underline underline-offset-4">{overview.shortages} material{Number(overview.shortages) === 1 ? " is" : "s are"} short or below reorder level</Link></p>
+          )}
+        </section>
+      )}
+
+      {FEATURES.payments && !overview && <section aria-labelledby="money" className="mb-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 id="money" className="text-base font-semibold">Money</h2>
-          <nav aria-label="Period" className="flex flex-wrap gap-1.5">
-            {(Object.keys(PERIODS) as Period[]).map((p) => (
-              <Link key={p} href={`${base}?period=${p}`} scroll={false} aria-current={p === period ? "true" : undefined}
-                className={cn("inline-flex min-h-11 items-center rounded-full px-4 text-sm transition-colors duration-150",
-                  p === period ? "bg-ink text-ivory" : "bg-ink/5 text-ink hover:bg-ink/10")}>
-                {PERIODS[p]}
-              </Link>
-            ))}
-          </nav>
+          <PeriodNav base={base} period={period} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <MaybeLink href={FEATURES.payments && `${base}/payments?from=${from}&to=${to}`}>
@@ -191,6 +213,20 @@ async function Dashboard({ params, searchParams }: PageProps<"/w/[slug]">) {
         )}
       </section>
     </>
+  );
+}
+
+function PeriodNav({ base, period }: { base: string; period: Period }) {
+  return (
+    <nav aria-label="Period" className="flex flex-wrap gap-1.5">
+      {(Object.keys(PERIODS) as Period[]).map((p) => (
+        <Link key={p} href={`${base}?period=${p}`} scroll={false} aria-current={p === period ? "true" : undefined}
+          className={cn("inline-flex min-h-11 items-center rounded-full px-4 text-sm transition-colors duration-150",
+            p === period ? "bg-ink text-ivory" : "bg-ink/5 text-ink hover:bg-ink/10")}>
+          {PERIODS[p]}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

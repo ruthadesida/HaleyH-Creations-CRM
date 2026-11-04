@@ -38,11 +38,11 @@ select results_eq($$ select units, sales, cogs, gross_profit, cost_complete from
 select results_eq($$ select channel, orders, order_value from public.report_sales_by_channel('aaaaaaaa-0000-0000-0000-000000000000', current_date - 1, current_date) $$,
   $$ values ('instagram'::text, 1::bigint, 3000000::numeric) $$, 'Sales by channel counts confirmed orders');
 select results_eq($$ select sum(cash_received) from public.report_sales_by_period('aaaaaaaa-0000-0000-0000-000000000000', current_date - 1, current_date, 'day') $$,
-  array[3000000::numeric], 'Cash received by day adds up');
+  array[4000000::numeric], 'Cash received by day adds up (this order''s ₦30,000 + the fixture order''s ₦10,000 deposit)');
 select results_eq($$ select value from public.report_valuation('aaaaaaaa-0000-0000-0000-000000000000') where kind = 'finished_good' $$,
   array[1200000::numeric], 'Valuation: 2 dresses left at ₦6,000');
 select results_eq($$ select confirmed_value, cash_received, fulfilled_sales, gross_profit from public.owner_overview('aaaaaaaa-0000-0000-0000-000000000000', current_date - 1, current_date) $$,
-  $$ values (3000000::numeric, 3000000::numeric, 3000000::numeric, 1800000::numeric) $$, 'The owner overview agrees with the reports');
+  $$ values (3000000::numeric, 4000000::numeric, 3000000::numeric, 1800000::numeric) $$, 'The owner overview agrees with the reports');
 reset role;
 
 select tests.login('a0000000-0000-0000-0000-000000000002'); -- front office
