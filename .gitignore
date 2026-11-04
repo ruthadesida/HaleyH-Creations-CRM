@@ -47,3 +47,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Worst-case screenshots from e2e/worst-case.spec.ts
+/e2e-shots/
