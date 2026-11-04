@@ -27,6 +27,8 @@ export function PoForm({ slug, id, suppliers, items, units, showPrices, defaults
   const [pending, start] = useTransition();
   const byId = new Map(items.map((i) => [i.id, i]));
   const update = (idx: number, patch: Partial<Line>) => setLines(lines.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  // The unit on screen is the unit submitted: the chosen one, else the first option (the purchase pack).
+  const shownUnit = (l: Line) => l.unit || unitOptions(byId.get(l.item), units)[0] || "";
 
   return (
     <form className="flex flex-col gap-6" noValidate onSubmit={(e) => {
@@ -37,7 +39,7 @@ export function PoForm({ slug, id, suppliers, items, units, showPrices, defaults
       start(async () => {
         const r = await savePurchaseOrder(slug, id, {
           supplier, expected_date: String(fd.get("expected_date") ?? ""), notes: String(fd.get("notes") ?? ""),
-          lines: filled.map((l) => ({ item: l.item, qty: l.qty, unit: l.unit || byId.get(l.item)?.base_unit || "", price: showPrices ? l.price : undefined })),
+          lines: filled.map((l) => ({ item: l.item, qty: l.qty, unit: shownUnit(l), price: showPrices ? l.price : undefined })),
         });
         if (r && !r.ok) toast.error(r.message);
       });

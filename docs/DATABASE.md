@@ -1,6 +1,6 @@
 # Database
 
-_Last updated: 2026-11-03_
+_Last updated: 2026-11-04 (Phase 2)_
 
 Source of truth: `supabase/migrations/`. Never change the database without a migration.
 
@@ -54,6 +54,23 @@ Source of truth: `supabase/migrations/`. Never change the database without a mig
 
 Posting RPCs: `post_transfer`, `reverse_stock_document`, `validate_opening_lines`, `save_opening_batch`, `post_opening_batch`, `reverse_opening_batch`, `discard_opening_batch`, `request_adjustment`, `decide_adjustment`. Cost readers: `stock_valuation`, `opening_batch_costs` (owners and permitted production managers only).
 
+## Phase 2 tables (migrations 0011–0012)
+
+| Table | Purpose |
+|---|---|
+| `purchase_orders`, `purchase_order_lines` | Requests (draft) → owner-approved orders; line qty in the ordered unit with its base factor; received/rejected base quantities; hidden `unit_price` |
+| `goods_receipts`, `goods_receipt_lines` | Deliveries (against a PO or quick purchase): accepted/rejected/returned quantities, hidden price, landed cost and stock cost; linked stock document |
+| `supplier_returns`, `supplier_return_lines` | Accepted goods sent back after receipt |
+| `supplier_bills`, `supplier_payments`, `supplier_balances` (view) | Owner-only money records ("Recorded manually"); voided, never deleted |
+| `stock_reservations`, `stock_availability` (view) | Reserved quantities by source (production job now, sales orders later); available = on hand outside Quarantine − reserved |
+| `boms`, `bom_lines` | Recipes per product with versions (draft → active → archived), one-off specs, per-variant lines, wastage, hidden labour/other cost |
+| `production_jobs` (extended) | Job number, product/variant, planned qty, recipe version copied, maker, dates, passed/rejected qty, hidden labour/other cost, maker fee approval |
+| `job_materials` | Planned, issued and returned quantities per material (values come from the ledger) |
+| `qc_checklists`, `qc_inspections` | Editable checklists per category; inspections with passed/rework/rejected and defects |
+| `maker_payments` | Owner-only money records for makers |
+
+Phase 2 RPCs: `save_purchase_order`, `approve_purchase_order`, `close_purchase_order`, `receive_goods`, `reverse_goods_receipt`, `return_to_supplier`, `record_supplier_bill`, `record_supplier_payment`, `void_supplier_record`; `save_bom`, `activate_bom`, `copy_bom`, `create_production_job`, `set_job_material`, `assign_job_maker`, `set_job_costs`, `allocate_job_materials`, `release_job_materials`, `issue_job_materials`, `return_job_materials`, `maker_location`, `move_job_materials`, `submit_job_for_qc`, `record_qc_inspection`, `cancel_production_job`, `approve_maker_fee`, `record_maker_payment`. Cost readers (return rows only to people who may see costs): `purchase_order_prices`, `goods_receipt_costs`, `bom_costs`, `job_costs`. All writes go through these functions; the tables have no insert/update grants (except QC checklist items).
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).
@@ -71,6 +88,13 @@ The enum values `manager` and `production` were renamed to `front_office` and `p
 | Approve counts / write-offs, post opening stock, reverse documents | ✅ | ❌ | ❌ | ❌ |
 | Prepare opening stock batches | ✅ | ❌ | ✅ | ❌ |
 | Costs and stock values | ✅ | ❌ | only if an owner allows | ❌ |
+| Raise purchase requests, receive goods, return to suppliers | ✅ | ❌ | ✅ | ❌ |
+| Approve purchase orders, close approved orders, reverse receipts | ✅ | ❌ | ❌ | ❌ |
+| Quick purchases, freight on receipts | ✅ | ❌ | only if an owner allows costs | ❌ |
+| Supplier bills, payments, balances | ✅ | ❌ | ❌ | ❌ |
+| Recipes, production jobs, reserve/issue/return materials, QC | ✅ | ❌ | ✅ | ❌ |
+| Job labour and other costs; approve and pay makers | ✅ | ❌ | ❌ | ❌ |
+| Production progress (job list) | ✅ | read (no costs) | ✅ | ❌ |
 | Customer payments, order values | ✅ | ✅ | ❌ | ❌ |
 | Audit log | ✅ | ❌ | ❌ | ❌ |
 | Invite, change role/title, deactivate staff; settings | ✅ | ❌ | ❌ | ❌ |

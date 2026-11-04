@@ -50,7 +50,7 @@ export function ReceiveForm({ slug, poId, poLines, suppliers, items, units, loca
           landed: canCost ? String(fd.get("landed") ?? "") : "", record_bill: isOwner && fd.get("record_bill") === "on",
           idempotency_key: key,
           lines: lines.map((l) => ({
-            po_line: l.po_line, item: l.item || undefined, unit: l.unit || byItem.get(l.item)?.base_unit,
+            po_line: l.po_line, item: l.item || undefined, unit: poId ? l.unit : l.unit || unitOptions(byItem.get(l.item), units ?? [])[0],
             accepted: l.accepted, rejected: l.rejected, reject_reason: l.reason, price: l.price,
           })),
         });
@@ -122,7 +122,7 @@ export function ReceiveForm({ slug, poId, poLines, suppliers, items, units, loca
                     {opts.map((u) => <option key={u} value={u}>{u}</option>)}
                   </Select>
                   <Input aria-label={`Price paid per ${unit || "unit"} in naira`} inputMode="decimal" placeholder={`₦ per ${unit || "unit"}`}
-                    value={l.price} onChange={(e) => update(idx, { price: e.target.value, unit })} />
+                    value={l.price} onChange={(e) => update(idx, { price: e.target.value })} />
                   <Button variant="ghost" size="icon" aria-label="Remove line" disabled={lines.length === 1} className="justify-self-end"
                     onClick={() => setLines(lines.filter((_, i) => i !== idx))}><Trash2 aria-hidden /></Button>
                 </div>

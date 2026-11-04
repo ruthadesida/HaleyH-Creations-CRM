@@ -89,10 +89,21 @@ export function QcSheet({ slug, jobId, checklist, remaining, locations, defaultL
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [passed, setPassed] = useState("");
+  const [defects, setDefects] = useState("");
   const [pending, start] = useTransition();
-  const allPass = checklist.every((c) => checks[c] !== false);
+  const toggle = (c: string, ok: boolean) => {
+    const next = { ...checks, [c]: ok };
+    setChecks(next);
+    // Suggest, never overwrite: only fill fields the inspector hasn't typed in.
+    if (!ok && passed === String(remaining)) setPassed("");
+    if (!ok && !defects.includes(c)) setDefects(defects ? `${defects}; ${c}` : c);
+  };
   return (
-    <Drawer.Root open={open} onOpenChange={(o) => { setOpen(o); if (o) setChecks(Object.fromEntries(checklist.map((c) => [c, true]))); }}>
+    <Drawer.Root open={open} onOpenChange={(o) => {
+      setOpen(o);
+      if (o) { setChecks(Object.fromEntries(checklist.map((c) => [c, true]))); setPassed(String(remaining)); setDefects(""); }
+    }}>
       <Drawer.Trigger asChild><Button variant="gold">Record QC</Button></Drawer.Trigger>
       <Sheet title="Quality check">
         <form className="flex flex-col gap-4" noValidate onSubmit={(e) => {
@@ -100,8 +111,8 @@ export function QcSheet({ slug, jobId, checklist, remaining, locations, defaultL
           const fd = new FormData(e.currentTarget);
           start(async () => {
             const r = await recordQc(slug, jobId, {
-              passed: String(fd.get("passed") ?? ""), rework: String(fd.get("rework") ?? ""), rejected: String(fd.get("rejected") ?? ""),
-              results: checks, defects: String(fd.get("defects") ?? ""), instructions: String(fd.get("instructions") ?? ""),
+              passed, rework: String(fd.get("rework") ?? ""), rejected: String(fd.get("rejected") ?? ""),
+              results: checks, defects, instructions: String(fd.get("instructions") ?? ""),
               to: String(fd.get("to") ?? ""), effective_date: String(fd.get("effective_date") ?? ""), idempotency_key: key,
             });
             (r.ok ? toast.success : toast.error)(r.message);
@@ -113,19 +124,19 @@ export function QcSheet({ slug, jobId, checklist, remaining, locations, defaultL
             {checklist.map((c) => (
               <label key={c} className="flex min-h-11 items-center gap-3">
                 <input type="checkbox" className="size-6 accent-[var(--color-ink)]" checked={checks[c] !== false}
-                  onChange={(e) => setChecks({ ...checks, [c]: e.target.checked })} />
+                  onChange={(e) => toggle(c, e.target.checked)} />
                 {c}
               </label>
             ))}
           </fieldset>
           <p className="text-sm text-muted">{remaining} item{remaining === 1 ? "" : "s"} still to inspect.</p>
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Passed" htmlFor="qc-passed"><Input id="qc-passed" name="passed" inputMode="numeric" defaultValue={allPass ? String(remaining) : ""} key={String(allPass)} /></Field>
+            <Field label="Passed" htmlFor="qc-passed"><Input id="qc-passed" inputMode="numeric" value={passed} onChange={(e) => setPassed(e.target.value)} /></Field>
             <Field label="Rework" htmlFor="qc-rework"><Input id="qc-rework" name="rework" inputMode="numeric" placeholder="0" /></Field>
             <Field label="Rejected" htmlFor="qc-rejected"><Input id="qc-rejected" name="rejected" inputMode="numeric" placeholder="0" /></Field>
           </div>
           <Field label="Defects found" htmlFor="qc-defects" optional hint="Required for rework or rejected items.">
-            <Textarea id="qc-defects" name="defects" rows={2} defaultValue={checklist.filter((c) => checks[c] === false).join("; ")} key={JSON.stringify(checks)} />
+            <Textarea id="qc-defects" rows={2} value={defects} onChange={(e) => setDefects(e.target.value)} />
           </Field>
           <Field label="What to fix" htmlFor="qc-instructions" optional><Textarea id="qc-instructions" name="instructions" rows={2} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">

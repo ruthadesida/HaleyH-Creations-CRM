@@ -227,7 +227,7 @@ async function Job({ params }: PageProps<"/w/[slug]/production/[id]">) {
           {costs && (
             <section>
               <SectionTitle action={can.own(role) && open && Number(job.qty_passed) + Number(job.qty_rejected) === 0 &&
-                <CostsSheet slug={slug} jobId={id} labour={String(Number(costs.labour_cost) / 100)} other={String(Number(costs.other_cost) / 100)} />}>
+                <CostsSheet slug={slug} jobId={id} labour={String(Math.round(Number(costs.labour_cost)) / 100)} other={String(Math.round(Number(costs.other_cost)) / 100)} />}>
                 Costs
               </SectionTitle>
               <Card className="px-4">
@@ -237,7 +237,7 @@ async function Job({ params }: PageProps<"/w/[slug]/production/[id]">) {
                   {Number(costs.other_cost) > 0 && <Detail label="Other direct costs"><Money minor={Math.round(Number(costs.other_cost))} currency={business.currency} /></Detail>}
                   <Detail label="Moved to finished stock"><Money minor={Math.round(Number(costs.completed_value))} currency={business.currency} /></Detail>
                   <Detail label="Still in work in progress"><Money minor={Math.round(Number(costs.wip_value))} currency={business.currency} /></Detail>
-                  {job.maker_id && job.status === "completed" && (
+                  {can.own(role) && job.maker_id && job.status === "completed" && (
                     <Detail label="Owed to maker">
                       {costs.fee_approved === null ? "Not approved yet" : <><Money minor={Number(costs.fee_approved)} currency={business.currency} /> · paid <Money minor={Number(costs.paid)} currency={business.currency} /></>}
                     </Detail>
@@ -247,7 +247,7 @@ async function Job({ params }: PageProps<"/w/[slug]/production/[id]">) {
               {can.own(role) && job.maker_id && job.status === "completed" && (
                 <div className="mt-3">
                   <FeeSheet slug={slug} jobId={id} makerId={job.maker_id} today={today} approved={costs.fee_approved !== null}
-                    suggested={String(Number(costs.labour_cost) / 100)} />
+                    suggested={String(Math.round(Number(costs.labour_cost)) / 100)} />
                 </div>
               )}
             </section>

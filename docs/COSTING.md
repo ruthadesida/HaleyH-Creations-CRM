@@ -1,6 +1,6 @@
 # Inventory and costing
 
-_Last updated: 2026-11-03 (Phase 1)_
+_Last updated: 2026-11-04 (Phase 2: purchasing, production, WIP, QC)_
 
 ## Source of truth
 
@@ -45,6 +45,28 @@ Owners always. A production manager only if an owner ticks **Can see production 
 - Create only stock documents: never sales, purchase expenses or cash.
 - Each item can have only **one live opening balance per location**. Re-importing requires reversing the earlier batch first.
 
+## Purchasing (Phase 2)
+
+- **A purchase order never changes stock.** A production manager raises a *request* (a draft PO, no prices unless they may see costs); an owner prices and approves it.
+- **Only the accepted part of a goods receipt enters stock**, at the PO price converted to the item's base unit (e.g. ₦20,000 a 50 m roll = ₦400/m). Rejected quantities are recorded with a reason and never stocked. Receiving more than is outstanding is refused.
+- **Landed cost** (delivery, freight, duty) is entered once on the receipt and shared across its accepted lines **in proportion to their value**: each line's unit cost = price + price × landed ÷ total accepted value. It can't be edited afterwards; reverse the receipt and receive again.
+- A **quick purchase** (no PO) sets its own prices, so it needs permission to see costs. The stock receipt and the supplier bill are separate records even when entered together.
+- **Supplier returns** remove the goods at the cost they came in at and take that value back out of the average.
+- **Supplier bills and payments** are owner-only money records labelled "Recorded manually". They never change stock. Supplier balance = bills − payments (voided records excluded).
+- Reversing a receipt (owner) takes the stock back out (refused if it's been used or partly returned to the supplier) and reopens the PO quantities.
+
+## Production and work in progress (Phase 2)
+
+- **Reservation** (allocation) reduces *available* stock, never physical stock. Available = on hand outside Quarantine − active reservations. Allocation is all-or-nothing and lists shortages.
+- **Issue to a job** removes material from a location at the current average cost. **The material is consumed here, once.** Its value becomes the job's work in progress (WIP). Issuing uses up the job's reservation first; anything beyond it must come from unreserved stock.
+- **Returns from a job** come back at the job's average issue cost for that item.
+- **External makers**: sending materials is a transfer to the maker's location ("With …"). It's still business stock, still visible, and still reserved for the job until issued.
+- **Labour and other direct costs** (agreed with the maker, set from the recipe × quantity; owners can adjust before anything is completed) are added to WIP.
+- **WIP value** = materials issued − returned + labour + other costs − value already completed.
+- **QC completion**: each unit leaving WIP (passed or rejected) takes an equal share: unit cost = WIP value ÷ units still to finish. Passed units enter finished stock (saleable); rejected units go to Quarantine at the same cost; rework units stay in WIP. The last units take whatever value remains, so WIP ends at zero. Materials not returned before the final QC count as used.
+- Production documents (issues, returns, completions) are corrected from the job, not reversed from the Movements page.
+- **Maker pay**: an owner approves the amount owed after completion and records payments manually. Production staff can't record payments.
+
 ## Coming in later phases
 
-- Purchase receipts (with freight/landed-cost allocation), production WIP (material issue → job cost → completion), dispatch (cost of goods sold), customer returns via quarantine. These will use the same posting engine and average-cost rules, and this document will be extended.
+- Dispatch (cost of goods sold), customer returns via quarantine, sales reservations. They will use the same posting engine and average-cost rules.

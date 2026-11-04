@@ -1,6 +1,6 @@
 # Testing
 
-_Last updated: 2026-11-03_
+_Last updated: 2026-11-04_
 
 | Layer | Tool | Location | Run locally | In CI |
 |---|---|---|---|---|
@@ -23,6 +23,7 @@ Every page test checks: loads with one `h1`, no console errors, no horizontal ov
 `e2e/support/world.ts` creates pre-confirmed users with random passwords through the Supabase admin API and businesses through the app's own RPCs. **It refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at localhost**, so the secret key in a developer's `.env.local` can never create test users in a real project. Locally (no Docker) these specs are skipped.
 
 - `signed-in.spec.ts`: at every viewport, an owner with seeded opening stock visits 23 signed-in screens (dashboard, every stock page, customers, enquiries, settings, staff, workspaces) and checks heading, console errors, overflow, input size and axe. Tap-target size is checked with the fixed tab bar and pinned Save bars laid out in place (a field under the bar at one scroll position isn't "covered").
+- `production.spec.ts` (Phase 2, laptop and phone): production manager raises a purchase request (no prices shown), owner prices and approves, production manager receives 80 and rejects 5 with a reason, owner records the bill and a part payment (stock unchanged, balance shown); recipe written and put in use; job with an external maker; reserve, send to maker, issue, return unused, QC with rework, then pass; finished stock and raw material checked in the ledger at each step.
 - `workflow.spec.ts`: owner sets the cutover date and invites the production manager by link; imports a CSV (yards → metres), approves it; a second import of the same lines is refused; stock levels show quantity, owner value and "Cost missing"; transfer keeps the total; over-transfer refused ("Not enough stock"); production manager accepts the invite, sees no costs, can't open settings, counts (blank refused), owner sees expected vs counted and approves; reversal from Movements; closing the period refuses a same-day posting; front office sees no raw materials (page and database); an owner of another business gets "Not found" on every URL. Quantities are checked in the ledger view, not just on screen.
 
 ## Database tests
@@ -33,9 +34,11 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `02_roles` — production, sales and owner limits; no deletes; audit log immutable; last owner protected.
 - `03_money_and_workflow` — totals, deposits, balances, refunds, overpayment, voids, cancellation, dispatch/delivery stamps, idempotency, enquiry → order exactly once.
 - `04_inventory` — Spec 2 tests A (opening stock imports once, correct quantities and values, yards → metres), L (external maker stock stays business stock; transfers keep totals), M (retries don't double-post; no overselling; closed periods), N (front office sees finished goods only, costs never selectable, other businesses locked out); counts/write-offs need owner approval; reversals.
+- `06_purchasing` — Spec 2 test B (a receipt adds stock; a payment never does), requests vs approval, price privacy, partial and rejected receipts, retries, over-receipt, freight sharing, quick purchases, supplier returns, reversals reopening the order, bills/balances, other roles and businesses.
+- `07_production` — Spec 2 tests C (recipe copied into the job, reservation, shortages, issue, maker), D (returns at issue cost), E (rework keeps items unavailable, rejected to Quarantine), F (completion consumes nothing again; finished cost = materials used + labour), L (materials with an external maker stay business stock), WIP ends at zero, fee approval, cancellation, cost privacy, isolation.
 - `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
 
-Total: **118** database tests.
+Total: **196** database tests.
 
 ## Notes
 

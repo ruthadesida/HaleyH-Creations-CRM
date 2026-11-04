@@ -1,8 +1,8 @@
-# Starting the HaleyH pilot: opening stock and staff
+# Starting the HaleyH pilot
 
-_Last updated: 2026-11-03 (Phase 1)_
+_Last updated: 2026-11-04 (Phase 2)_
 
-A step-by-step guide for the owners. Phase 1 covers staff, the catalogue, stock locations and opening stock. Sales orders, purchasing and production arrive in later phases.
+A step-by-step guide for the owners. Phases 1 and 2 cover staff, the catalogue, stock, opening stock, purchasing and production. Sales orders, payments from customers and dispatch arrive in Phase 3.
 
 ## 1. Set up the workspace (owner, ~10 minutes)
 
@@ -53,12 +53,34 @@ The cutover date is the day this app takes over stock from Zoho. From that day, 
 
 You can import in several batches (e.g. one per location). The same item can't be opened twice at the same location.
 
-## 5. Day-to-day in Phase 1
+## 5. Day-to-day stock
 
 - **Move stock** between locations (e.g. send leather to an external maker): Stock → Move stock.
 - **Counts and write-offs:** the production manager records them; an owner approves before stock changes.
 - **Stock closed up to:** after a month-end count, an owner can close that period so nobody can backdate changes into it.
 - Every change is visible in **Stock → Movements**, numbered and attributed.
+
+## 6. Buying materials (Phase 2)
+
+1. **Purchasing → New request** (production manager or owner): supplier, items, quantities in any unit that fits the item (rolls, metres, yards). The production manager doesn't see prices unless you allow costs.
+2. An owner opens the request, taps **Edit** to add prices, then **Approve order**. Approving changes no stock.
+3. When goods arrive: **Receive goods** on the order. Enter what was accepted and what was rejected (with a reason). Only accepted goods enter stock. Partial deliveries are fine; the order shows what's still to come.
+4. Delivery or transport costs: an owner (or a production manager allowed to see costs) enters them once on the receipt; they're shared into the cost of the goods.
+5. Bought something on the spot with no order? **Record a purchase** (needs cost permission).
+6. Owners record the supplier's **bill** and **payments** (Purchasing → Supplier balances). Payments are "Recorded manually" and never change stock.
+7. Faulty goods after receiving: open the receipt and **Return to supplier**.
+
+## 7. Making things (Phase 2)
+
+1. **Production → Recipes → New recipe**: the materials one finished item uses, with wastage %, labour per item (owners) and instructions. Add a line "only for" a variant when a size or length uses more. **Use for new jobs** makes it the standard; later changes are new versions, and old jobs keep their copy.
+2. **Production → New job**: what to make, how many, the recipe and the maker.
+3. **Reserve materials**. If anything is short, the job lists it with a link to raise a purchase request.
+4. External maker? **Send to maker** moves the materials to "With [maker]": still your stock, still reserved.
+5. **Issue materials** when work starts (from the store, or from the maker's location). This is when material is used up, once.
+6. **Return unused** leftovers before the final QC.
+7. **Ready for QC** → **Record QC**: tick the checklist, then enter how many passed, need rework or are rejected. Passed items become finished stock you can sell. Rejected items go to Quarantine. Rework goes back to the maker; record QC again when it's fixed.
+8. Owners see each job's costs (materials used, labour, what's still in work in progress), approve what the maker is owed, and record maker payments.
+9. Edit the QC checklists under **Production → QC checklists**.
 
 ## Before going live with real data
 

@@ -2,7 +2,7 @@
 
 What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
-_Last updated: 2026-11-03 (Phase 1 built)_
+_Last updated: 2026-11-04 (Phase 2 built)_
 
 Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in progress · ⬜ not started · ⚙️ needs configuration · 🔌 external integration (not connected) · 🙈 hidden in the UI until built
 
@@ -12,7 +12,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 |---|---|---|
 | Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Dev project; migrations 0001–0009 applied |
+| Supabase project | ✅ | Dev project; migrations 0001–0012 applied |
 | Sign up / in / out / reset | ✅ | |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | None on the free plan (Phase 4 or Supabase Pro) |
@@ -39,11 +39,37 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Products with variants (SKU, size, colour, length, price) | 🧪 | Variant stock items created automatically (database-tested) |
 | Suppliers, locations (incl. external maker) | 🧪 | |
 | Inventory ledger: posting, idempotency, no negative stock, reversal | ✅ | Spec 2 tests A, L, M (single-session), N |
-| Stock levels, item history, movements | 🧪 | On hand only; reserved/available arrive with sales (Phase 3) |
+| Stock levels, item history, movements | 🧪 | On hand; production reservations are counted in availability (job screens); sales reservations arrive in Phase 3 |
 | Transfers | ✅ | Database-tested; UI built |
 | Counts and write-offs with owner approval | ✅ | Database-tested; UI built |
 | Opening stock import (template, mapping, preview, approval, reversal) | ✅ | Database-tested; UI built |
 | Moving average valuation | ✅ | `docs/COSTING.md` |
+
+## Purchasing (Phase 2)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Purchase requests (production manager) and owner approval | ✅ | Database-tested; browser workflow test |
+| Goods received: partial, rejected with reason, retries | ✅ | Spec 2 test B; browser workflow test |
+| Freight / landed cost shared by value | ✅ | Database-tested |
+| Quick purchase (no order) | ✅ | Needs cost permission; database-tested |
+| Supplier returns | ✅ | Database-tested; UI built |
+| Supplier bills, payments ("Recorded manually"), balances | ✅ | Owners only; payments never change stock |
+| Receipt reversal | ✅ | Owner; reopens order quantities |
+
+## Production (Phase 2)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Recipes (BOMs) with versions, wastage, per-variant lines, one-off specs | ✅ | Jobs copy the recipe used |
+| Production jobs, maker assignment, due dates | ✅ | Production manager's home screen |
+| Reserve materials with shortage list, link to raise a purchase request | ✅ | Spec 2 test C |
+| Issue to job (consumed once, value into WIP), return unused | ✅ | Spec 2 tests C, D, F |
+| External makers: materials held by the maker stay business stock | ✅ | Spec 2 test L |
+| QC checklists (editable), inspections, rework, rejected to Quarantine | ✅ | Spec 2 test E |
+| Job costs, WIP value, finished-goods cost | ✅ | Owners / permitted production managers; `docs/COSTING.md` |
+| Maker fee approval and payments | ✅ | Owners only |
+| Job sheets (printable), attachments, partial close of a job | ⬜ | Phase 4 / later |
 
 ## CRM
 
@@ -59,8 +85,6 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 
 | Feature | Phase |
 |---|---|
-| Purchasing, goods receipts, landed costs | 2 |
-| BOMs, production jobs, WIP, external maker jobs, QC | 2 |
 | Quotations, sales orders, reservations, dispatch, payments UI, returns, costing/COGS | 3 |
 | Reports, exports, templates, notifications, imports with external IDs, backups | 4 |
 

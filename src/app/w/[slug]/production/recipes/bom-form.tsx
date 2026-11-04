@@ -41,7 +41,7 @@ export function BomForm({ slug, id, products, variants, items, units, showCosts,
           product, name: String(fd.get("name") ?? ""), is_one_off: fd.get("is_one_off") === "on",
           labour: showCosts ? String(fd.get("labour") ?? "") : undefined, other: showCosts ? String(fd.get("other") ?? "") : undefined,
           instructions: String(fd.get("instructions") ?? ""),
-          lines: filled.map((l) => ({ item: l.item, qty: l.qty, unit: l.unit || byId.get(l.item)?.base_unit || "", wastage: l.wastage, variant: l.variant })),
+          lines: filled.map((l) => ({ item: l.item, qty: l.qty, unit: l.unit || unitOptions(byId.get(l.item), units)[0] || "", wastage: l.wastage, variant: l.variant })),
         });
         if (r && !r.ok) toast.error(r.message);
       });
