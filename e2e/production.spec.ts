@@ -125,7 +125,7 @@ test("purchasing and production run end to end", async ({ page, browser }) => {
     await pmPage.goto(`${w()}/production/new`);
     await pmPage.getByLabel("What to make").selectOption({ label: "M" });
     await pmPage.getByLabel("How many").fill("2");
-    await pmPage.getByLabel("Maker", { exact: true }).selectOption({ label: "Tunde Adeyemi (external)" });
+    await pmPage.getByLabel(/^Maker/).selectOption({ label: "Tunde Adeyemi (external)" });
     await pmPage.getByRole("button", { name: "Create job" }).click();
     await expect(pmPage.getByText("Job created. Check the materials, then reserve them.")).toBeVisible();
     await expect(pmPage.getByText("Planned 5.2 m")).toBeVisible();

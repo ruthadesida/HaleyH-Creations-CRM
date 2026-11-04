@@ -18,6 +18,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    // A wrong selector fails in seconds instead of hanging until the test times out.
+    actionTimeout: 20_000,
     screenshot: "only-on-failure",
   },
   projects: [
