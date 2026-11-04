@@ -4,7 +4,8 @@ import { defineConfig, devices } from "@playwright/test";
 export const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${E2E_PORT}`;
 
-const viewportProjects = { testIgnore: /security\.spec\.ts/ };
+// The long multi-user workflow runs on one laptop and one phone; everything else runs at every viewport.
+const viewportProjects = { testIgnore: [/security\.spec\.ts/, /workflow\.spec\.ts/] };
 
 // Viewports cover the responsive targets: phones, tablets, laptops and large monitors.
 export default defineConfig({
@@ -42,6 +43,12 @@ export default defineConfig({
       ...viewportProjects,
       use: { ...devices["Desktop Chrome"], viewport: { width: 2560, height: 1440 } },
     },
+    {
+      name: "workflow-laptop",
+      testMatch: /workflow\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 } },
+    },
+    { name: "workflow-phone", testMatch: /workflow\.spec\.ts/, use: { ...devices["Pixel 7"] } },
     // Header and attack-surface checks only need one browser.
     { name: "security", testMatch: /security\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
   ],
