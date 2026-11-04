@@ -1,4 +1,4 @@
-﻿# Feature status
+# Feature status
 
 What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
@@ -17,7 +17,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | None on the free plan (Phase 4 or Supabase Pro) |
 | Hosting | ⚙️ | Not deployed |
-| Signed-in browser tests | ⬜ | Database tests cover the logic; UI flows need e2e with a test Supabase (next) |
+| Signed-in browser tests | ✅ | Every signed-in screen at 6 viewports + the Phase 1 workflow with four roles, in CI against a local Supabase |
 
 ## Access and workspace (Phase 1)
 

@@ -100,7 +100,12 @@ test("every signed-in screen loads cleanly at this viewport", async ({ page }) =
       const sizes2 = await new AxeBuilder({ page }).withRules(["target-size"]).analyze();
       await fixedBar.evaluate((el) => (el as Element).remove());
       const serious = [...results.violations, ...sizes2.violations].filter((v) => v.impact === "serious" || v.impact === "critical");
-      expect.soft(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`), path).toEqual([]);
+      // Name the element involved too (e.g. what covers a tap target), so failures are actionable.
+      const describe = (v: (typeof serious)[number]) => `${v.id}: ${v.nodes.map((n) => {
+        const related = [...n.any, ...n.all, ...n.none].flatMap((c) => c.relatedNodes ?? []).map((r) => r.html.slice(0, 120));
+        return `${n.target.join(" ")}${related.length ? ` (with ${related.join(" | ")})` : ""}`;
+      }).join(", ")}`;
+      expect.soft(serious.map(describe), path).toEqual([]);
 
       expect.soft(errors, `${path} console errors`).toEqual([]);
       page.off("console", onConsole);

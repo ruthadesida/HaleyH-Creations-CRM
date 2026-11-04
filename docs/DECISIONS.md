@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-04 (later)
+
+- **Signed-in browser tests run only against CI's throwaway local Supabase.** The test helper refuses any non-localhost URL; test users get random passwords and are created pre-confirmed through the admin API.
+- **Session check calls `io()` first** (`src/lib/dal.ts`). Supabase's `getClaims()` compares token expiry with the clock; with Partial Prefetching that was reported as `Date.now()` during prerender on every signed-in page. `io()` keeps it at request time. Trade-off (reviewer): the workspace shell is no longer part of the prefetched App Shell, so links into a workspace show the loading skeleton briefly. The docs' alternative (`"use cache: private"`) caches session-derived data in the browser; we chose request-time auth for now and can revisit if navigation feels slow.
+- **Root `not-found.tsx`.** The workspace layout 404s non-members, which skips the segment's own not-found page; without a root one, outsiders saw Next's unstyled 404.
+- **Bottom tab bar is solid, not translucent**, so labels keep contrast over any content. **The floating New button is hidden on form screens**, where it covered fields.
+
 ## 2026-11-04
 
 - **Spec 2 roles:** enum values renamed (`manager` → `front_office`, `production` → `production_manager`), `sales` retired by constraint; owner titles and an owner-granted `can_view_costs`. Refunds and voids became owner-only; the front office can cancel orders.

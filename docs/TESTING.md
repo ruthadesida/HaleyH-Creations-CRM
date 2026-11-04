@@ -14,9 +14,16 @@ _Last updated: 2026-11-03_
 
 ## Playwright projects
 
-`phone-small` (320×640), `phone` (Pixel 7), `iphone-safari` (iPhone 15, WebKit), `tablet` (768×1024), `laptop` (1366×768), `monitor` (2560×1440), plus `security` (headers and attack-surface probes, one browser). Tests run against a production build on port 3100, never the dev server.
+`phone-small` (320×640), `phone` (Pixel 7), `iphone-safari` (iPhone 15, WebKit), `tablet` (768×1024), `laptop` (1366×768), `monitor` (2560×1440), plus `security` (headers and attack-surface probes, one browser) and `workflow-laptop` / `workflow-phone` (the multi-user workflow). Tests run against a production build on port 3100, never the dev server.
 
-Every page test checks: loads with one `h1`, no console errors, no horizontal overflow, no serious or critical axe violations.
+Every page test checks: loads with one `h1`, no console errors, no horizontal overflow, no serious or critical axe violations, inputs ≥ 16px.
+
+### Signed-in tests (need a local Supabase: CI only)
+
+`e2e/support/world.ts` creates pre-confirmed users with random passwords through the Supabase admin API and businesses through the app's own RPCs. **It refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at localhost**, so the secret key in a developer's `.env.local` can never create test users in a real project. Locally (no Docker) these specs are skipped.
+
+- `signed-in.spec.ts`: at every viewport, an owner with seeded opening stock visits 23 signed-in screens (dashboard, every stock page, customers, enquiries, settings, staff, workspaces) and checks heading, console errors, overflow, input size and axe. Tap-target size is checked with the fixed tab bar laid out in place (a field under the bar at one scroll position isn't "covered").
+- `workflow.spec.ts`: owner sets the cutover date and invites the production manager by link; imports a CSV (yards → metres), approves it; a second import of the same lines is refused; stock levels show quantity, owner value and "Cost missing"; transfer keeps the total; over-transfer refused ("Not enough stock"); production manager accepts the invite, sees no costs, can't open settings, counts (blank refused), owner sees expected vs counted and approves; reversal from Movements; closing the period refuses a same-day posting; front office sees no raw materials (page and database); an owner of another business gets "Not found" on every URL. Quantities are checked in the ledger view, not just on screen.
 
 ## Database tests
 
