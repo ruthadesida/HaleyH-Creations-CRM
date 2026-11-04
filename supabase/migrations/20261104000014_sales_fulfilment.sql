@@ -26,6 +26,51 @@ alter table public.orders
 -- Orders recorded before quotations existed were confirmed sales.
 update public.orders set confirmed_at = created_at where confirmed_at is null;
 
+-- Recreated so it carries the new order columns (confirmed_at etc.). Same figures as before.
+drop view public.order_summaries;
+create view public.order_summaries
+with (security_invoker = true)
+as
+with item_totals as (
+  select business_id, order_id,
+    -- sum(bigint) returns numeric; cast back so money stays in whole kobo.
+    sum(quantity::bigint * unit_price_minor)::bigint as subtotal,
+    count(*) as item_count,
+    bool_or(item_type = 'made_to_order') as has_made_to_order
+  from public.order_items
+  group by business_id, order_id
+),
+payment_totals as (
+  select business_id, order_id,
+    (sum(amount_minor) filter (where kind = 'payment'))::bigint as paid,
+    (sum(amount_minor) filter (where kind = 'refund'))::bigint as refunded,
+    max(paid_on) filter (where kind = 'payment') as last_paid_on
+  from public.payments
+  where voided_at is null
+  group by business_id, order_id
+),
+figures as (
+  select o.*,
+    coalesce(i.subtotal, 0) as subtotal_minor,
+    greatest(coalesce(i.subtotal, 0) - o.discount_minor, 0) + o.delivery_fee_minor as total_minor,
+    coalesce(i.item_count, 0) as item_count,
+    coalesce(i.has_made_to_order, false) as has_made_to_order,
+    coalesce(p.paid, 0) as paid_minor,
+    coalesce(p.refunded, 0) as refunded_minor,
+    coalesce(p.paid, 0) - coalesce(p.refunded, 0) as net_paid_minor,
+    p.last_paid_on
+  from public.orders o
+  left join item_totals i on i.business_id = o.business_id and i.order_id = o.id
+  left join payment_totals p on p.business_id = o.business_id and p.order_id = o.id
+)
+select f.*,
+  -- A cancelled order owes nothing; anything already paid becomes a refund due.
+  case when f.status = 'cancelled' then 0 else f.total_minor end as amount_due_minor,
+  (case when f.status = 'cancelled' then 0 else f.total_minor end) - f.net_paid_minor as balance_minor,
+  app.payment_status(case when f.status = 'cancelled' then 0 else f.total_minor end, f.net_paid_minor) as payment_status
+from figures f;
+revoke all on public.order_summaries from anon;
+
 alter table public.businesses
   add column next_dispatch_number integer not null default 1 check (next_dispatch_number > 0),
   add column next_return_number integer not null default 1 check (next_return_number > 0);
@@ -172,8 +217,81 @@ as $$
   where source_type = 'sales_order' and status = 'active'
     and source_id in (select id from public.order_items where order_id = p_order)
 $$;
-revoke all on function app.order_item_stock_item, app.lock_order, app.reserve_for_order_item, app.release_order_reservations
-  from public, anon, authenticated;
+-- The order's stage, from its records: dispatched (everything out), in production (a linked job is open),
+-- ready for dispatch (every stock line reserved or out), otherwise confirmed. Delivered and cancelled stay.
+create or replace function app.refresh_order_stage(p_order uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  o public.orders;
+  v_stage public.fulfilment_stage;
+begin
+  select * into o from public.orders where id = p_order;
+  if o.status = 'cancelled' or o.confirmed_at is null or o.fulfilment_stage = 'delivered' then
+    return;
+  end if;
+  if not exists (select 1 from public.order_items where order_id = p_order and dispatched_quantity < quantity) then
+    v_stage := 'dispatched';
+  elsif exists (select 1 from public.production_jobs j join public.order_items i on i.id = j.order_item_id
+                where i.order_id = p_order and j.status not in ('completed', 'cancelled')) then
+    v_stage := 'in_production';
+  elsif not exists (
+    select 1 from public.order_items i
+    where i.order_id = p_order and i.variant_id is not null and i.dispatched_quantity
+      + coalesce((select sum(qty_base) from public.stock_reservations r where r.source_type = 'sales_order' and r.source_id = i.id and r.status = 'active'), 0)
+      < i.quantity
+  ) then
+    v_stage := 'ready_for_dispatch';
+  else
+    v_stage := 'confirmed';
+  end if;
+  if v_stage is distinct from o.fulfilment_stage then
+    -- Written as the system: the stage is derived, so the "moving back needs the office" rule doesn't apply.
+    perform set_config('app.stage_refresh', 'on', true);
+    update public.orders set fulfilment_stage = v_stage where id = p_order;
+    perform set_config('app.stage_refresh', 'off', true);
+  end if;
+end;
+$$;
+
+revoke all on function app.order_item_stock_item, app.lock_order, app.reserve_for_order_item, app.release_order_reservations,
+  app.refresh_order_stage from public, anon, authenticated;
+
+-- Stage moves made by refresh_order_stage are derived from records, so they skip the manual-move rule.
+create or replace function app.guard_order_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if old.status = 'cancelled' and (new.fulfilment_stage <> old.fulfilment_stage or new.status <> old.status) then
+    raise exception 'This order is cancelled and cannot be changed.' using errcode = 'P0001';
+  end if;
+  if new.status = 'cancelled' and old.status <> 'cancelled' then
+    if not app.is_office(new.business_id) then
+      raise exception 'Only an owner or the front office can cancel an order.' using errcode = '42501';
+    end if;
+    new.cancelled_at := now();
+    new.cancelled_by := (select auth.uid());
+  end if;
+  if new.fulfilment_stage <> old.fulfilment_stage then
+    if new.fulfilment_stage < old.fulfilment_stage and not app.is_office(new.business_id)
+       and coalesce(current_setting('app.stage_refresh', true), 'off') <> 'on' then
+      raise exception 'Only an owner or the front office can move an order back a stage.' using errcode = '42501';
+    end if;
+    if new.fulfilment_stage >= 'dispatched' and old.fulfilment_stage < 'dispatched' and new.dispatched_at is null then
+      new.dispatched_at := now();
+    end if;
+    if new.fulfilment_stage = 'delivered' and new.delivered_at is null then
+      new.delivered_at := now();
+    end if;
+  end if;
+  return new;
+end;
+$$;
 
 -------------------------------------------------------------------------------
 -- Items can't change once an order is confirmed (cancel and re-create instead)
@@ -287,6 +405,7 @@ begin
       v_bom := null;
     end if;
   end loop;
+  perform app.refresh_order_stage(p_order);
   return v_jobs;
 end;
 $$;
@@ -312,6 +431,7 @@ begin
   for i in select * from public.order_items where order_id = p_order and variant_id is not null loop
     v_total := v_total + app.reserve_for_order_item(i.id, i.quantity);
   end loop;
+  perform app.refresh_order_stage(p_order);
   return v_total;
 end;
 $$;
@@ -363,7 +483,6 @@ declare
   v_id uuid;
   v_n integer;
   v_doc uuid;
-  v_all boolean;
 begin
   o := app.lock_order(p_order);
   if p_idempotency_key is null then
@@ -449,14 +568,11 @@ begin
     raise exception 'The date cannot be in the future.' using errcode = 'P0001';
   end if;
 
-  select bool_and(dispatched_quantity = quantity) into v_all from public.order_items where order_id = p_order;
   update public.orders set
-    fulfilment_stage = case when v_all then 'dispatched'::public.fulfilment_stage
-                            when fulfilment_stage < 'ready_for_dispatch' then 'ready_for_dispatch'::public.fulfilment_stage
-                            else fulfilment_stage end,
     courier_name = coalesce(nullif(btrim(p_courier), ''), courier_name),
     tracking_reference = coalesce(nullif(btrim(p_tracking), ''), tracking_reference)
     where id = p_order;
+  perform app.refresh_order_stage(p_order);
   return v_id;
 end;
 $$;
@@ -866,6 +982,9 @@ begin
   -- Made for a customer's order: passed items are kept for that order, never sold to someone else.
   if p_passed > 0 and j.order_item_id is not null then
     perform app.reserve_for_order_item(j.order_item_id, p_passed);
+  end if;
+  if j.order_item_id is not null then
+    perform app.refresh_order_stage((select order_id from public.order_items where id = j.order_item_id));
   end if;
   return v_id;
 end;

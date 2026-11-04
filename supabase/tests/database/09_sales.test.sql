@@ -90,7 +90,7 @@ select is(tests.on_hand('DRESS-M'), 3::numeric, 'Dispatching 2 takes 2 out of st
 select is(tests.reserved_for((select id from t where k = 'o1')), 1::numeric, '... using up 2 of the order''s reservation');
 select is(tests.available('DRESS-M'), 2::numeric, '... so availability for others is unchanged');
 select results_eq($$ select dispatched_quantity, fulfilment_stage::text from public.order_items i join public.orders o on o.id = i.order_id
-  where o.id = (select id from t where k = 'o1') $$, $$ values (2, 'ready_for_dispatch'::text) $$, 'Partly dispatched: 1 still to go');
+  where o.id = (select id from t where k = 'o1') $$, $$ values (2, 'ready_for_dispatch'::text) $$, 'Partly dispatched: 1 still to go, and it is reserved, so ready');
 select is(public.dispatch_order((select id from t where k = 'o1'), tests.loc('Finished goods / showroom'), current_date,
   null, null, tests.items((select id from t where k = 'o1'), 2), '00000000-0000-0000-0000-00000000d001'),
   (select id from t where k = 'd1'), 'A retried dispatch returns the same record');
