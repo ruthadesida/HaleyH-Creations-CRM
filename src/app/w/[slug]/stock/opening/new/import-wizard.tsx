@@ -35,8 +35,8 @@ export function ImportWizard({ slug, locations }: { slug: string; locations: str
   async function choose(f: File | undefined) {
     if (!f) return;
     if (f.size > 2_000_000) return toast.error("That file is over 2 MB. Split it into smaller files.");
-    const rows = parseCsv(await f.text());
-    if (rows.length < 2) return toast.error("The file needs a header row and at least one line.");
+    const rows = parseCsv(await f.text(), { keepBlank: true });
+    if (rows.filter((r) => r.some((x) => x.trim())).length < 2) return toast.error("The file needs a header row and at least one line.");
     setFile({ name: f.name, rows });
     setMapping(guessMapping(rows[0]));
     setPreview(null);
@@ -61,7 +61,7 @@ export function ImportWizard({ slug, locations }: { slug: string; locations: str
             <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => choose(e.target.files?.[0])} />
           </label>
         </div>
-        {file && <p className="text-sm">{file.name} · {body.length} line{body.length === 1 ? "" : "s"}</p>}
+        {file && <p className="text-sm">{file.name} · {mapRows(body, { code: 0 }).length} line(s)</p>}
       </Card>
 
       {/* 2. Mapping */}

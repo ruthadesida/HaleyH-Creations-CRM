@@ -1,9 +1,10 @@
 /**
  * Minimal RFC 4180 CSV reading/writing for imports and exports.
  * Handles quoted fields, escaped quotes (""), commas and newlines inside quotes,
- * CRLF line endings and a leading byte-order mark (Excel).
+ * CRLF line endings and a leading byte-order mark (Excel). With keepBlank, blank lines are kept
+ * (as rows of empty strings) so row numbers match the spreadsheet.
  */
-export function parseCsv(text: string): string[][] {
+export function parseCsv(text: string, opts: { keepBlank?: boolean } = {}): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -23,7 +24,7 @@ export function parseCsv(text: string): string[][] {
     else if (ch === "\n" || ch === "\r") {
       if (ch === "\r" && s[i + 1] === "\n") i++;
       row.push(field); field = "";
-      if (row.some((f) => f.trim() !== "")) rows.push(row);
+      if (opts.keepBlank || row.some((f) => f.trim() !== "")) rows.push(row);
       row = [];
     } else field += ch;
   }

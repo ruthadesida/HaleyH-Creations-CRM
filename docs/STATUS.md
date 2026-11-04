@@ -1,8 +1,8 @@
 ﻿# Feature status
 
-What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phase numbers refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
+What works, what's a placeholder, and what still needs configuration. Update this whenever a feature changes state. Phases refer to Spec 2 (`docs/GAP-ANALYSIS.md`).
 
-_Last updated: 2026-11-03_
+_Last updated: 2026-11-03 (Phase 1 built)_
 
 Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in progress · ⬜ not started · ⚙️ needs configuration · 🔌 external integration (not connected) · 🙈 hidden in the UI until built
 
@@ -10,57 +10,60 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 
 | Feature | Status | Notes |
 |---|---|---|
-| Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; move to nonces (Phase 4) |
+| Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Linked, migrations 0001–0004 applied, auth hardened |
-| Sign up / in / out / reset | ✅ | Confirmation and reset use Supabase's default emails |
-| Auth emails | ⚙️ | Free plan: default emails only reach Supabase team members; custom SMTP needed for staff emails and branded templates (templates ready in `supabase/templates/`) |
-| Backups / restore | ⚙️ | Free plan has none. Needs Pro or a scheduled dump (Phase 4) |
+| Supabase project | ✅ | Dev project; migrations 0001–0009 applied |
+| Sign up / in / out / reset | ✅ | |
+| Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
+| Backups / restore | ⚙️ | None on the free plan (Phase 4 or Supabase Pro) |
 | Hosting | ⚙️ | Not deployed |
+| Signed-in browser tests | ⬜ | Database tests cover the logic; UI flows need e2e with a test Supabase (next) |
 
-## Access and workspace
+## Access and workspace (Phase 1)
 
 | Feature | Status | Notes |
 |---|---|---|
-| Multi-business isolation (RLS) | ✅ | 58 database tests |
-| Roles | 🚧 | Built as owner/manager/sales/production; Spec 2 model is Phase 1 |
-| Staff invites / deactivate | 🙈 | Database functions only; UI in Phase 1 |
-| Makers directory | ⬜ | Phase 1 |
-| Workspace onboarding, demo workspace | ✅ | |
-| Business settings, cutover date | 🙈 | Phase 1 |
+| Business isolation (RLS) | ✅ | Database-tested |
+| Roles: owners with titles, front office, production manager | ✅ | Database-tested; owner-granted cost visibility |
+| Staff invites (link), roles, titles, deactivate | 🧪 | UI built; invite RPCs database-tested |
+| Makers directory (no login) | 🧪 | |
+| Business settings, cutover date, closed period | 🧪 | Closed period database-tested |
+| Demo workspace | ✅ | |
+
+## Inventory (Phase 1)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Units and conversions | ✅ | Yards↔metres etc.; pieces never mix with metres or pairs |
+| Materials and packaging catalogue | 🧪 | |
+| Products with variants (SKU, size, colour, length, price) | 🧪 | Variant stock items created automatically (database-tested) |
+| Suppliers, locations (incl. external maker) | 🧪 | |
+| Inventory ledger: posting, idempotency, no negative stock, reversal | ✅ | Spec 2 tests A, L, M (single-session), N |
+| Stock levels, item history, movements | 🧪 | On hand only; reserved/available arrive with sales (Phase 3) |
+| Transfers | ✅ | Database-tested; UI built |
+| Counts and write-offs with owner approval | ✅ | Database-tested; UI built |
+| Opening stock import (template, mapping, preview, approval, reversal) | ✅ | Database-tested; UI built |
+| Moving average valuation | ✅ | `docs/COSTING.md` |
 
 ## CRM
 
 | Feature | Status | Notes |
 |---|---|---|
-| Dashboard (front office) | ✅ | Order cards show counts but don't link until orders are built |
+| Dashboard (front office) | ✅ | Order cards hidden until Phase 3 |
 | Customers + duplicate warning | ✅ | |
-| Enquiries list + pipeline | ✅ | Won → order creation hidden until Phase 3 |
-| Follow-up tasks | 🙈 | Enquiry follow-ups work; task screens in Phase 4 |
-| Message templates, "Open in WhatsApp" | 🚧 | Button with a fixed greeting works (opens WhatsApp only); editable templates Phase 4 |
+| Enquiries list + pipeline | ✅ | |
+| Follow-up tasks | 🙈 | Phase 4 |
+| "Open in WhatsApp" | ✅ | Opens WhatsApp only |
 
-## Inventory, purchasing, production (Spec 2)
+## Later phases
 
-| Feature | Status | Phase |
-|---|---|---|
-| Catalogue: variants, materials, packaging, units, suppliers | ⬜ | 1 |
-| Locations, inventory ledger, stock levels, transfers, adjustments | ⬜ | 1 |
-| Opening balance import | ⬜ | 1 |
-| Purchasing and goods receipts | ⬜ | 2 |
-| BOM, production jobs, WIP, makers, QC | ⬜ | 2 |
-| Quotations, sales orders, reservations, dispatch | 🙈 | 3 (order/payment SQL exists and is tested) |
-| Payments, refunds, invoices | 🙈 | 3 |
-| Returns and exchanges | ⬜ | 3 |
-| Costing, COGS, estimated gross profit | ⬜ | 3 |
-| Reports and exports | ⬜ | 4 |
-| CSV imports (customers, products, external IDs) | ⬜ | 4 |
+| Feature | Phase |
+|---|---|
+| Purchasing, goods receipts, landed costs | 2 |
+| BOMs, production jobs, WIP, external maker jobs, QC | 2 |
+| Quotations, sales orders, reservations, dispatch, payments UI, returns, costing/COGS | 3 |
+| Reports, exports, templates, notifications, imports with external IDs, backups | 4 |
 
 ## Integrations (none connected)
 
-| Integration | Status |
-|---|---|
-| WhatsApp Business API | 🔌 Not connected (click-to-chat link only) |
-| Zoho | 🔌 Not connected (CSV later) |
-| WooCommerce | 🔌 Not connected (CSV later) |
-| Instagram | 🔌 Not connected |
-| Payment provider | 🔌 Not connected; subscriptions managed manually |
+WhatsApp Business API, Zoho, WooCommerce, Instagram, payment provider: 🔌 not connected. Subscriptions are managed manually.

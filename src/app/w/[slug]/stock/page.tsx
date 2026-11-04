@@ -26,7 +26,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
 
   const supabase = await createClient();
   let itemsQuery = supabase.from("stock_items")
-    .select("id, kind, code, name, category, colour, base_unit, reorder_level")
+    .select("id, kind, code, name, category, colour, base_unit, reorder_level, cost_missing")
     .eq("business_id", business.id).eq("kind", kind).is("archived_at", null).order("name").limit(500);
   if (q) itemsQuery = itemsQuery.or(`name.ilike.*${q}*,code.ilike.*${q}*`);
   const [{ data: items }, { data: balances }, locations, showCosts] = await Promise.all([
@@ -57,7 +57,8 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
   });
   if (low) rows = rows.filter((r) => r.reorder);
   const base = `/w/${slug}/stock`;
-  const totalValue = [...valueByItem.values()].reduce((s, v) => s + v, 0);
+  // Only the items listed on this tab.
+  const totalValue = rows.reduce((s, r) => s + (valueByItem.get(r.id) ?? 0), 0);
 
   return (
     <>
@@ -78,7 +79,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
 
       <p className="mb-3 text-sm text-muted">
         On hand = physical stock recorded in the ledger. Reserved and available stock appear once sales reservations are switched on.
-        {showCosts && values.length > 0 && <> Total value (moving average cost): <Money minor={Math.round(totalValue)} currency={business.currency} className="font-medium text-ink" />.</>}
+        {showCosts && values.length > 0 && <> Value of the items listed (moving average cost): <Money minor={Math.round(totalValue)} currency={business.currency} className="font-medium text-ink" />.</>}
       </p>
 
       {rows.length === 0 ? (
@@ -111,6 +112,7 @@ async function StockLevels({ params, searchParams }: PageProps<"/w/[slug]/stock"
                       )}
                     </span>
                     {r.reorder && <Chip tone="warn">Reorder</Chip>}
+                    {showCosts && r.cost_missing && <Chip tone="neutral">Cost missing</Chip>}
                     <ChevronRight aria-hidden className="size-4 text-muted" />
                   </span>
                 </Link>

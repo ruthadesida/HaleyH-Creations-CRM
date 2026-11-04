@@ -16,3 +16,10 @@ describe("opening import mapping", () => {
     expect(rows).toEqual([{ line: 2, code: "FAB-1", quantity: "12" }]);
   });
 });
+
+describe("line numbers with blank rows", () => {
+  it("skips blank rows but keeps spreadsheet numbering", () => {
+    const rows = mapRows([["A"], [""], ["B"]], { code: 0 });
+    expect(rows.map((r) => [r.line, r.code])).toEqual([[2, "A"], [4, "B"]]);
+  });
+});

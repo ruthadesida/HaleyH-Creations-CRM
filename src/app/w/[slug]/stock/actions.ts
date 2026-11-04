@@ -206,45 +206,63 @@ export async function transferStock(slug: string, _prev: ActionState, formData: 
   redirect(`/w/${slug}/stock/items/${t.item}?moved=1`);
 }
 
+const quantityText = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/,/g, ""))
+  // A blank quantity is never zero: zero must be typed.
+  .refine((v) => /^\d+(\.\d{1,4})?$/.test(v), "Enter a quantity for every item (type 0 if there are none).")
+  .transform(Number);
+
 const adjustmentSchema = z.object({
   kind: z.enum(["count", "write_off"]),
   location: z.string().uuid("Choose a location."),
   reason: z.string().trim().min(3, "Say why (e.g. monthly count, damaged).").max(500),
   effective_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date."),
-  lines: z.array(z.object({ item: z.string().uuid(), qty: z.number().nonnegative().finite() })).min(1, "Add at least one item."),
+  idempotency_key: z.string().uuid(),
+  lines: z.array(z.object({ item: z.string().uuid("Choose an item on every line."), qty: quantityText }))
+    .min(1, "Add at least one item.")
+    .refine((ls) => new Set(ls.map((l) => l.item)).size === ls.length, "The same item appears twice. Combine it into one line."),
 });
+
+const key = z.string().uuid();
 
 export async function requestAdjustment(slug: string, input: z.input<typeof adjustmentSchema>): Promise<Result> {
   const { business } = await authorize(slug, can.production);
   const parsed = adjustmentSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the form." };
   const a = parsed.data;
+  if (a.kind === "write_off" && a.lines.some((l) => l.qty <= 0)) {
+    return { ok: false, message: "Write-off quantities must be more than zero." };
+  }
   const supabase = await createClient();
   const { error } = await supabase.rpc("request_adjustment", {
     p_business_id: business.id, p_kind: a.kind, p_location: a.location, p_reason: a.reason,
-    p_effective_date: a.effective_date, p_lines: a.lines,
+    p_effective_date: a.effective_date, p_lines: a.lines, p_idempotency_key: a.idempotency_key,
   });
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();
   return { ok: true, message: "Sent for owner approval. Stock changes only once it's approved." };
 }
 
-export async function decideAdjustment(slug: string, id: string, approve: boolean, key: string): Promise<Result> {
+export async function decideAdjustment(slug: string, id: string, approve: boolean, idempotencyKey: string): Promise<Result> {
   await authorize(slug, can.own);
+  if (!key.safeParse(idempotencyKey).success || !key.safeParse(id).success) return { ok: false, message: "Refresh the page and try again." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("decide_adjustment", {
-    p_request_id: id, p_approve: approve, p_note: "", p_idempotency_key: key,
+    p_request_id: id, p_approve: approve, p_note: "", p_idempotency_key: idempotencyKey,
   });
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();
   return { ok: true, message: approve ? "Approved and posted to stock." : "Rejected. Stock is unchanged." };
 }
 
-export async function reverseDocument(slug: string, id: string, reason: string, key: string): Promise<Result> {
+export async function reverseDocument(slug: string, id: string, reason: string, idempotencyKey: string): Promise<Result> {
   await authorize(slug, can.own);
+  if (!key.safeParse(idempotencyKey).success || !key.safeParse(id).success) return { ok: false, message: "Refresh the page and try again." };
   if (reason.trim().length < 3) return { ok: false, message: "Give a reason for the reversal." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("reverse_stock_document", { p_doc_id: id, p_reason: reason.trim(), p_idempotency_key: key });
+  const { error } = await supabase.rpc("reverse_stock_document", { p_doc_id: id, p_reason: reason.trim().slice(0, 500), p_idempotency_key: idempotencyKey });
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();
   return { ok: true, message: "Reversed. Both documents stay in the history." };

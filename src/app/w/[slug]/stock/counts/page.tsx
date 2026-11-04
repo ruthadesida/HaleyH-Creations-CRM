@@ -16,7 +16,7 @@ async function Counts({ params }: PageProps<"/w/[slug]/stock/counts">) {
   const supabase = await createClient();
   const [{ data: requests }, { data: items }, locations, { data: profiles }] = await Promise.all([
     supabase.from("adjustment_requests")
-      .select("id, reference, kind, status, reason, effective_date, created_at, requested_by, location_id, adjustment_lines(stock_item_id, quantity)")
+      .select("id, reference, kind, status, reason, effective_date, created_at, requested_by, location_id, adjustment_lines(stock_item_id, quantity, expected_qty)")
       .eq("business_id", business.id).order("created_at", { ascending: false }).limit(50),
     supabase.from("stock_items").select("id, name, code, base_unit").eq("business_id", business.id).is("archived_at", null).order("name"),
     getLocations(business.id),
@@ -37,7 +37,7 @@ async function Counts({ params }: PageProps<"/w/[slug]/stock/counts">) {
         {r.status === "pending" ? (
           can.own(role) ? <DecideButtons slug={slug} id={r.id} /> : <Chip tone="warn">Waiting for an owner</Chip>
         ) : (
-          <Chip tone={r.status === "approved" ? "success" : "danger"}>{r.status === "approved" ? "Approved" : "Rejected"}</Chip>
+          <Chip tone={r.status === "approved" ? "success" : r.status === "reversed" ? "neutral" : "danger"}>{r.status === "approved" ? "Approved" : r.status === "reversed" ? "Reversed" : "Rejected"}</Chip>
         )}
       </div>
       <p className="text-sm text-muted">{r.reason} · {formatDate(r.effective_date)} · by {who.get(r.requested_by) || "staff"}</p>
@@ -46,7 +46,9 @@ async function Counts({ params }: PageProps<"/w/[slug]/stock/counts">) {
           const it = itemById.get(l.stock_item_id);
           return (
             <li key={l.stock_item_id} className="tabular">
-              {it?.name ?? "Archived item"}: {r.kind === "count" ? "counted " : "remove "}{formatQty(Number(l.quantity), it?.base_unit)}
+              {it?.name ?? "Archived item"}: {r.kind === "count"
+                ? <>records said {formatQty(Number(l.expected_qty ?? 0), it?.base_unit)}, counted {formatQty(Number(l.quantity), it?.base_unit)}{" "}<span className={Number(l.quantity) - Number(l.expected_qty ?? 0) < 0 ? "text-danger" : "text-success"}>({Number(l.quantity) - Number(l.expected_qty ?? 0) > 0 ? "+" : ""}{formatQty(Number(l.quantity) - Number(l.expected_qty ?? 0))})</span></>
+                : <>remove {formatQty(Number(l.quantity), it?.base_unit)}</>}
             </li>
           );
         })}

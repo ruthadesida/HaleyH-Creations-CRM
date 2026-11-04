@@ -78,7 +78,9 @@ async function Batch({ params }: PageProps<"/w/[slug]/stock/opening/[id]">) {
                 <span className="text-right">
                   <span className="tabular block font-medium">{formatQty(Number(l.quantity), l.unit)}</span>
                   {l.unit !== baseUnit && <span className="tabular block text-sm text-muted">= {formatQty(Number(l.qty_base), baseUnit)}</span>}
-                  {c && <span className="block text-sm text-muted"><Money minor={Math.round(Number(c.unit_cost))} currency={business.currency} /> / {l.unit}</span>}
+                  {c && (c.unit_cost === null
+                    ? <span className="block text-sm text-muted">Cost unknown</span>
+                    : <span className="block text-sm text-muted"><Money minor={Math.round(Number(c.unit_cost))} currency={business.currency} /> / {l.unit}</span>)}
                 </span>
               </li>
             );

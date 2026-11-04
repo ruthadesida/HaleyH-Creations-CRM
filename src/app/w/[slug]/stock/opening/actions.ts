@@ -48,8 +48,10 @@ async function toLines(businessId: string, rows: OpeningRow[]) {
   const lines = rows.map((r) => {
     const loc = locByName.get((r.location ?? "").trim().toLowerCase());
     if (!loc) pre[r.line] = `Unknown location "${r.location ?? ""}". Use one of: ${(locations ?? []).map((l) => l.name).join(", ")}.`;
-    const cost = parseMoneyInput(r.unit_cost ?? "");
-    if (cost === null) pre[r.line] ??= "Cost per unit must be a number in naira, e.g. 2500 or 2,500.50.";
+    // Blank cost = unknown (flagged on the item), never silently ₦0.
+    const rawCost = (r.unit_cost ?? "").trim();
+    const cost = rawCost === "" ? "" : parseMoneyInput(rawCost);
+    if (cost === null) pre[r.line] ??= "Cost per unit must be a number in naira (e.g. 2500 or 2,500.50), or left blank if unknown.";
     const qty = (r.quantity ?? "").replace(/,/g, "");
     return {
       line: r.line,
@@ -62,7 +64,7 @@ async function toLines(businessId: string, rows: OpeningRow[]) {
       location_id: loc ?? "",
       quantity: qty,
       unit: (r.unit ?? "").trim().toLowerCase(),
-      unit_cost: cost ?? 0,
+      unit_cost: cost === null ? "" : String(cost),
     };
   });
   return { lines, pre, supabase };
@@ -74,7 +76,7 @@ export async function previewOpening(slug: string, rawRows: OpeningRow[]): Promi
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message };
   const rows = parsed.data as OpeningRow[];
   const { lines, pre, supabase } = await toLines(business.id, rows);
-  // Lines with a known problem are still sent (with a placeholder location) so duplicates are judged in order.
+  // Lines with a problem found here are not sent; the database judges the rest (incl. duplicates).
   const sendable = lines.filter((l) => !pre[l.line] && /^\d+(\.\d{1,4})?$/.test(l.quantity));
   const { data, error } = sendable.length
     ? await supabase.rpc("validate_opening_lines", { p_business_id: business.id, p_lines: sendable })
@@ -109,8 +111,11 @@ export async function saveOpening(slug: string, fileName: string, notes: string,
   redirect(`/w/${slug}/stock/opening/${id}?saved=1`);
 }
 
+const uuid = z.string().uuid();
+
 export async function postOpening(slug: string, id: string, key: string) {
   await authorize(slug, can.own);
+  if (!uuid.safeParse(id).success || !uuid.safeParse(key).success) return { ok: false, message: "Refresh the page and try again." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("post_opening_batch", { p_batch_id: id, p_idempotency_key: key });
   if (error) return { ok: false, message: friendlyDbError(error) };
@@ -129,6 +134,7 @@ export async function discardOpening(slug: string, id: string) {
 
 export async function reverseOpening(slug: string, id: string, reason: string, key: string) {
   await authorize(slug, can.own);
+  if (!uuid.safeParse(id).success || !uuid.safeParse(key).success) return { ok: false, message: "Refresh the page and try again." };
   if (reason.trim().length < 3) return { ok: false, message: "Give a reason for the reversal." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("reverse_opening_batch", { p_batch_id: id, p_reason: reason.trim(), p_idempotency_key: key });

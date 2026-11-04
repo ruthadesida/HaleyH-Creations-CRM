@@ -17,6 +17,7 @@ export type Database = {
       adjustment_lines: {
         Row: {
           business_id: string
+          expected_qty: number | null
           id: number
           quantity: number
           request_id: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          expected_qty?: number | null
           id?: never
           quantity: number
           request_id: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          expected_qty?: number | null
           id?: never
           quantity?: number
           request_id?: string
@@ -63,6 +66,7 @@ export type Database = {
           document_id: string | null
           effective_date: string
           id: string
+          idempotency_key: string | null
           kind: string
           location_id: string
           reason: string
@@ -79,6 +83,7 @@ export type Database = {
           document_id?: string | null
           effective_date: string
           id?: string
+          idempotency_key?: string | null
           kind: string
           location_id: string
           reason: string
@@ -95,6 +100,7 @@ export type Database = {
           document_id?: string | null
           effective_date?: string
           id?: string
+          idempotency_key?: string | null
           kind?: string
           location_id?: string
           reason?: string
@@ -696,7 +702,7 @@ export type Database = {
         Row: {
           batch_id: string
           business_id: string
-          cost_base: number
+          cost_base: number | null
           id: number
           line_no: number
           location_id: string
@@ -705,12 +711,12 @@ export type Database = {
           quantity: number
           stock_item_id: string | null
           unit: string
-          unit_cost: number
+          unit_cost: number | null
         }
         Insert: {
           batch_id: string
           business_id: string
-          cost_base: number
+          cost_base?: number | null
           id?: never
           line_no: number
           location_id: string
@@ -719,12 +725,12 @@ export type Database = {
           quantity: number
           stock_item_id?: string | null
           unit: string
-          unit_cost: number
+          unit_cost?: number | null
         }
         Update: {
           batch_id?: string
           business_id?: string
-          cost_base?: number
+          cost_base?: number | null
           id?: never
           line_no?: number
           location_id?: string
@@ -733,7 +739,7 @@ export type Database = {
           quantity?: number
           stock_item_id?: string | null
           unit?: string
-          unit_cost?: number
+          unit_cost?: number | null
         }
         Relationships: [
           {
@@ -1481,6 +1487,7 @@ export type Database = {
           category: string | null
           code: string
           colour: string | null
+          cost_missing: boolean
           created_at: string
           default_location_id: string | null
           default_supplier_id: string | null
@@ -1503,6 +1510,7 @@ export type Database = {
           category?: string | null
           code: string
           colour?: string | null
+          cost_missing?: boolean
           created_at?: string
           default_location_id?: string | null
           default_supplier_id?: string | null
@@ -1525,6 +1533,7 @@ export type Database = {
           category?: string | null
           code?: string
           colour?: string | null
+          cost_missing?: boolean
           created_at?: string
           default_location_id?: string | null
           default_supplier_id?: string | null
@@ -2041,6 +2050,7 @@ export type Database = {
         Args: {
           p_business_id: string
           p_effective_date: string
+          p_idempotency_key?: string
           p_kind: string
           p_lines: Json
           p_location: string

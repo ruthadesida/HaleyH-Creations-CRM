@@ -10,7 +10,7 @@ export const OPENING_FIELDS = [
   { key: "location", label: "Location name", required: true },
   { key: "quantity", label: "Quantity", required: true },
   { key: "unit", label: "Unit of the quantity", required: true },
-  { key: "unit_cost", label: "Cost per unit (₦)", required: true },
+  { key: "unit_cost", label: "Cost per unit (₦), blank if unknown", required: true },
 ] as const;
 
 export type OpeningField = (typeof OPENING_FIELDS)[number]["key"];
@@ -49,12 +49,14 @@ export function guessMapping(headers: string[]): Partial<Record<OpeningField, nu
 
 /** Turns CSV rows (without the header) into opening rows using a column mapping. */
 export function mapRows(rows: string[][], mapping: Partial<Record<OpeningField, number>>): OpeningRow[] {
-  return rows.map((r, i) => {
-    const row: OpeningRow = { line: i + 2 }; // line numbers as seen in a spreadsheet (header = 1)
+  // Line numbers as seen in a spreadsheet (header = 1); blank lines are skipped but still counted.
+  return rows.flatMap((r, i) => {
+    if (r.every((cell) => cell.trim() === "")) return [];
+    const row: OpeningRow = { line: i + 2 };
     for (const f of OPENING_FIELDS) {
       const idx = mapping[f.key];
       if (idx !== undefined && idx >= 0) row[f.key] = (r[idx] ?? "").trim();
     }
-    return row;
+    return [row];
   });
 }

@@ -39,18 +39,42 @@ Source of truth: `supabase/migrations/`. Never change the database without a mig
 - `anon` has no access to anything. `authenticated` has **no DELETE** on any table.
 - Column-level grants restrict what can be updated (e.g. order numbers and ids never change; payments can only be voided).
 
-## Role matrix
+## Phase 1 inventory tables (migrations 0006–0009)
 
-| | Owner | Manager | Sales | Production | Platform admin |
-|---|---|---|---|---|---|
-| Customers, enquiries, orders, payments (read/write) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Record refunds, void payments, cancel orders, move orders back a stage | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Products (edit), production jobs (assign) | ✅ | ✅ | read | ❌ | ❌ |
-| Assigned production jobs (`my_production_jobs`) | all | all | ❌ | own only, no prices/contacts | ❌ |
-| Audit log | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Invite, change role, deactivate staff | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Business settings | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Business list + subscriptions | own | ❌ | ❌ | ❌ | ✅ (no customer data) |
+| Table | Purpose |
+|---|---|
+| `units` | Global units with dimension and factor to the dimension's base (m, m², kg, l, pc, pair) |
+| `suppliers`, `makers` | Directories; makers have no login (`is_external` for freelancers) |
+| `locations` | store, production, showroom, external_maker (linked to a maker), quarantine; four seeded per business |
+| `stock_items` | Raw materials, packaging and finished-good variants (one per variant, auto-synced); base unit, purchase unit, reorder level, hidden `avg_cost` |
+| `stock_documents`, `stock_movements` | The ledger (see `docs/COSTING.md`); written only by posting functions |
+| `stock_balances` (view) | On hand per item and location |
+| `opening_batches`, `opening_batch_lines` | Opening stock drafts, approval, posting and reversal |
+| `adjustment_requests`, `adjustment_lines` | Counts and write-offs awaiting owner approval |
+
+Posting RPCs: `post_transfer`, `reverse_stock_document`, `validate_opening_lines`, `save_opening_batch`, `post_opening_batch`, `reverse_opening_batch`, `discard_opening_batch`, `request_adjustment`, `decide_adjustment`. Cost readers: `stock_valuation`, `opening_batch_costs` (owners and permitted production managers only).
+
+## Role matrix (Spec 2)
+
+The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).
+
+| | Owner | Front office manager | Production manager / QC | Platform admin |
+|---|---|---|---|---|
+| Customers, enquiries, sales orders, record payments | ✅ | ✅ | ❌ | ❌ |
+| Cancel orders, move orders back a stage | ✅ | ✅ | ❌ | ❌ |
+| Refunds, void payments (corrections) | ✅ | ❌ | ❌ | ❌ |
+| Products and prices (edit) | ✅ | read | read | ❌ |
+| Materials, suppliers, makers, locations (edit) | ✅ | ❌ | ✅ | ❌ |
+| Stock levels | all | finished goods only | all | ❌ |
+| Move stock (transfers) | ✅ | ❌ | ✅ | ❌ |
+| Request counts / write-offs | ✅ | ❌ | ✅ | ❌ |
+| Approve counts / write-offs, post opening stock, reverse documents | ✅ | ❌ | ❌ | ❌ |
+| Prepare opening stock batches | ✅ | ❌ | ✅ | ❌ |
+| Costs and stock values | ✅ | ❌ | only if an owner allows | ❌ |
+| Customer payments, order values | ✅ | ✅ | ❌ | ❌ |
+| Audit log | ✅ | ❌ | ❌ | ❌ |
+| Invite, change role/title, deactivate staff; settings | ✅ | ❌ | ❌ | ❌ |
+| Business list + subscriptions | own | ❌ | ❌ | ✅ (no customer data) |
 
 ## Money
 

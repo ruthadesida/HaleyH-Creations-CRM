@@ -139,11 +139,16 @@ export function MemberRow({ member, update }: {
     Promise<{ ok: boolean; message: string }>;
 }) {
   const [pending, start] = useTransition();
-  const run = (patch: Parameters<typeof update>[0], confirmText?: string) => {
-    if (confirmText && !window.confirm(confirmText)) return;
+  // Controlled values that roll back if the server refuses (e.g. demoting the last owner).
+  const [role, setRole] = useState(member.role);
+  const [title, setTitle] = useState(member.title ?? "");
+  const [costs, setCosts] = useState(member.can_view_costs);
+  const run = (patch: Parameters<typeof update>[0], rollback?: () => void, confirmText?: string) => {
+    if (confirmText && !window.confirm(confirmText)) return rollback?.();
     start(async () => {
       const r = await update(patch);
       (r.ok ? toast.success : toast.error)(r.message);
+      if (!r.ok) rollback?.();
     });
   };
   const active = member.status === "active";
@@ -155,7 +160,7 @@ export function MemberRow({ member, update }: {
           {!active && <span className="ml-2 text-sm font-normal text-danger">Deactivated</span>}
         </p>
         <Button size="sm" variant={active ? "ghost" : "secondary"} disabled={pending}
-          onClick={() => run({ active: !active }, active ? `Deactivate ${member.name}? They lose access immediately. Their history is kept.` : undefined)}>
+          onClick={() => run({ active: !active }, undefined, active ? `Deactivate ${member.name}? They lose access immediately. Their history is kept.` : undefined)}>
           {active ? "Deactivate" : "Reactivate"}
         </Button>
       </div>
@@ -163,25 +168,37 @@ export function MemberRow({ member, update }: {
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted">Role</span>
-            <Select aria-label={`Role for ${member.name}`} defaultValue={member.role} disabled={pending}
-              onChange={(e) => run({ role: e.target.value as "owner" | "front_office" | "production_manager" })}>
+            <Select aria-label={`Role for ${member.name}`} value={role} disabled={pending}
+              onChange={(e) => {
+                const prev = role;
+                setRole(e.target.value);
+                run({ role: e.target.value as "owner" | "front_office" | "production_manager" }, () => setRole(prev));
+              }}>
               {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
             </Select>
           </label>
-          {member.role === "owner" && (
+          {role === "owner" && (
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted">Title</span>
-              <Select aria-label={`Title for ${member.name}`} defaultValue={member.title ?? ""} disabled={pending}
-                onChange={(e) => run({ title: e.target.value })}>
+              <Select aria-label={`Title for ${member.name}`} value={title} disabled={pending}
+                onChange={(e) => {
+                  const prev = title;
+                  setTitle(e.target.value);
+                  run({ title: e.target.value }, () => setTitle(prev));
+                }}>
                 <option value="">No title</option>
                 {OWNER_TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
               </Select>
             </label>
           )}
-          {member.role === "production_manager" && (
+          {role === "production_manager" && (
             <label className="flex min-h-12 items-center gap-3 self-end text-sm">
-              <input type="checkbox" defaultChecked={member.can_view_costs} disabled={pending} className="size-5 accent-[var(--color-ink)]"
-                onChange={(e) => run({ can_view_costs: e.target.checked })} />
+              <input type="checkbox" checked={costs} disabled={pending} className="size-5 accent-[var(--color-ink)]"
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setCosts(next);
+                  run({ can_view_costs: next }, () => setCosts(!next));
+                }} />
               Can see production costs and stock values
             </label>
           )}
