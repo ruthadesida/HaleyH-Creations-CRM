@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 \ir ../shared/fixtures.psql
 
-select plan(23);
+select plan(26);
 
 select tests.login('a0000000-0000-0000-0000-000000000001');
 
@@ -78,28 +78,43 @@ update public.payments set void_reason = 'again' where reference = 'typo';
 select results_eq($$ select void_reason from public.payments where reference = 'typo' $$,
   array['Entered twice'], 'A voided payment cannot be voided again or re-edited');
 
--- Fulfilment: forward moves, timestamps, backward needs a manager.
-update public.orders set fulfilment_stage = 'dispatched', courier_name = 'Test Courier'
-  where id = (select order_id from t);
-select results_eq($$ select dispatched_at is not null from public.orders where id = (select order_id from t) $$,
-  array[true], 'Dispatch time is set');
+-- Fulfilment comes from records: confirm, dispatch (owner approval while money is owed), deliver.
+select throws_ok($$ update public.orders set fulfilment_stage = 'dispatched' where id = (select order_id from t) $$,
+  '42501', null, 'The stage cannot be typed in; it comes from dispatch records');
+select public.confirm_order((select order_id from t));
+select throws_like($$ select public.dispatch_order((select order_id from t), (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'),
+  current_date, 'Test Courier', null, (select jsonb_agg(jsonb_build_object('item', id, 'qty', quantity)) from public.order_items where order_id = (select order_id from t)),
+  gen_random_uuid()) $$, '%still owed%', 'Dispatching with money owed needs an owner''s approval');
+select public.approve_unpaid_dispatch((select order_id from t), 'Trusted customer, pays on delivery');
+select public.dispatch_order((select order_id from t), (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'),
+  current_date, 'Test Courier', null, (select jsonb_agg(jsonb_build_object('item', id, 'qty', quantity)) from public.order_items where order_id = (select order_id from t)),
+  gen_random_uuid());
+select results_eq($$ select dispatched_at is not null, fulfilment_stage::text from public.orders where id = (select order_id from t) $$,
+  $$ values (true, 'dispatched'::text) $$, 'Dispatching everything sets the stage and time');
 select throws_ok(
   $$ update public.order_items set quantity = 9 where order_id = (select order_id from t) and description = 'Bag' $$,
   'P0001', null, 'Items cannot change after dispatch');
-update public.orders set fulfilment_stage = 'delivered' where id = (select order_id from t);
+select public.mark_order_delivered((select order_id from t));
 select results_eq($$ select delivered_at is not null from public.orders where id = (select order_id from t) $$,
   array[true], 'Delivery confirmation stamps the delivery time');
+select throws_like($$ select public.cancel_order((select order_id from t), 'Too late') $$, 'Some items have already gone out%',
+  'A dispatched order cannot be cancelled (record a return instead)');
 
 -- Cancellation keeps the history and turns money received into a refund due.
-update public.orders set status = 'cancelled', cancel_reason = 'Customer changed mind' where id = (select order_id from t);
-select results_eq($$ select amount_due_minor, balance_minor from public.order_summaries where id = (select order_id from t) $$,
-  $$ values (0::bigint, -27000::bigint) $$, 'A cancelled order owes nothing and shows the refund due');
+create temp table t2 (order_id uuid) on commit drop;
+grant all on t2 to authenticated;
+insert into t2 (order_id) select public.create_order('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a',
+  '[{"description":"Agbada","quantity":1,"unit_price_minor":30000}]'::jsonb, gen_random_uuid());
+insert into public.payments (business_id, order_id, amount_minor, method) select 'aaaaaaaa-0000-0000-0000-000000000000', order_id, 10000, 'cash' from t2;
+select public.cancel_order((select order_id from t2), 'Customer changed mind');
+select results_eq($$ select amount_due_minor, balance_minor from public.order_summaries where id = (select order_id from t2) $$,
+  $$ values (0::bigint, -10000::bigint) $$, 'A cancelled order owes nothing and shows the refund due');
 select throws_ok(
   $$ insert into public.payments (business_id, order_id, amount_minor, method)
-     select 'aaaaaaaa-0000-0000-0000-000000000000', order_id, 100, 'cash' from t $$,
+     select 'aaaaaaaa-0000-0000-0000-000000000000', order_id, 100, 'cash' from t2 $$,
   'P0001', null, 'No new payments on a cancelled order');
-select results_eq($$ select count(*)::int from public.order_items where order_id = (select order_id from t) $$,
-  array[2], 'Cancelling keeps the original items');
+select results_eq($$ select count(*)::int from public.order_items where order_id = (select order_id from t2) $$,
+  array[1], 'Cancelling keeps the original items');
 
 -- Enquiry → order, exactly once.
 insert into public.enquiries (id, business_id, customer_id, stage)
