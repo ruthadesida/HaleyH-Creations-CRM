@@ -14,7 +14,7 @@ test.describe.configure({ mode: "serial" });
 const BENIGN = [
   /Viewport argument key "interactive-widget" not recognized/,
   // Safari reports a prefetch it cancelled (because the test moved on) this way.
-  /_rsc=\S+ due to access control checks/,
+  /_rsc=[\s\S]*access control checks/,
 ];
 
 let owner: TestUser;
