@@ -52,7 +52,11 @@ export default function Page(props: PageProps<"/w/[slug]/search">) {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Search" />
-      <div className="mb-6"><SearchBar placeholder="Customer, phone, order, job, product or SKU" /></div>
+      <div className="mb-6">
+        <Suspense fallback={<div className="h-12 rounded-[var(--radius-card)] bg-ink/5" />}>
+          <SearchBar placeholder="Customer, phone, order, job, product or SKU" />
+        </Suspense>
+      </div>
       <Suspense fallback={<div className="h-48 animate-pulse rounded-[var(--radius-card)] bg-ink/5" />}>
         <Results {...props} />
       </Suspense>
