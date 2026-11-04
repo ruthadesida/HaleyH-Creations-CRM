@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-04 (Phase 2)
+
+- **Purchasing:** a draft PO is the purchase request; an owner prices and approves it. Prices are cost data (hidden column, `purchase_order_prices()`), so a production manager without cost permission can raise requests and receive goods but never sees prices. Quick purchases set prices and need cost permission.
+- **Landed cost** is entered once per receipt and shared by accepted line value; never editable afterwards (reverse and re-receive).
+- **Supplier returns reopen the returned quantity on the PO** (a replacement is expected). Close the order if it isn't.
+- **WIP lives on the job**, not as a stock location: issue documents carry the value out of stock; completion documents carry it into finished goods at (WIP remaining ÷ units remaining). Rejected units go to Quarantine at the same cost; rework stays in WIP.
+- **External makers:** sending material is a transfer to an auto-created "With [maker]" location; it stays reserved for the job until issued.
+- **Reservations are per item, not per location**, and the engine refuses any posting that would leave available stock (outside Quarantine) below what's reserved. Material held by one maker counts as available to another job; issuing still needs it at the chosen location.
+- **Zero-cost completion** (no materials, labour or costs recorded) flags the item "cost missing" instead of valuing it at ₦0.
+- **Maker pay** (approved fee, payments) is owner-only, even for production managers who may see costs.
+- **Production documents are corrected from the job**, never reversed from Movements; returns to a finished job are refused.
+- Supabase generated types mark nullable RPC arguments as required; `src/lib/rpc.ts` `orNull()` sends a real null.
+
 ## 2026-11-04 (later)
 
 - **Signed-in browser tests run only against CI's throwaway local Supabase.** The test helper refuses any non-localhost URL; test users get random passwords and are created pre-confirmed through the admin API.
