@@ -101,7 +101,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
               <dl>
                 {c.phone && <Detail label="Phone">{formatPhone(c.phone)}</Detail>}
                 {c.whatsapp && <Detail label="WhatsApp">{formatPhone(c.whatsapp)}</Detail>}
-                {c.email && <Detail label="Email"><a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 underline underline-offset-4"><Mail aria-hidden className="size-4" />{c.email}</a></Detail>}
+                {c.email && <Detail label="Email"><a href={`mailto:${c.email}`} className="underline underline-offset-4"><Mail aria-hidden className="mr-1 inline size-4 align-[-0.15em]" />{c.email}</a></Detail>}
                 {(c.address_line || c.city || c.state) && (
                   <Detail label="Address">{[c.address_line, c.city, c.state, c.country].filter(Boolean).join(", ")}</Detail>
                 )}

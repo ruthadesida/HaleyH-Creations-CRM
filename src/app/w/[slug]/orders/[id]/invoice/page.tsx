@@ -40,7 +40,7 @@ async function Invoice({ params }: PageProps<"/w/[slug]/orders/[id]/invoice">) {
           </div>
         </header>
         <section className="grid gap-4 border-b border-line py-6 sm:grid-cols-2">
-          <div>
+          <div className="min-w-0 [overflow-wrap:anywhere]">
             <p className="text-sm text-muted">For</p>
             <p className="font-medium">{c?.full_name}</p>
             {c?.phone && <p>{c.phone}</p>}
@@ -53,18 +53,18 @@ async function Invoice({ params }: PageProps<"/w/[slug]/orders/[id]/invoice">) {
           <thead>
             <tr className="text-sm text-muted">
               <th scope="col" className="py-3 font-normal">Item</th>
-              <th scope="col" className="py-3 text-right font-normal">Qty</th>
+              <th scope="col" className="hidden py-3 pl-3 text-right font-normal sm:table-cell">Qty</th>
               <th scope="col" className="hidden py-3 text-right font-normal sm:table-cell">Price</th>
-              <th scope="col" className="py-3 text-right font-normal">Amount</th>
+              <th scope="col" className="py-3 pl-3 text-right font-normal">Amount</th>
             </tr>
           </thead>
           <tbody>
             {(items ?? []).map((i) => (
               <tr key={i.id} className="border-t border-line">
-                <td className="py-3 pr-3">{i.description}</td>
-                <td className="py-3 text-right tabular">{i.quantity}</td>
-                <td className="hidden py-3 text-right tabular sm:table-cell"><Money minor={i.unit_price_minor} currency={cur} /></td>
-                <td className="py-3 text-right tabular"><Money minor={i.quantity * i.unit_price_minor} currency={cur} /></td>
+                <td className="py-3 [overflow-wrap:anywhere]"><span className="tabular text-muted sm:hidden">{i.quantity} × </span>{i.description}</td>
+                <td className="hidden py-3 pl-3 text-right tabular sm:table-cell">{i.quantity}</td>
+                <td className="hidden py-3 pl-3 text-right tabular sm:table-cell"><Money minor={i.unit_price_minor} currency={cur} /></td>
+                <td className="py-3 pl-3 text-right tabular"><Money minor={i.quantity * i.unit_price_minor} currency={cur} /></td>
               </tr>
             ))}
           </tbody>

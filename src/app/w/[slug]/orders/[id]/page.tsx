@@ -138,8 +138,8 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                   const js = job && JOB_STATUS[job.status as keyof typeof JOB_STATUS];
                   return (
                     <li key={i.id} className="flex flex-col gap-1 border-b border-line px-4 py-3 last:border-b-0 sm:px-5">
-                      <span className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="font-medium">{i.quantity} × {i.description}</span>
+                      <span className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
+                        <span className="font-medium [overflow-wrap:anywhere]">{i.quantity} × {i.description}</span>
                         <Money minor={i.quantity * i.unit_price_minor} currency={cur} className="tabular" />
                       </span>
                       <span className="text-sm text-muted">

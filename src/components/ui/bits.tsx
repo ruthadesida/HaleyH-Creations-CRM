@@ -1,9 +1,15 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 
+/** A money amount. Kept on one line, except that a very large figure may wrap after a thousands comma. */
 export function Money({ minor, currency = "NGN", className }: { minor: number; currency?: string; className?: string }) {
-  return <span className={cn("tabular whitespace-nowrap", className)}>{formatMoney(minor, currency)}</span>;
+  const parts = formatMoney(minor, currency).replace(/\s/g, " ").split(",");
+  return (
+    <span className={cn("tabular", className)}>
+      {parts.map((p, i) => <Fragment key={i}>{i > 0 && <>,<wbr /></>}{p}</Fragment>)}
+    </span>
+  );
 }
 
 const tones = {
@@ -68,7 +74,7 @@ export function Detail({ label, children }: { label: string; children: ReactNode
   return (
     <div className="flex justify-between gap-4 border-b border-line py-2.5 last:border-b-0">
       <dt className="text-muted">{label}</dt>
-      <dd className="min-w-0 text-right break-words">{children}</dd>
+      <dd className="min-w-0 text-right [overflow-wrap:anywhere]">{children}</dd>
     </div>
   );
 }

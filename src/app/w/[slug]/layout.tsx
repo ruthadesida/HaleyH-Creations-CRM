@@ -104,7 +104,8 @@ export default function WorkspaceLayout({ children, params }: LayoutProps<"/w/[s
         Skip to content
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line px-4 py-6 lg:flex print:hidden">
+      {/* Children never shrink: on a short screen (or with a long business name) the sidebar scrolls instead of squashing buttons. */}
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto overscroll-contain border-r border-line px-4 py-6 lg:flex print:hidden [&>*]:shrink-0">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-ink/5" />}>
           <SidebarContent params={params} />
         </Suspense>
