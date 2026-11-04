@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/back-link";
-import { Card, EmptyState } from "@/components/ui/bits";
+import { EmptyState } from "@/components/ui/bits";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { getWorkspace } from "@/lib/dal";
@@ -55,7 +55,8 @@ async function ReportView({ params, searchParams }: PageProps<"/w/[slug]/reports
       ) : rows.length === 0 ? (
         <EmptyState title="Nothing to show">Nothing matches this report{report.range ? " for these dates" : ""}.</EmptyState>
       ) : (
-        <Card className="overflow-x-auto overscroll-x-contain">
+        // Wide tables scroll sideways on phones; focusable so keyboard users can scroll too.
+        <div className="overflow-x-auto overscroll-x-contain rounded-[var(--radius-card)] border border-line bg-surface focus-visible:outline-2 focus-visible:outline-gold" tabIndex={0} role="region" aria-label={`${report.title} table`}>
           <table className="w-full min-w-max text-left text-sm">
             <thead>
               <tr className="border-b border-line text-muted">
@@ -85,7 +86,7 @@ async function ReportView({ params, searchParams }: PageProps<"/w/[slug]/reports
               </tfoot>
             )}
           </table>
-        </Card>
+        </div>
       )}
     </>
   );

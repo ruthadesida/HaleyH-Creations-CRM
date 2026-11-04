@@ -46,15 +46,16 @@ select public.receive_customer_return((select id from public.orders where idempo
 
 -- Production: a job with materials issued and one unit through QC.
 select public.create_production_job('aaaaaaaa-0000-0000-0000-000000000000', (select id from public.product_variants where sku = 'DRESS-M'),
-  2, null, null, current_date + 5, null, '00000000-0000-0000-0000-00000000bb01');
-select public.set_job_material((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+  2, null, null, current_date + 5, null, '00000000-0000-0000-0000-00000000bb01') as job \gset
+-- (Staff can't read production_jobs.idempotency_key directly, so keep the new job's id in a psql variable.)
+select public.set_job_material(:'job'::uuid,
   (select id from public.stock_items where code = 'FAB'), 5, 'm');
-select public.allocate_job_materials((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'));
-select public.issue_job_materials((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+select public.allocate_job_materials(:'job'::uuid);
+select public.issue_job_materials(:'job'::uuid,
   (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'store'), current_date,
   jsonb_build_array(jsonb_build_object('item', (select id from public.stock_items where code = 'FAB'), 'qty', 5)), gen_random_uuid());
-select public.submit_job_for_qc((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'));
-select public.record_qc_inspection((select id from public.production_jobs where idempotency_key = '00000000-0000-0000-0000-00000000bb01'),
+select public.submit_job_for_qc(:'job'::uuid);
+select public.record_qc_inspection(:'job'::uuid,
   1, 1, 0, '{}', 'Hem uneven', 'Redo', (select id from public.locations where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and kind = 'showroom'),
   current_date, gen_random_uuid());
 reset role;

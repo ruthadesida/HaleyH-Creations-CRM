@@ -49,9 +49,9 @@ select results_eq($$ select action from public.import_products('aaaaaaaa-0000-00
   array['update'], 'Re-importing a product with no SKU updates it');
 select is((select count(*)::int from public.product_variants v join public.products p on p.id = v.product_id where p.name = 'Aso oke cap'), 1,
   '... without creating a second variant');
-select results_eq( select action from public.import_products('aaaaaaaa-0000-0000-0000-000000000000', '[
+select results_eq($$ select action from public.import_products('aaaaaaaa-0000-0000-0000-000000000000', '[
   {"line": 2, "product_name": "Gele", "category": "other", "colour": "Gold"},
-  {"line": 3, "product_name": "gele", "category": "other", "colour": "gold"}]', true) order by line ,
+  {"line": 3, "product_name": "gele", "category": "other", "colour": "gold"}]', true) order by line $$,
   array['create', 'error'], 'The same SKU-less product twice in one file is flagged in the preview');
 
 select ok((select count(*) > 0 from public.search_everything('aaaaaaaa-0000-0000-0000-000000000000', 'Amaka') where kind = 'order'),
