@@ -1,4 +1,4 @@
-import { type Browser, type Page, expect, test } from "@playwright/test";
+import { type Browser, expect, test } from "@playwright/test";
 import {
   SKIP_REASON, type TestUser, addMember, createBusiness, createUser, hasLocalSupabase, lagosDaysAgo, onHand, signIn,
 } from "./support/world";
@@ -6,8 +6,8 @@ import {
 /**
  * Phase 1 end to end, clicked through the real screens by the real roles:
  * owner sets the cutover date and invites the production manager, imports and approves opening stock,
- * moves stock; the production manager counts; the owner approves; another business is locked out.
- * Quantities are then checked in the ledger itself.
+ * moves stock; the production manager counts; the owner approves and reverses; the period is closed;
+ * the front office and another business are kept out. Quantities are checked in the ledger itself.
  */
 test.skip(!hasLocalSupabase, SKIP_REASON);
 
@@ -17,13 +17,17 @@ const CSV = [
   "ZIP-20,Metal zip 20 cm,raw_material,pc,Hardware,Gold,Raw material store,300,pc,",
 ].join("\n");
 
-async function newUserPage(browser: Browser, page: Page) {
-  const context = await browser.newContext({ baseURL: test.info().project.use.baseURL, viewport: page.viewportSize() });
+const LOCATIONS = ["Raw material store", "Production floor", "Quarantine", "Finished goods / showroom"];
+
+/** A second signed-in person on the same device type as this project (phone users get a phone). */
+async function newUserPage(browser: Browser) {
+  const { baseURL, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = test.info().project.use;
+  const context = await browser.newContext({ baseURL, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch });
   return context.newPage();
 }
 
 test("owner, production manager and front office run Phase 1 stock end to end", async ({ page, browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   page.on("dialog", (d) => d.accept());
 
   let owner: TestUser, pm: TestUser, office: TestUser, outsider: TestUser;
@@ -59,7 +63,7 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     expect(inviteLink).toMatch(/\/invite\/[\w-]+$/);
   });
 
-  let batchUrl = "";
+  let batchPath = "";
   await test.step("owner imports opening stock from a CSV and approves it", async () => {
     await page.goto(`${base()}/stock/opening/new`);
     await page.locator("input[type=file]").setInputFiles({ name: "opening.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
@@ -69,8 +73,9 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     // Yards are converted to the item's metres before anything is saved.
     await expect(page.getByText("(= 109.728 m)")).toBeVisible();
     await page.getByRole("button", { name: "Save batch for owner approval" }).click();
-    await expect(page).toHaveURL(/\/stock\/opening\/[0-9a-f-]{36}\?saved=1/);
-    batchUrl = page.url();
+    await expect(page.getByText("Batch saved. An owner can now approve it.")).toBeVisible();
+    await expect(page).toHaveURL(/\/stock\/opening\/[0-9a-f-]{36}/);
+    batchPath = new URL(page.url()).pathname;
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(0); // saving posts nothing
     await page.getByRole("button", { name: "Approve and post" }).click();
     await expect(page.getByText("Approved and posted. Opening stock is now on hand.")).toBeVisible();
@@ -78,16 +83,26 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(300);
   });
 
-  await test.step("stock levels show the imported quantities, and a blank cost is flagged", async () => {
+  await test.step("importing the same stock again is refused", async () => {
+    await page.goto(`${base()}/stock/opening/new`);
+    await page.locator("input[type=file]").setInputFiles({ name: "again.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
+    await page.getByRole("button", { name: "Check every line" }).click();
+    await expect(page.getByText("2 lines need fixing.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save batch for owner approval" })).toHaveCount(0);
+  });
+
+  await test.step("stock levels show quantities and value; a blank cost is flagged", async () => {
     await page.goto(`${base()}/stock?kind=raw_material`);
     const fabric = page.getByRole("link", { name: /Blue Ankara print/ });
     await expect(fabric).toContainText("109.728 m");
+    // Owners see value at moving average: 120 yd at ₦2,500 a yard.
+    await expect(fabric).toContainText(/₦300,000|₦299,999\.9\d/);
     const zips = page.getByRole("link", { name: /Metal zip 20 cm/ });
     await expect(zips).toContainText("300 pc");
     await expect(zips).toContainText("Cost missing");
   });
 
-  await test.step("owner moves 20 zips to the production floor", async () => {
+  await test.step("owner moves 20 zips to the production floor; the total stays 300", async () => {
     await page.goto(`${base()}/stock/transfer`);
     await page.getByLabel("Item", { exact: true }).selectOption({ label: "Metal zip 20 cm (ZIP-20)" });
     await page.getByLabel("From", { exact: true }).selectOption({ label: "Raw material store" });
@@ -95,9 +110,12 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     await page.getByLabel("To", { exact: true }).selectOption({ label: "Production floor" });
     await page.getByLabel(/^Quantity/).fill("20");
     await page.getByRole("button", { name: "Move stock" }).click();
-    await expect(page).toHaveURL(/\/stock\/items\/[0-9a-f-]{36}\?moved=1/);
+    await expect(page.getByText("Stock moved.")).toBeVisible();
+    await expect(page).toHaveURL(/\/stock\/items\/[0-9a-f-]{36}/);
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(280);
     expect(await onHand(business.id, "ZIP-20", "Production floor")).toBe(20);
+    const totals = await Promise.all(LOCATIONS.map((l) => onHand(business.id, "ZIP-20", l)));
+    expect(totals.reduce((a, b) => a + b, 0)).toBe(300);
   });
 
   await test.step("moving more than is on hand is refused and changes nothing", async () => {
@@ -107,12 +125,12 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     await page.getByLabel("To", { exact: true }).selectOption({ label: "Quarantine" });
     await page.getByLabel(/^Quantity/).fill("25");
     await page.getByRole("button", { name: "Move stock" }).click();
-    await expect(page.locator("form [role=alert]")).not.toBeEmpty();
+    await expect(page.locator("form [role=alert]")).toContainText("Not enough stock");
     await expect(page).toHaveURL(/\/stock\/transfer/);
     expect(await onHand(business.id, "ZIP-20", "Production floor")).toBe(20);
   });
 
-  const pmPage = await newUserPage(browser, page);
+  const pmPage = await newUserPage(browser);
   await test.step("production manager accepts the invite and sees stock without costs", async () => {
     await signIn(pmPage, pm, new URL(inviteLink).pathname);
     await expect(pmPage.getByRole("heading", { level: 1, name: "Join E2E Atelier" })).toBeVisible();
@@ -120,7 +138,7 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     // Their home is the Stock area.
     await expect(pmPage).toHaveURL(new RegExp(`${base()}/stock`));
     await pmPage.goto(`${base()}/stock?kind=raw_material`);
-    await expect(pmPage.getByRole("link", { name: /Metal zip 20 cm/ })).toContainText("300 pc");
+    await expect(pmPage.getByRole("link", { name: /Metal zip 20 cm/ })).toContainText("300 pc"); // 280 in the store + 20 on the floor
     await expect(pmPage.getByRole("main")).not.toContainText("₦");
     await expect(pmPage.getByRole("main")).not.toContainText("Cost missing");
   });
@@ -153,27 +171,55 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(280);
   });
 
-  await test.step("every change is in the movement history", async () => {
+  await test.step("every change is in the history, and the owner can reverse the count", async () => {
     await page.goto(`${base()}/stock/movements`);
-    await expect(page.getByRole("main")).toContainText("ZIP-20");
-    await expect(page.getByRole("main")).toContainText("-2 pc");
+    const doc = (label: string) => page.locator("main ul > li").filter({ has: page.locator("p.font-medium", { hasText: label }) });
+    await expect(doc("Count adjustment")).toContainText("Metal zip 20 cm · Production floor");
+    await expect(doc("Count adjustment")).toContainText("-2 pc");
+    await expect(doc("Transfer").first()).toContainText("Metal zip 20 cm");
+    await expect(doc("Opening balance")).toContainText("Blue Ankara print");
+    await doc("Count adjustment").getByRole("button", { name: "Reverse", exact: true }).click();
+    await page.getByLabel("Reason", { exact: true }).fill("Found two more in a bin");
+    await page.getByRole("button", { name: "Reverse document" }).click();
+    await expect(page.getByText("Reversed. Both documents stay in the history.")).toBeVisible();
+    expect(await onHand(business.id, "ZIP-20", "Production floor")).toBe(20);
+    await expect(doc("Reversal").first()).toContainText("+2 pc");
+    await expect(doc("Count adjustment")).toContainText("Reversed");
   });
 
-  const officePage = await newUserPage(browser, page);
+  await test.step("after closing the period up to today, postings dated today are refused", async () => {
+    await page.goto(`${base()}/settings`);
+    await page.getByLabel("Stock closed up to").fill(lagosDaysAgo(0));
+    await page.getByRole("button", { name: "Save stock dates" }).click();
+    await expect(page.getByText("Stock dates saved.")).toBeVisible();
+    await page.goto(`${base()}/stock/transfer`);
+    await page.getByLabel("Item", { exact: true }).selectOption({ label: "Metal zip 20 cm (ZIP-20)" });
+    await page.getByLabel("From", { exact: true }).selectOption({ label: "Raw material store" });
+    await page.getByLabel("To", { exact: true }).selectOption({ label: "Quarantine" });
+    await page.getByLabel(/^Quantity/).fill("1");
+    await page.getByRole("button", { name: "Move stock" }).click();
+    await expect(page.locator("form [role=alert]")).not.toBeEmpty();
+    expect(await onHand(business.id, "ZIP-20", "Quarantine")).toBe(0);
+  });
+
+  const officePage = await newUserPage(browser);
   await test.step("front office sees finished goods only, never raw materials", async () => {
     await signIn(officePage, office);
     await officePage.goto(`${base()}/stock?kind=raw_material`);
     await expect(officePage.getByRole("heading", { level: 1, name: "Stock" })).toBeVisible();
     await expect(officePage.getByRole("main")).not.toContainText("Metal zip 20 cm");
     await expect(officePage.getByRole("main")).not.toContainText("₦");
+    // Not just hidden by the page: the database returns no raw materials to them.
+    const { data: raw } = await office.client.from("stock_items").select("id").eq("business_id", business.id).eq("kind", "raw_material");
+    expect(raw ?? []).toEqual([]);
     await officePage.goto(`${base()}/stock/counts`);
     await expect(officePage.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
   });
 
-  const outsiderPage = await newUserPage(browser, page);
+  const outsiderPage = await newUserPage(browser);
   await test.step("an owner of another business can't open this one by URL", async () => {
     await signIn(outsiderPage, outsider);
-    for (const path of [`${base()}/stock?kind=raw_material`, new URL(batchUrl).pathname, `${base()}/settings/staff`]) {
+    for (const path of [`${base()}/stock?kind=raw_material`, batchPath, `${base()}/settings/staff`]) {
       await outsiderPage.goto(path);
       await expect(outsiderPage.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
       await expect(outsiderPage.locator("body")).not.toContainText("Metal zip 20 cm");

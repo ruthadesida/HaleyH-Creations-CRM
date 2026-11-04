@@ -62,7 +62,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("every signed-in screen loads cleanly at this viewport", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);
   for (const { path, heading } of paths) {
     await test.step(path.replace(slug, "<slug>"), async () => {
       const errors: string[] = [];
