@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-04
+
+- **Spec 2 roles:** enum values renamed (`manager` → `front_office`, `production` → `production_manager`), `sales` retired by constraint; owner titles and an owner-granted `can_view_costs`. Refunds and voids became owner-only; the front office can cancel orders.
+- **Single inventory ledger** (`stock_documents` + `stock_movements`) written only by SECURITY DEFINER posting functions; costs hidden by column grants and exposed only through permission-checked functions.
+- **Moving weighted average per item** (not per location); only a net increase within a document moves it.
+- **Lock order:** business row first, then items (ordered by id) on every posting path; idempotency checked under that lock; a reused key for a different action is refused.
+- **Counts** post counted − expected (expected recorded at count time). **Opening stock**: one live opening per item and location; posted under the business lock from fresh validation; blank cost = unknown, flagged `cost_missing`.
+- **Makers are a directory without logins** for now; restricted maker logins are optional later.
+- **Production manager can read products** (needed for BOMs); costs remain hidden unless permitted.
+
 ## 2026-11-03 (later)
 
 - **Spec 2 adopted** (integrated CRM + purchasing + inventory + production). Phases and design decisions in GAP-ANALYSIS.md. Orders/payments/tasks UI folded into Spec 2 phases instead of being built twice.

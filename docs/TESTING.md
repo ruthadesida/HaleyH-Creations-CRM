@@ -25,6 +25,10 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `01_isolation` — business B attacking A through reads, writes, RPCs, views and forged foreign keys; deactivated staff; platform admin; anonymous.
 - `02_roles` — production, sales and owner limits; no deletes; audit log immutable; last owner protected.
 - `03_money_and_workflow` — totals, deposits, balances, refunds, overpayment, voids, cancellation, dispatch/delivery stamps, idempotency, enquiry → order exactly once.
+- `04_inventory` — Spec 2 tests A (opening stock imports once, correct quantities and values, yards → metres), L (external maker stock stays business stock; transfers keep totals), M (retries don't double-post; no overselling; closed periods), N (front office sees finished goods only, costs never selectable, other businesses locked out); counts/write-offs need owner approval; reversals.
+- `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
+
+Total: **118** database tests.
 
 ## Notes
 
