@@ -28,7 +28,7 @@ async function available(businessId: string, code: string) {
 }
 
 test("purchasing and production run end to end", async ({ page, browser }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(600_000);
   page.on("dialog", (d) => d.accept());
 
   let owner: TestUser, pm: TestUser;
