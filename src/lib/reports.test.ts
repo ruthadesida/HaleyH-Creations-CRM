@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canOpen, csvValue, findReport, formatCell, REPORTS } from "./reports";
+import { canOpen, csvValue, findReport, formatCell, hasTotal, REPORTS } from "./reports";
 
 describe("report catalogue", () => {
   it("has unique keys, a definition and columns for every report", () => {
@@ -26,6 +26,16 @@ describe("report catalogue", () => {
     expect(formatCell(null, "money")).toBe("—");
     expect(formatCell(109.728, "qty")).toBe("109.728");
     expect(formatCell("finished_good", "text")).toBe("finished good");
+  });
+  it("never totals unit costs or quantities in mixed units", () => {
+    const col = (report: string, key: string) => findReport(report)!.columns.find((c) => c.key === key)!;
+    expect(hasTotal(col("sales-by-product", "sales"))).toBe(true);
+    expect(hasTotal(col("sales-by-product", "units"))).toBe(true);
+    expect(hasTotal(col("movements", "unit_cost"))).toBe(false);
+    expect(hasTotal(col("movements", "quantity"))).toBe(false);
+    expect(hasTotal(col("shortages", "short_by"))).toBe(false);
+    expect(hasTotal(col("stock-by-location", "on_hand"))).toBe(false);
+    expect(hasTotal(col("gross-profit", "margin_pct"))).toBe(false);
   });
   it("exports money in naira with two decimals", () => {
     expect(csvValue(3000050, "money")).toBe("30000.50");

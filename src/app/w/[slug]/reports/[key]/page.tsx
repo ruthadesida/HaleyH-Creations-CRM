@@ -8,7 +8,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { getWorkspace } from "@/lib/dal";
 import { formatDate } from "@/lib/dates";
-import { canOpen, findReport, formatCell } from "@/lib/reports";
+import { canOpen, hasTotal, findReport, formatCell } from "@/lib/reports";
 import { reportRange, runReport } from "@/lib/run-report";
 import { canViewCosts } from "@/lib/stock";
 import { cn } from "@/lib/cn";
@@ -28,8 +28,7 @@ async function ReportView({ params, searchParams }: PageProps<"/w/[slug]/reports
   const { rows, error } = await runReport(report, business.id, from, to);
   // Columns the role can't see come back empty: hide them rather than show a column of dashes.
   const columns = report.columns.filter((c) => rows.length === 0 || rows.some((r) => r[c.key] !== null && r[c.key] !== undefined));
-  const totals = columns.map((c) => (c.type === "money" || (c.type === "qty" && report.key !== "stock-by-location" && report.key !== "availability" && report.key !== "movements" && report.key !== "material-variance"))
-    ? rows.reduce((s, r) => s + Number(r[c.key] ?? 0), 0) : null);
+  const totals = columns.map((c) => (hasTotal(c) ? rows.reduce((s, r) => s + Number(r[c.key] ?? 0), 0) : null));
   const exportHref = `/w/${slug}/reports/${key}/export${report.range ? `?from=${from}&to=${to}` : ""}`;
 
   return (

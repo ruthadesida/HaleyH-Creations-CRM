@@ -51,7 +51,8 @@ jobs:
         run: |
           set -euo pipefail
           name="haleyh-backup-$(date -u +%Y-%m-%dT%H%M).tar.gz.gpg"
-          tar czf - roles.sql schema.sql data.sql | gpg --batch --yes --pinentry-mode loopback --passphrase "$PASSPHRASE" \
+          # The passphrase goes through a file descriptor, never the command line (other processes can read that).
+          tar czf - roles.sql schema.sql data.sql | gpg --batch --yes --pinentry-mode loopback --passphrase-file <(printf '%s' "$PASSPHRASE") \
             --symmetric --cipher-algo AES256 -o "$name"
           shred -u roles.sql schema.sql data.sql
           echo "NAME=$name" >> "$GITHUB_ENV"
@@ -61,3 +62,7 @@ jobs:
           name: ${{ env.NAME }}
           path: ${{ env.NAME }}
           retention-days: 30
+      # GitHub emails the repository owner when a scheduled run fails; this makes the reason plain in the run summary.
+      - name: Explain a failure
+        if: failure()
+        run: echo "::error::Tonight's backup failed. Check the steps above, then run it again from Actions → Backup → Run workflow (docs/BACKUPS.md)."

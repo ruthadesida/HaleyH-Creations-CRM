@@ -1,6 +1,6 @@
 import { ArrowLeftRight, Bell, LogOut, Search } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { Wordmark } from "@/components/wordmark";
 import { getWorkspace } from "@/lib/dal";
@@ -37,13 +37,14 @@ async function SidebarContent({ params }: SlugParams) {
   );
 }
 
-/** How many things need attention (worked out from the records). */
-async function notificationCount(slug: string) {
+/** How many things need attention (worked out from the records). Once per request: the bell appears twice. */
+const notificationCount = cache(async (slug: string) => {
   const { business } = await getWorkspace(slug);
   const supabase = await createClient();
-  const { data } = await supabase.rpc("my_notifications", { p_business_id: business.id });
+  const { data, error } = await supabase.rpc("my_notifications", { p_business_id: business.id });
+  if (error) console.error("my_notifications failed", error.message);
   return (data ?? []).length;
-}
+});
 
 async function BellLink({ slug, className }: { slug: string; className?: string }) {
   const n = await notificationCount(slug);

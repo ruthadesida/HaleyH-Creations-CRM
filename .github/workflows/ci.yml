@@ -72,16 +72,19 @@ jobs:
           set -euo pipefail
           psql "$URL" -v ON_ERROR_STOP=1 -q -f supabase/tests/restore/seed.psql
           psql "$URL" -At -f supabase/tests/restore/snapshot.psql > before.txt
-          # The backup: all business data, plus the logins it links to.
-          docker exec "$DB" pg_dump -U supabase_admin -Fc --data-only -n public -t auth.users -t auth.identities -f /tmp/backup.dump postgres
-          docker cp "$DB:/tmp/backup.dump" backup.dump
-          # Wipe: a fresh database from the migrations.
+          # The backup: the same data dump the nightly Backup workflow takes (docs/BACKUPS.md).
+          supabase db dump --local --data-only --use-copy -f data.sql
+          grep -q 'COPY "public"."stock_movements"' data.sql || { echo "The dump has no business data"; exit 1; }
+          grep -q 'COPY "auth"."users"' data.sql || { echo "The dump has no logins"; exit 1; }
+          # Wipe: a fresh database from the migrations (stands in for restoring schema.sql into a new project),
+          # then empty every table the dump will refill, as in a brand-new project.
           supabase db reset
-          docker exec "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c \
-            "do \$\$ declare t text; begin select string_agg(format('%I.%I', schemaname, tablename), ', ') into t from pg_tables where schemaname = 'public'; execute 'truncate ' || t || ', auth.users, auth.identities cascade'; end \$\$;"
-          # Restore.
-          docker cp backup.dump "$DB:/tmp/backup.dump"
-          docker exec "$DB" pg_restore -U supabase_admin --data-only --disable-triggers -d postgres /tmp/backup.dump
+          tables=$(grep -oE '^COPY "[a-z_]+"\."[a-z_0-9]+"' data.sql | cut -d' ' -f2 | sort -u | paste -sd, -)
+          echo "Tables in the backup: $tables"
+          docker exec "$DB" psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "truncate $tables cascade"
+          psql "$URL" -At -c "select count(*) from public.businesses" | grep -qx 0
+          # Restore, exactly as the runbook says: one transaction, triggers off.
+          psql "$URL" --single-transaction -v ON_ERROR_STOP=1 -q -c "set session_replication_role = replica" -f data.sql
           psql "$URL" -At -f supabase/tests/restore/snapshot.psql > after.txt
           echo "Before: $(cat before.txt)"
           diff before.txt after.txt

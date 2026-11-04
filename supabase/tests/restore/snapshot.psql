@@ -1,6 +1,11 @@
 -- Spec 2 test O: a fingerprint of the data, taken before the backup and after the restore. They must match.
 select jsonb_build_object(
   'users', (select count(*) from auth.users),
+  'identities', (select count(*) from auth.identities),
+  'locations', (select count(*) from public.locations),
+  'makers', (select count(*) from public.makers),
+  'message_templates', (select string_agg(key || ':' || md5(body), ',' order by business_id, key) from public.message_templates),
+  'customer_external_ids', (select count(external_id) from public.customers),
   'businesses', (select count(*) from public.businesses),
   'memberships', (select count(*) from public.memberships),
   'customers', (select count(*) from public.customers),

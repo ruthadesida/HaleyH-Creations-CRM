@@ -5,7 +5,11 @@
 import type { Role } from "./dal";
 
 export type ColumnType = "text" | "money" | "qty" | "int" | "date" | "pct" | "bool";
-export type Column = { key: string; label: string; type: ColumnType };
+export type Column = {
+  key: string; label: string; type: ColumnType;
+  /** Show a total under this column. Default: money columns only; quantities only when every row has the same unit. */
+  total?: boolean;
+};
 export type Audience = "office" | "production" | "owner" | "costs" | "stock";
 
 export type Report = {
@@ -37,7 +41,7 @@ export const REPORTS: Report[] = [
     fn: "report_sales_by_product",
     definition: "Fulfilled sales: units dispatched in the period less units returned, at the order price after the order discount (delivery fees excluded). Owners also see cost of goods and estimated gross profit (not net profit); \"cost complete\" is no when any unit had no recorded cost.",
     columns: [
-      { key: "product", label: "Product", type: "text" }, { key: "units", label: "Units", type: "qty" },
+      { key: "product", label: "Product", type: "text" }, { key: "units", label: "Units", type: "qty", total: true },
       { key: "sales", label: "Fulfilled sales", type: "money" }, { key: "cogs", label: "Cost of goods", type: "money" },
       { key: "gross_profit", label: "Est. gross profit", type: "money" }, { key: "cost_complete", label: "Cost complete", type: "bool" },
     ],
@@ -82,7 +86,7 @@ export const REPORTS: Report[] = [
   {
     key: "gross-profit", title: "Estimated gross profit by order", group: "Sales and money", audience: "owner", range: true,
     fn: "report_gross_profit",
-    definition: "Orders with a dispatch in the period: fulfilled sales (after discount, less returns) minus cost of goods at moving average. Estimated, before delivery, overheads and tax. Never net profit.",
+    definition: "Per order, what was dispatched in the period less what came back in the period: fulfilled sales (after discount) minus cost of goods at moving average. An order sent out over two periods is split between them. Estimated, before delivery, overheads and tax. Never net profit.",
     columns: [
       { key: "order_number", label: "Order", type: "text" }, { key: "customer", label: "Customer", type: "text" },
       { key: "fulfilled_sales", label: "Fulfilled sales", type: "money" }, { key: "cogs", label: "Cost of goods", type: "money" },
@@ -133,7 +137,7 @@ export const REPORTS: Report[] = [
       { key: "document", label: "Document", type: "text" }, { key: "type", label: "Type", type: "text" },
       { key: "effective", label: "Date", type: "date" }, { key: "item", label: "Item", type: "text" },
       { key: "location", label: "Location", type: "text" }, { key: "quantity", label: "Quantity", type: "qty" },
-      { key: "unit", label: "Unit", type: "text" }, { key: "unit_cost", label: "Unit cost", type: "money" },
+      { key: "unit", label: "Unit", type: "text" }, { key: "unit_cost", label: "Unit cost", type: "money", total: false },
       { key: "reason", label: "Reason", type: "text" },
     ],
   },
@@ -154,7 +158,7 @@ export const REPORTS: Report[] = [
       { key: "job", label: "Job", type: "text" }, { key: "item", label: "Making", type: "text" }, { key: "maker", label: "Maker", type: "text" },
       { key: "status", label: "Status", type: "text" }, { key: "started", label: "Started", type: "date" },
       { key: "age_days", label: "Days in work", type: "int" }, { key: "due", label: "Due", type: "date" },
-      { key: "units_left", label: "Units left", type: "qty" }, { key: "wip_value", label: "WIP value", type: "money" },
+      { key: "units_left", label: "Units left", type: "qty", total: true }, { key: "wip_value", label: "WIP value", type: "money" },
     ],
   },
   {
@@ -172,9 +176,9 @@ export const REPORTS: Report[] = [
     key: "qc", title: "Production output and QC failures", group: "Production", audience: "production", range: true, fn: "report_qc",
     definition: "Inspections recorded in the period by product: passed (now stock), sent for rework, rejected (to Quarantine), and the failure rate.",
     columns: [
-      { key: "item", label: "Product", type: "text" }, { key: "inspected", label: "Inspected", type: "qty" },
-      { key: "passed", label: "Passed", type: "qty" }, { key: "rework", label: "Rework", type: "qty" },
-      { key: "rejected", label: "Rejected", type: "qty" }, { key: "failure_pct", label: "Failure rate", type: "pct" },
+      { key: "item", label: "Product", type: "text" }, { key: "inspected", label: "Inspected", type: "qty", total: true },
+      { key: "passed", label: "Passed", type: "qty", total: true }, { key: "rework", label: "Rework", type: "qty", total: true },
+      { key: "rejected", label: "Rejected", type: "qty", total: true }, { key: "failure_pct", label: "Failure rate", type: "pct" },
     ],
   },
   {
@@ -183,10 +187,15 @@ export const REPORTS: Report[] = [
     columns: [
       { key: "maker", label: "Maker", type: "text" }, { key: "external", label: "External", type: "bool" },
       { key: "open_jobs", label: "Open jobs", type: "int" }, { key: "overdue_jobs", label: "Overdue", type: "int" },
-      { key: "units_completed", label: "Units passed", type: "qty" },
+      { key: "units_completed", label: "Units passed", type: "qty", total: true },
     ],
   },
 ];
+
+/** Whether the table shows a total under a column: never a unit cost or a sum of different units. */
+export function hasTotal(column: Column): boolean {
+  return column.total ?? column.type === "money";
+}
 
 /** Whether a role may open a report (the database checks again). */
 export function canOpen(report: Report, role: Role, canSeeCosts: boolean): boolean {

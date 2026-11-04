@@ -29,7 +29,7 @@ export function MessageSheet({ phone, templates, values, suggested }: {
   const href = whatsappLink(phone, text);
   if (!phone || templates.length === 0) return null;
   return (
-    <Drawer.Root open={open} onOpenChange={(o) => { setOpen(o); if (o) pick(key); }}>
+    <Drawer.Root open={open} onOpenChange={(o) => { setOpen(o); if (o && !text) pick(key); /* keep edits if the sheet is closed and reopened */ }}>
       <Drawer.Trigger asChild><Button variant="ghost"><MessageCircle aria-hidden /> Message customer</Button></Drawer.Trigger>
       <Sheet title="Message on WhatsApp">
         <div className="flex flex-col gap-4">

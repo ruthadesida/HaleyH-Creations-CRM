@@ -32,7 +32,8 @@ export function ImportWizard({ slug, kinds }: { slug: string; kinds: ImportKind[
   const reset = (k: ImportKind = kind) => { setKind(k); setFile(null); setPreview(null); setMapping({}); setDone(false); };
   async function choose(f: File | undefined) {
     if (!f) return;
-    if (f.size > 5_000_000) return toast.error("That file is over 5 MB. Split it into smaller files.");
+    // Up to 2 MB of CSV (thousands of rows) fits within the upload limit for one import (next.config.ts).
+    if (f.size > 2_000_000) return toast.error("That file is over 2 MB. Split it into smaller files and import them one after another.");
     const rows = parseCsv(await f.text(), { keepBlank: true });
     if (rows.filter((r) => r.some((x) => x.trim())).length < 2) return toast.error("The file needs a header row and at least one line.");
     setFile({ name: f.name, rows });
