@@ -69,7 +69,7 @@ select lives_ok($$ select public.approve_purchase_order((select id from t where 
 select is(tests.po_status((select id from t where k = 'po')), 'ordered', 'Approved: ordered');
 select is(tests.on_hand('FAB'), 0::numeric, 'An approved purchase order does not change stock');
 select throws_ok($$ select public.save_purchase_order('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'po'),
-  (select id from t where k = 'sup'), null, null, jsonb_build_array(jsonb_build_object('item', tests.item('FAB'), 'qty', 9, 'unit', 'roll')))) $$,
+  (select id from t where k = 'sup'), null, null, jsonb_build_array(jsonb_build_object('item', tests.item('FAB'), 'qty', 9, 'unit', 'roll'))) $$,
   'P0001', null, 'An approved order can no longer be edited');
 reset role;
 
