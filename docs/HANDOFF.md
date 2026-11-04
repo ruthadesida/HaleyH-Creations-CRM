@@ -2,13 +2,14 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-04 (Phase 4 built)_
+_Last updated: 2026-11-04 (Phase 4 built and reviewed)_
 
 ## Where things stand
 
-- **Phase 4 of Spec 2 is built** (migrations 0016–0019):
+- **Phase 4 of Spec 2 is built and reviewed** (migrations 0016–0020):
   - 17 reports with definitions, date filters and CSV export (`/w/[slug]/reports`); owner overview on Today; notifications (bell + page); global search; printable job sheets; editable WhatsApp message templates (Settings); CSV import of customers and products with external IDs (Settings → Import); Integrations page (honest status); nightly encrypted backup workflow + `docs/BACKUPS.md`; restore tested in CI (Spec 2 test O).
   - All 15 required Spec 2 tests (A–O) are now covered by automated tests.
+  - The Phase 4 reviewer found the CI restore test was broken: a pg_dump option quirk meant the dump held only logins, so it proved nothing. It now uses the same `supabase db dump` and `psql --single-transaction` steps as the real backup and runbook. Also fixed (0020 + UI, with `14_phase4_review` tests): gross profit counted whole orders instead of the period; report totals added unit costs and mixed units; imports could duplicate SKU-less products and same-phone lines; archived customers were updated by import; search offered job pages to the front office; the WhatsApp sheet lost edits; the bell queried twice; large imports hit the 1 MB action limit.
 
 - **Phase 3 of Spec 2 is built** (migrations 0014–0015 applied to the dev project):
   - Orders: quotations → confirm (reserves stock, creates linked production jobs) → payments ("Recorded manually"; owner refunds/voids) → dispatch (partial; QC-passed stock only; owner approval when money is owed) → delivered → returns to Quarantine → inspection (restock/scrap). Cancel releases reservations and handles jobs. Printable invoice/quotation. Payments list. Owners see estimated gross profit per order. Screens under `/w/[slug]/orders` and `/w/[slug]/payments`.
@@ -39,11 +40,15 @@ _Last updated: 2026-11-04 (Phase 4 built)_
 - Signed-in browser tests run only in CI (no Docker on this machine); locally they are skipped.
 - True concurrency (two simultaneous requests) is designed for (business-row lock, item locks, idempotency) but tested only with sequential retries.
 - Supabase advisors flag the intentional SECURITY DEFINER RPCs (each checks roles inside; commented in SQL).
+- Reports use the Lagos time zone for "today" and confirmed dates, whatever the business's time-zone setting. Fine for HaleyH; needs work before other businesses in other zones.
+- Imports: a 2 MB file limit (about 5,000 rows) per import; larger files must be split.
+- Backups don't include Supabase Storage files (logos).
 
 ## Next steps
 
-1. `break-ui` + `jury` on the stock, purchasing and production screens; QA agent click-through of Phase 2 with real data.
-2. Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
+1. `break-ui` + `jury` on the purchasing, production, orders and reports screens; QA agent click-through of the whole flow with realistic data.
+2. Per-business time zone in reports (see Known gaps).
+Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): reports with definitions, date filters and role-appropriate CSV exports (sales by product/channel/period, cash and balances, stock by location, valuation, WIP by job and age, shortages, planned vs actual material, QC failures, maker work, supplier balances, estimated gross profit with completeness); owner overview home; message templates; notifications; printable job sheets; global search; CSV imports with external IDs (customers, products, Zoho/WooCommerce); backup/restore runbook; then integrations. Spec 2 test O.
 3. Phase 3 follow-ups: edit a confirmed order with impact shown; link exchange replacements (`order_returns.replacement_order_id`); a production-side list of returns to inspect.
 3. Done in Phase 2 (kept for reference): **Phase 2** (`docs/GAP-ANALYSIS.md`): purchasing (PO → partial/rejected receipts → supplier returns; quick purchase; landed costs), BOMs with versions, production jobs with WIP, material allocation/issue/return, external maker jobs and fees (owner-only payments), QC checklists and outcomes, rework, production home screen. Extend `docs/COSTING.md`.
 
@@ -52,5 +57,6 @@ _Last updated: 2026-11-04 (Phase 4 built)_
 - Create the owner account and try Phase 1 (follow `docs/PILOT-GUIDE.md`).
 - GitHub dependency graph (Settings → Code security) for the "Dependency review" check.
 - Dependabot PRs: #1 and #3 pass real checks; #2 (TypeScript 7) breaks lint.
-- Backups: free Supabase plan has none (Pro $25/month, or a scheduled dump in Phase 4).
+- Backups: the nightly encrypted backup is built but does nothing until the owner adds two GitHub secrets (`docs/BACKUPS.md`). Or Supabase Pro ($25/month). Do this before real data goes in.
+- A clean production Supabase project before real data (the current one is used for development).
 - Production domain, custom SMTP (optional: invites work by link).

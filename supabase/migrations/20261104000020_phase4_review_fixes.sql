@@ -196,6 +196,8 @@ declare
   v_variant uuid;
   v_seen text[] := '{}';
   v_seen_sku text[] := '{}';
+  v_seen_key text[] := '{}';
+  v_key text;
 begin
   if not app.is_owner(p_business_id) then
     raise exception 'Only an owner can import products (they carry prices).' using errcode = '42501';
@@ -234,13 +236,22 @@ begin
     end if;
     if v_ext is not null then v_seen := v_seen || v_ext; end if;
     if v_sku is not null then v_seen_sku := v_seen_sku || lower(v_sku); end if;
+    -- Without SKU or external ID a row is identified by product + size/colour/length: the same twice in one file is an error,
+    -- so the preview and the real run agree.
+    if v_ext is null and v_sku is null then
+      v_key := concat_ws('|', lower(v_name), lower(btrim(r ->> 'size')), lower(btrim(r ->> 'colour')), lower(btrim(r ->> 'length')));
+      if v_key = any (v_seen_key) then
+        line := v_line; action := 'error'; message := 'This product and size/colour appear twice in the file.'; return next; continue;
+      end if;
+      v_seen_key := v_seen_key || v_key;
+    end if;
 
     select id into v_variant from public.product_variants
       where business_id = p_business_id and ((v_ext is not null and external_id = v_ext) or (v_sku is not null and lower(sku) = lower(v_sku)))
       limit 1;
     if v_variant is null and v_ext is null and v_sku is null then
       select v.id into v_variant from public.product_variants v join public.products p on p.id = v.product_id
-      where v.business_id = p_business_id and lower(p.name) = lower(v_name)
+      where v.business_id = p_business_id and lower(p.name) = lower(v_name) and v.archived_at is null and v.sku is null
         and v.size is not distinct from nullif(btrim(r ->> 'size'), '') and v.colour is not distinct from nullif(btrim(r ->> 'colour'), '')
         and v.length is not distinct from nullif(btrim(r ->> 'length'), '')
       limit 1;

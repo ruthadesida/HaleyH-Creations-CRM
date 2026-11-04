@@ -22,14 +22,17 @@ export function MessageSheet({ phone, templates, values, suggested }: {
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(suggested ?? templates[0]?.key ?? "");
   const [text, setText] = useState("");
+  // True once staff edit the message: reopening keeps their words. Otherwise it is refilled with the latest figures.
+  const [edited, setEdited] = useState(false);
   const pick = (k: string) => {
     setKey(k);
+    setEdited(false);
     setText(fillTemplate(templates.find((t) => t.key === k)?.body ?? "", values));
   };
   const href = whatsappLink(phone, text);
   if (!phone || templates.length === 0) return null;
   return (
-    <Drawer.Root open={open} onOpenChange={(o) => { setOpen(o); if (o && !text) pick(key); /* keep edits if the sheet is closed and reopened */ }}>
+    <Drawer.Root open={open} onOpenChange={(o) => { setOpen(o); if (o && !edited) pick(key); }}>
       <Drawer.Trigger asChild><Button variant="ghost"><MessageCircle aria-hidden /> Message customer</Button></Drawer.Trigger>
       <Sheet title="Message on WhatsApp">
         <div className="flex flex-col gap-4">
@@ -39,7 +42,7 @@ export function MessageSheet({ phone, templates, values, suggested }: {
             </Select>
           </Field>
           <Field label="Check and edit before sending" htmlFor="msg-text">
-            <Textarea id="msg-text" rows={5} value={text} onChange={(e) => setText(e.target.value)} />
+            <Textarea id="msg-text" rows={5} value={text} onChange={(e) => { setText(e.target.value); setEdited(true); }} />
           </Field>
           {href && (
             <a href={href} target="_blank" rel="noopener noreferrer" className={buttonStyles({ size: "lg", block: true })} onClick={() => setOpen(false)}>
