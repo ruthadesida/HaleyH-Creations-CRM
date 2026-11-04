@@ -19,14 +19,6 @@ alter table public.businesses
   add column next_job_number integer not null default 1 check (next_job_number > 0),
   add column next_qc_number integer not null default 1 check (next_qc_number > 0);
 
--- Quantities in messages: up to 4 decimals, no trailing zeros or dot ("26", "14.8").
-create or replace function app.fmt_qty(p numeric)
-returns text
-language sql
-immutable
-set search_path = ''
-as $$ select rtrim(to_char(p, 'FM999999990.####'), '.') $$;
-
 -------------------------------------------------------------------------------
 -- Reservations (production now; sales orders in Phase 3)
 -------------------------------------------------------------------------------
@@ -1433,3 +1425,159 @@ create trigger audit_production_jobs after insert or update on public.production
 create trigger audit_qc_inspections after insert on public.qc_inspections for each row execute function app.write_audit();
 create trigger audit_maker_payments after insert or update on public.maker_payments for each row execute function app.write_audit();
 create trigger audit_qc_checklists after update on public.qc_checklists for each row execute function app.write_audit();
+
+-------------------------------------------------------------------------------
+-- Posting engine: unchanged except the shortage message prints exact quantities ("0.5", not "1")
+-------------------------------------------------------------------------------
+create or replace function app.post_stock_document(
+  p_business_id uuid,
+  p_doc_type text,
+  p_effective_date date,
+  p_lines jsonb,
+  p_idempotency_key uuid,
+  p_reason text default null,
+  p_source_type text default null,
+  p_source_id uuid default null,
+  p_reverses_id uuid default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_doc uuid;
+  v_existing public.stock_documents;
+  v_closed date;
+  v_n integer;
+  v_line jsonb;
+  v_item public.stock_items;
+  v_on_hand numeric;
+  v_qty numeric;
+  v_cost numeric;
+  v_unit_in numeric;
+  v_loc_archived timestamptz;
+  r record;
+begin
+  if p_idempotency_key is null then
+    raise exception 'Missing idempotency key.' using errcode = 'P0001';
+  end if;
+
+  -- 1. Business row first: the single lock order for every posting path.
+  select stock_closed_through into v_closed from public.businesses where id = p_business_id for update;
+  if not found then
+    raise exception 'Unknown business.' using errcode = 'P0001';
+  end if;
+
+  -- 2. Same request again? Only if it really is the same action.
+  select * into v_existing from public.stock_documents
+    where business_id = p_business_id and idempotency_key = p_idempotency_key;
+  if v_existing.id is not null then
+    if v_existing.doc_type is distinct from p_doc_type
+       or v_existing.source_type is distinct from p_source_type
+       or v_existing.source_id is distinct from p_source_id
+       or v_existing.reverses_id is distinct from p_reverses_id then
+      raise exception 'This request was already used for a different stock action. Refresh the page and try again.' using errcode = 'P0001';
+    end if;
+    return v_existing.id;
+  end if;
+
+  if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) = 0 then
+    raise exception 'A stock document needs at least one line.' using errcode = 'P0001';
+  end if;
+  if p_effective_date is null or p_effective_date > (now() at time zone 'Africa/Lagos')::date then
+    raise exception 'The date cannot be in the future.' using errcode = 'P0001';
+  end if;
+  if v_closed is not null and p_effective_date <= v_closed then
+    raise exception 'Stock is closed up to %. Choose a later date.', to_char(v_closed, 'DD Mon YYYY') using errcode = 'P0001';
+  end if;
+
+  update public.businesses set next_stock_doc_number = next_stock_doc_number + 1
+    where id = p_business_id returning next_stock_doc_number - 1 into v_n;
+
+  -- 3. Then the items, in a fixed order.
+  perform 1 from public.stock_items
+    where business_id = p_business_id
+      and id in (select (l ->> 'item')::uuid from jsonb_array_elements(p_lines) l)
+    order by id
+    for update;
+
+  insert into public.stock_documents (
+    business_id, number, doc_type, effective_date, posted_by, reason, source_type, source_id,
+    reverses_id, idempotency_key
+  ) values (
+    p_business_id, 'SD-' || lpad(v_n::text, 5, '0'), p_doc_type, p_effective_date, (select auth.uid()),
+    nullif(btrim(p_reason), ''), p_source_type, p_source_id, p_reverses_id, p_idempotency_key
+  )
+  returning id into v_doc;
+
+  -- 4. Moving average: only a net increase of the item in this document, carrying a cost, moves it.
+  --    (A transfer or its reversal nets to zero and leaves the average alone.)
+  for r in
+    select (l ->> 'item')::uuid as item,
+      sum((l ->> 'qty')::numeric) as net,
+      sum((l ->> 'qty')::numeric) filter (where (l ->> 'qty')::numeric > 0 and l ->> 'unit_cost' is not null) as in_qty,
+      sum((l ->> 'qty')::numeric * (l ->> 'unit_cost')::numeric)
+        filter (where (l ->> 'qty')::numeric > 0 and l ->> 'unit_cost' is not null) as in_value
+    from jsonb_array_elements(p_lines) l
+    group by 1
+  loop
+    if r.net > 0 and coalesce(r.in_qty, 0) > 0 then
+      select * into v_item from public.stock_items where id = r.item and business_id = p_business_id;
+      select coalesce(sum(quantity), 0) into v_on_hand from public.stock_movements
+        where business_id = p_business_id and stock_item_id = r.item;
+      v_unit_in := r.in_value / r.in_qty;
+      update public.stock_items set avg_cost =
+          ((greatest(v_on_hand, 0) * v_item.avg_cost) + least(r.net, r.in_qty) * v_unit_in)
+          / (greatest(v_on_hand, 0) + least(r.net, r.in_qty))
+        where id = r.item;
+    end if;
+  end loop;
+
+  for v_line in select * from jsonb_array_elements(p_lines) loop
+    v_qty := (v_line ->> 'qty')::numeric;
+    if v_qty is null or v_qty = 0 then
+      raise exception 'Every line needs a quantity other than zero.' using errcode = 'P0001';
+    end if;
+    select * into v_item from public.stock_items
+      where id = (v_line ->> 'item')::uuid and business_id = p_business_id;
+    if v_item.id is null then
+      raise exception 'That item does not belong to this business.' using errcode = 'P0001';
+    end if;
+    select archived_at into v_loc_archived from public.locations
+      where id = (v_line ->> 'location')::uuid and business_id = p_business_id;
+    if not found then
+      raise exception 'That location does not belong to this business.' using errcode = 'P0001';
+    end if;
+    if v_qty > 0 and v_loc_archived is not null and p_doc_type <> 'reversal' then
+      raise exception 'That location is archived. Restore it before moving stock into it.' using errcode = 'P0001';
+    end if;
+    v_cost := coalesce((v_line ->> 'unit_cost')::numeric, v_item.avg_cost);
+    if v_cost < 0 then
+      raise exception 'Unit cost cannot be negative.' using errcode = 'P0001';
+    end if;
+    insert into public.stock_movements (business_id, document_id, stock_item_id, location_id, quantity, unit_cost, effective_date)
+    values (p_business_id, v_doc, v_item.id, (v_line ->> 'location')::uuid, v_qty, v_cost, p_effective_date);
+  end loop;
+
+  for r in
+    select m.stock_item_id, m.location_id, sum(m.quantity) as bal
+    from public.stock_movements m
+    where m.business_id = p_business_id
+      and (m.stock_item_id, m.location_id) in (
+        select stock_item_id, location_id from public.stock_movements where document_id = v_doc and quantity < 0
+      )
+    group by m.stock_item_id, m.location_id
+  loop
+    if r.bal < 0 then
+      raise exception 'Not enough stock: % at %. This would leave %.',
+        (select name from public.stock_items where id = r.stock_item_id),
+        (select name from public.locations where id = r.location_id),
+        app.fmt_qty(r.bal) using errcode = 'P0001';
+    end if;
+  end loop;
+
+  return v_doc;
+end;
+$$;
+revoke all on function app.post_stock_document from public, anon, authenticated;

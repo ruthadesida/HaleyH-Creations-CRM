@@ -215,6 +215,14 @@ create trigger touch_purchase_orders before update on public.purchase_orders for
 -------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
+-- Quantities in messages: up to 4 decimals, no trailing zeros ("26", "14.8").
+create or replace function app.fmt_qty(p numeric)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$ select trim_scale(round(p, 4))::text $$;
+
 -- Base units of an item per one `p_unit` (a unit code or the item's purchase unit).
 create or replace function app.item_unit_factor(p_item public.stock_items, p_unit text)
 returns numeric
@@ -752,7 +760,7 @@ begin
       raise exception 'Enter a quantity greater than zero.' using errcode = 'P0001';
     end if;
     if v_rl.qty_returned_base + v_qty > v_rl.qty_accepted_base then
-      raise exception 'You can return at most % of that line.', trim(to_char(v_rl.qty_accepted_base - v_rl.qty_returned_base, 'FM999999990.####')) using errcode = 'P0001';
+      raise exception 'You can return at most % of that line.', app.fmt_qty(v_rl.qty_accepted_base - v_rl.qty_returned_base) using errcode = 'P0001';
     end if;
     update public.goods_receipt_lines set qty_returned_base = qty_returned_base + v_qty where id = v_rl.id;
     insert into public.supplier_return_lines (business_id, return_id, receipt_line_id, qty_base)
