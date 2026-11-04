@@ -104,7 +104,8 @@ test("front office sells, dispatches and takes a return; the owner approves and 
     await officePage.getByRole("button", { name: "Dispatch", exact: true }).click();
     await expect(dialog(officePage).getByLabel("Ankara wrap dress M")).toHaveValue("1");
     await dialog(officePage).getByRole("button", { name: "Dispatch", exact: true }).click();
-    await expect(officePage.getByText("Dispatched. Stock is reduced.")).toBeVisible();
+    // Wait for the page to show both out (the first dispatch's toast may still be on screen).
+    await expect(officePage.getByText("2 dispatched", { exact: false })).toBeVisible();
     await expect(officePage.getByText("Dispatched", { exact: true }).first()).toBeVisible();
     expect(await onHand(business.id, "WRAP-M", "Finished goods / showroom")).toBe(1);
     await officePage.getByRole("button", { name: "Mark delivered" }).click();
