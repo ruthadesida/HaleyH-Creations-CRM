@@ -21,6 +21,7 @@ const money = (v: string | undefined) => (v === undefined || v.trim() === "" ? 0
 const orderSchema = z.object({
   customer: uuid.or(z.literal("")).refine((v) => v !== "", "Choose the customer."),
   enquiry: z.string().optional(),
+  exchange: uuid.optional(),
   confirm: z.boolean(),
   promised_date: z.string().optional(),
   discount: z.string().optional(),
@@ -76,6 +77,11 @@ export async function createOrder(slug: string, input: z.input<typeof orderSchem
     p_delivery_instructions: orNull(o.delivery_instructions), p_internal_notes: orNull(o.internal_notes),
   });
   if (error || !id) return { ok: false, message: friendlyDbError(error) };
+  if (o.exchange) {
+    // If linking fails, saving again is safe: the same idempotency key returns this same order.
+    const { error: lError } = await supabase.rpc("link_exchange_replacement", { p_return: o.exchange, p_order: id });
+    if (lError) return { ok: false, message: `The order was saved, but couldn't be linked to the exchange: ${friendlyDbError(lError)}` };
+  }
   if (o.confirm) {
     const { error: cError } = await supabase.rpc("confirm_order", { p_order: id });
     // If confirming fails (e.g. the order was changed meanwhile), it stays a quotation and says so.

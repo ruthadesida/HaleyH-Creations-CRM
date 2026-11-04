@@ -18,6 +18,12 @@ async function NewOrder({ searchParams, params }: PageProps<"/w/[slug]/orders/ne
     ? await supabase.from("enquiries").select("id, product_interest, customer_id").eq("id", enquiryId).eq("business_id", business.id).maybeSingle()
     : { data: null };
   const customerId = enquiry?.customer_id ?? (typeof sp.customer === "string" ? sp.customer : null);
+  // Starting the replacement for an exchange: the database checks it again when linking.
+  const exchangeId = typeof sp.exchange === "string" && /^[0-9a-f-]{36}$/i.test(sp.exchange) ? sp.exchange : null;
+  const { data: exchange } = exchangeId
+    ? await supabase.from("order_returns").select("id, number, kind, replacement_order_id, orders!order_returns_business_id_order_id_fkey(order_number)")
+        .eq("id", exchangeId).eq("business_id", business.id).eq("kind", "exchange").is("replacement_order_id", null).maybeSingle()
+    : { data: null };
   const [{ data: customer }, { data: variants }, { data: availability }] = await Promise.all([
     customerId ? supabase.from("customers").select("id, full_name, phone, city").eq("id", customerId).eq("business_id", business.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("product_variants").select("id, size, colour, length, sku, price_minor, products!inner(name, base_price_minor, default_item_type, archived_at), stock_items(id)")
@@ -28,6 +34,7 @@ async function NewOrder({ searchParams, params }: PageProps<"/w/[slug]/orders/ne
   return (
     <OrderForm slug={slug} currency={business.currency} customer={customer}
       enquiry={enquiry ? { id: enquiry.id, interest: enquiry.product_interest } : null}
+      exchange={exchange ? { id: exchange.id, label: `exchange ${exchange.number} on ${exchange.orders?.order_number ?? "an earlier order"}` } : null}
       variants={(variants ?? []).map((v) => {
         const p = v.products;
         const stockId = Array.isArray(v.stock_items) ? v.stock_items[0]?.id : (v.stock_items as { id: string } | null)?.id;

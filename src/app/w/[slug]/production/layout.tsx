@@ -11,6 +11,7 @@ async function Tabs({ params }: { params: Promise<{ slug: string }> }) {
       { href: base, label: "Jobs", exact: true },
       { href: `${base}/recipes`, label: "Recipes (BOMs)" },
       { href: `${base}/qc`, label: "QC checklists" },
+      { href: `${base}/returns`, label: "Returns to inspect" },
     ]} />
   );
 }

@@ -70,6 +70,7 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/production/recipes/new`, heading: "New recipe" },
     { path: `${w}/production/recipes/${p2.bom}`, heading: "Wrap dress" },
     { path: `${w}/production/qc`, heading: "QC checklists" },
+    { path: `${w}/production/returns`, heading: "Returns to inspect" },
     { path: `${w}/orders`, heading: "Orders" },
     { path: `${w}/orders?view=quotes`, heading: "Orders" },
     { path: `${w}/orders/new`, heading: "New order" },

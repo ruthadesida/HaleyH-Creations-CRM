@@ -24,11 +24,13 @@ const toKobo = (v: string) => {
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
 };
 
-export function OrderForm({ slug, variants, customer, enquiry, currency }: {
+export function OrderForm({ slug, variants, customer, enquiry, exchange, currency }: {
   slug: string;
   variants: VariantOption[];
   customer?: PickedCustomer | null;
   enquiry?: { id: string; interest: string | null } | null;
+  /** When this order replaces items from an exchange. */
+  exchange?: { id: string; label: string } | null;
   currency: string;
 }) {
   const [key] = useState(() => crypto.randomUUID());
@@ -47,7 +49,7 @@ export function OrderForm({ slug, variants, customer, enquiry, currency }: {
     const fd = new FormData(form);
     start(async () => {
       const r = await createOrder(slug, {
-        customer: String(fd.get("customer_id") ?? ""), enquiry: enquiry?.id, confirm,
+        customer: String(fd.get("customer_id") ?? ""), enquiry: enquiry?.id, exchange: exchange?.id, confirm,
         promised_date: String(fd.get("promised_date") ?? ""), discount, delivery_fee: fee,
         delivery_method: method as "home_delivery", delivery_address: String(fd.get("delivery_address") ?? ""),
         delivery_city: String(fd.get("delivery_city") ?? ""), delivery_state: String(fd.get("delivery_state") ?? ""),
@@ -64,6 +66,7 @@ export function OrderForm({ slug, variants, customer, enquiry, currency }: {
 
   return (
     <form className="flex flex-col gap-6" noValidate onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget, true); }}>
+      {exchange && <p className="rounded-lg bg-info-soft px-3 py-2 text-sm">This order replaces the items from {exchange.label}. Saving it links the two.</p>}
       <div>
         <CustomerPicker search={searchCustomers.bind(null, slug)} initial={customer ?? null} allowNew={false} />
         <Link href={`/w/${slug}/customers/new?returnTo=order`} className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-gold-ink underline underline-offset-4">

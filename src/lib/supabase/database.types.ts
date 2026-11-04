@@ -3619,6 +3619,10 @@ export type Database = {
           wip_value: number
         }[]
       }
+      link_exchange_replacement: {
+        Args: { p_order: string; p_return: string }
+        Returns: undefined
+      }
       maker_location: { Args: { p_maker_id: string }; Returns: string }
       mark_order_delivered: { Args: { p_order: string }; Returns: undefined }
       move_job_materials: {
@@ -4029,6 +4033,20 @@ export type Database = {
           p_receipt_id: string
         }
         Returns: string
+      }
+      returns_to_inspect: {
+        Args: { p_business_id: string }
+        Returns: {
+          condition: string
+          item: string
+          kind: string
+          line_id: string
+          order_number: string
+          quantity: number
+          reason: string
+          received_on: string
+          return_number: string
+        }[]
       }
       reverse_goods_receipt: {
         Args: {

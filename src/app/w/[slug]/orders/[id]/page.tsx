@@ -39,9 +39,12 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
     supabase.from("stock_reservations").select("source_id, qty_base").eq("source_type", "sales_order").eq("status", "active").in("source_id", ids),
     supabase.from("production_jobs").select("id, number, status, order_item_id, planned_qty, qty_passed, due_date").in("order_item_id", ids),
     supabase.from("order_dispatches").select("id, number, dispatched_on, courier_name, tracking_reference, order_dispatch_lines(order_item_id, quantity)").eq("order_id", id).order("created_at"),
-    supabase.from("order_returns").select("id, number, kind, status, reason, received_on, order_return_lines(id, order_item_id, quantity, condition, decision)").eq("order_id", id).order("created_at"),
+    supabase.from("order_returns").select("id, number, kind, status, reason, received_on, replacement_order_id, replacement:orders!order_returns_replacement_fk(id, order_number), order_return_lines(id, order_item_id, quantity, condition, decision)").eq("order_id", id).order("created_at"),
     getLocations(business.id),
   ]);
+  // When this order is the replacement for an exchange on an earlier order.
+  const { data: replaces } = await supabase.from("order_returns").select("number, original:orders!order_returns_business_id_order_id_fkey(id, order_number)")
+    .eq("business_id", business.id).eq("replacement_order_id", id);
   const { data: templates } = await supabase.from("message_templates").select("key, title, body").eq("business_id", business.id).order("key");
   const profit = can.own(role) && o.confirmed_at ? (await supabase.rpc("order_profit", { p_order: id })).data?.[0] : undefined;
 
@@ -85,6 +88,11 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
           {` · ordered ${formatDate(o.order_date!)}`}{o.promised_date && ` · promised ${formatDate(o.promised_date)}`}
         </p>
         {o.cancel_reason && <p className="rounded-lg bg-ink/5 px-3 py-2">Cancelled: {o.cancel_reason}</p>}
+        {(replaces ?? []).map((x) => x.original && (
+          <p key={x.number} className="rounded-lg bg-info-soft px-3 py-2 text-sm">
+            Replacement for exchange {x.number} on <Link href={`${base}/orders/${x.original.id}`} className="underline underline-offset-4">{x.original.order_number}</Link>.
+          </p>
+        ))}
         {!confirmed && open && <p className="rounded-lg bg-warn-soft px-3 py-2 text-sm">A quotation: not a sale yet, and nothing is reserved. Confirm it when the customer agrees.</p>}
 
         {open && confirmed && toGo.length > 0 && needsApproval && (
@@ -191,6 +199,13 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                     <li key={r.id} className="border-b border-line px-4 py-3 last:border-b-0 sm:px-5">
                       <p className="font-medium">{r.number} · {r.kind === "exchange" ? "Exchange" : "Return"} · {r.received_on && formatDate(r.received_on)}</p>
                       <p className="text-sm text-muted">{r.reason}</p>
+                      {r.kind === "exchange" && (r.replacement ? (
+                        <p className="mt-1 text-sm">Replacement order: <Link href={`${base}/orders/${r.replacement.id}`} className="underline underline-offset-4">{r.replacement.order_number}</Link></p>
+                      ) : (
+                        <ButtonLink href={`${base}/orders/new?customer=${o.customers?.id}&exchange=${r.id}`} variant="secondary" size="sm" className="mt-2">
+                          Start the replacement order
+                        </ButtonLink>
+                      ))}
                       <ul className="mt-2 flex flex-col gap-2">
                         {(r.order_return_lines ?? []).map((l) => (
                           <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
