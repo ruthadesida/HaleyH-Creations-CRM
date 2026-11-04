@@ -63,7 +63,7 @@ async function ItemDetail({ params }: PageProps<"/w/[slug]/stock/items/[id]">) {
         )}
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex flex-col gap-6">
           <Card className="p-5">
             <p className="text-sm text-muted">On hand (all locations)</p>

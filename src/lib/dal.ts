@@ -1,4 +1,5 @@
 import "server-only";
+import { io } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import type { Database } from "./supabase/database.types";
@@ -18,6 +19,9 @@ export type Business = Pick<
 export type SessionUser = { id: string; email: string };
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
+  // Verifying the session compares the token expiry with the clock: always do it at request time,
+  // never while Next prepares a shared page shell.
+  await io();
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;

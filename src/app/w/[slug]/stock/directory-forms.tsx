@@ -43,7 +43,7 @@ export function MakerForm({ action, defaults, submitLabel }: {
         </Field>
       </div>
       <label className="flex min-h-11 items-center gap-3">
-        <input type="checkbox" name="is_external" defaultChecked={Boolean(defaults?.is_external)} className="size-5 accent-[var(--color-ink)]" />
+        <input type="checkbox" name="is_external" defaultChecked={Boolean(defaults?.is_external)} className="size-6 accent-[var(--color-ink)]" />
         Works outside the workshop (freelance)
       </label>
       <Field label="Notes" htmlFor="maker-notes" optional>

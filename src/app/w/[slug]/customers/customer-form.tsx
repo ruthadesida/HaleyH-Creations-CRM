@@ -84,7 +84,7 @@ export function CustomerForm({
             defaultValue={v("phone")} {...inv("phone")} />
         </Field>
         <Field label="WhatsApp" htmlFor="whatsapp" error={err("whatsapp")} optional
-          hint={<label className="flex items-center gap-2"><input type="checkbox" name="whatsapp_same" defaultChecked={state.values?.whatsapp_same === "on"} className="size-5 accent-[var(--color-ink)]" /> Same as phone</label>}>
+          hint={<label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="whatsapp_same" defaultChecked={state.values?.whatsapp_same === "on"} className="size-6 accent-[var(--color-ink)]" /> Same as phone</label>}>
           <Input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" autoComplete="off" defaultValue={v("whatsapp")} {...inv("whatsapp")} />
         </Field>
       </div>
@@ -191,7 +191,7 @@ export function CustomerForm({
             </div>
           </fieldset>
           <label className="flex items-start gap-3">
-            <input type="checkbox" name="marketing_consent" defaultChecked={consent} className="mt-1 size-5 accent-[var(--color-ink)]" />
+            <input type="checkbox" name="marketing_consent" defaultChecked={consent} className="mt-0.5 size-6 accent-[var(--color-ink)]" />
             <span>
               <span className="font-medium">Agreed to receive offers and new arrivals</span>
               <span className="block text-sm text-muted">Only tick this if the customer said yes.</span>

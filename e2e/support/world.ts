@@ -104,15 +104,17 @@ export async function seedOpeningStock(owner: TestUser, businessId: string) {
 }
 
 export async function itemId(businessId: string, code: string) {
-  const { data } = await admin().from("stock_items").select("id").eq("business_id", businessId).eq("code", code).single();
-  return data!.id as string;
+  const { data } = await admin().from("stock_items").select("id").eq("business_id", businessId).eq("code", code).maybeSingle();
+  return (data?.id as string | undefined) ?? null;
 }
 
 /** On-hand quantity straight from the ledger view. */
 export async function onHand(businessId: string, code: string, location: string) {
+  const item = await itemId(businessId, code);
+  if (!item) return 0; // not created yet, so nothing on hand
   const loc = await locationIds(admin(), businessId);
   const { data } = await admin().from("stock_balances").select("on_hand")
-    .eq("business_id", businessId).eq("stock_item_id", await itemId(businessId, code)).eq("location_id", loc[location]);
+    .eq("business_id", businessId).eq("stock_item_id", item).eq("location_id", loc[location]);
   return (data ?? []).reduce((s, r) => s + Number(r.on_hand), 0);
 }
 

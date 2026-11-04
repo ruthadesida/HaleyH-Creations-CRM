@@ -193,7 +193,7 @@ export function MemberRow({ member, update }: {
           )}
           {role === "production_manager" && (
             <label className="flex min-h-12 items-center gap-3 self-end text-sm">
-              <input type="checkbox" checked={costs} disabled={pending} className="size-5 accent-[var(--color-ink)]"
+              <input type="checkbox" checked={costs} disabled={pending} className="size-6 accent-[var(--color-ink)]"
                 onChange={(e) => {
                   const next = e.target.checked;
                   setCosts(next);

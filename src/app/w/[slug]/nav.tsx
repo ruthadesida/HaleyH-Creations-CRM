@@ -100,7 +100,7 @@ export function BottomTabs({ slug, role }: { slug: string; role: Role }) {
 
   return (
     <nav aria-label="Main"
-      className="material fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ivory/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 lg:hidden">
+      className="material fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ivory pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="mx-auto flex max-w-xl">
         {tabs.map((item) => {
           const active = isActive(item);
@@ -170,6 +170,9 @@ const NEW_ACTIONS = (slug: string) =>
 /** One-thumb "New" button on phones; a full-width button in the sidebar on laptops. */
 export function NewButton({ slug, variant }: { slug: string; variant: "fab" | "sidebar" }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // On form screens the floating button would sit on top of fields; the person is already creating something.
+  if (variant === "fab" && /\/(new|edit|transfer|counts|settings)(\/|$)/.test(pathname)) return null;
   return (
     <Drawer.Root open={open} onOpenChange={setOpen}>
       <Drawer.Trigger

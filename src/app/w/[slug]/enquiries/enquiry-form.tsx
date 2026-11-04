@@ -103,7 +103,7 @@ export function EnquiryForm({
             <Input id="new_customer_name" name="new_customer_name" defaultValue={v("new_customer_name")} {...inv("new_customer_name")} />
           </Field>
           <Field label="Phone" htmlFor="new_customer_phone" error={err("new_customer_phone")}
-            hint={<label className="flex items-center gap-2"><input type="checkbox" name="new_customer_whatsapp_same" defaultChecked className="size-4 accent-[var(--color-ink)]" /> Also their WhatsApp</label>}>
+            hint={<label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="new_customer_whatsapp_same" defaultChecked className="size-6 accent-[var(--color-ink)]" /> Also their WhatsApp</label>}>
             <Input id="new_customer_phone" name="new_customer_phone" type="tel" inputMode="tel" placeholder="0803 123 4567"
               defaultValue={v("new_customer_phone")} {...inv("new_customer_phone")} />
           </Field>

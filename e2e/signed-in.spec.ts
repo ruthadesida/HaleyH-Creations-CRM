@@ -11,7 +11,11 @@ import {
 test.skip(!hasLocalSupabase, SKIP_REASON);
 test.describe.configure({ mode: "serial" });
 
-const BENIGN = [/Viewport argument key "interactive-widget" not recognized/];
+const BENIGN = [
+  /Viewport argument key "interactive-widget" not recognized/,
+  // Safari reports a prefetch it cancelled (because the test moved on) this way.
+  /_rsc=\S+ due to access control checks/,
+];
 
 let owner: TestUser;
 let slug = "";
@@ -23,7 +27,7 @@ test.beforeAll(async ({ browser }) => {
   const business = await createBusiness(owner, "Page Check Atelier");
   slug = business.slug;
   const batch = await seedOpeningStock(owner, business.id);
-  const zip = await itemId(business.id, "ZIP-20");
+  const zip = (await itemId(business.id, "ZIP-20"))!;
   const w = `/w/${slug}`;
   paths = [
     { path: w, heading: "" },

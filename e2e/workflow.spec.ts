@@ -1,4 +1,4 @@
-import { type Browser, expect, test } from "@playwright/test";
+import { type Browser, type Page, expect, test } from "@playwright/test";
 import {
   SKIP_REASON, type TestUser, addMember, createBusiness, createUser, hasLocalSupabase, lagosDaysAgo, onHand, signIn,
 } from "./support/world";
@@ -18,6 +18,14 @@ const CSV = [
 ].join("\n");
 
 const LOCATIONS = ["Raw material store", "Production floor", "Quarantine", "Finished goods / showroom"];
+
+/** Picks the CSV, retrying until the page has loaded its scripts and shows the file. */
+async function upload(page: Page, name: string) {
+  await expect(async () => {
+    await page.locator("input[type=file]").setInputFiles({ name, mimeType: "text/csv", buffer: Buffer.from(CSV) });
+    await expect(page.getByText(`${name} · 2 line(s)`)).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+}
 
 /** A second signed-in person on the same device type as this project (phone users get a phone). */
 async function newUserPage(browser: Browser) {
@@ -66,8 +74,7 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
   let batchPath = "";
   await test.step("owner imports opening stock from a CSV and approves it", async () => {
     await page.goto(`${base()}/stock/opening/new`);
-    await page.locator("input[type=file]").setInputFiles({ name: "opening.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
-    await expect(page.getByText("opening.csv · 2 line(s)")).toBeVisible();
+    await upload(page, "opening.csv");
     await page.getByRole("button", { name: "Check every line" }).click();
     await expect(page.getByText("All 2 lines are valid.")).toBeVisible();
     // Yards are converted to the item's metres before anything is saved.
@@ -85,7 +92,7 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
 
   await test.step("importing the same stock again is refused", async () => {
     await page.goto(`${base()}/stock/opening/new`);
-    await page.locator("input[type=file]").setInputFiles({ name: "again.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
+    await upload(page, "again.csv");
     await page.getByRole("button", { name: "Check every line" }).click();
     await expect(page.getByText("2 lines need fixing.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Save batch for owner approval" })).toHaveCount(0);
