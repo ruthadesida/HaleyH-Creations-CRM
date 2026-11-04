@@ -53,6 +53,13 @@ Newest first. Each entry: what was decided, and why.
 - **Makers are a directory without logins** for now; restricted maker logins are optional later.
 - **Production manager can read products** (needed for BOMs); costs remain hidden unless permitted.
 
+## 2026-11-04 (Phase 4 review)
+
+- **The restore test uses the real backup format.** The first version dumped with `pg_dump -n public -t auth.users`; pg_dump ignores `-n` when `-t` is given, so it only backed up logins and proved nothing. CI now runs the same `supabase db dump --data-only` as the nightly backup and restores with the runbook's command, and fails if the dump lacks business data or logins.
+- **Gross profit by period, not by order lifetime.** An order dispatched across two months shows each month's share, so the report agrees with Sales by product and the owner overview.
+- **Report totals are opt-in per column.** Money columns total by default; quantities only where every row shares a unit; unit costs and percentages never.
+- **Imports: one call, 2 MB cap.** Chunking would break the in-file duplicate checks, so a file is sent whole (Server Action limit raised to 4 MB) and larger files must be split.
+
 ## 2026-11-03 (later)
 
 - **Spec 2 adopted** (integrated CRM + purchasing + inventory + production). Phases and design decisions in GAP-ANALYSIS.md. Orders/payments/tasks UI folded into Spec 2 phases instead of being built twice.

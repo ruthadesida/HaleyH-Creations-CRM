@@ -12,7 +12,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 |---|---|---|
 | Next.js 16 app, security headers | ✅ | CSP still allows inline scripts; nonces in Phase 4 |
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
-| Supabase project | ✅ | Dev project; migrations 0001–0019 applied |
+| Supabase project | ✅ | Dev project; migrations 0001–0020 applied |
 | Sign up / in / out / reset | ✅ | |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | Nightly encrypted backup workflow ready; needs two GitHub secrets (`docs/BACKUPS.md`). Restore tested in CI (Spec 2 test O) |

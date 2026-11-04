@@ -43,13 +43,14 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `11_reports` — report figures and who may run each (front office: no cost/profit; production: no sales or payments; costs need permission; owners only for supplier money and the overview).
 - `12_notifications_search` — notifications and search by role.
 - `13_imports` — preview writes nothing; idempotent by external ID; no duplicate people; product variants get stock items; role limits.
+- `14_phase4_review` — gross profit split by period; owner overview agrees; SKU-less products update on re-import and are flagged when repeated in one file; the same phone twice in one file creates one customer; archived customers untouched by import; job search only for production.
 - `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
 
 Total: **300+** database tests (see CI for the exact count).
 
 ### Backup and restore (Spec 2 test O)
 
-`backup-restore` job: `supabase/tests/restore/seed.psql` builds linked records in every area, `snapshot.psql` fingerprints them, the job backs up (public schema + logins), wipes with `supabase db reset`, restores, requires an identical fingerprint, then `check.psql` checks for orphaned links, negative stock and over-reservation and posts a transfer as an owner on the restored data.
+`backup-restore` job: `supabase/tests/restore/seed.psql` builds linked records in every area, `snapshot.psql` fingerprints them, the job backs up with the nightly backup's own command (`supabase db dump --data-only`, checked to contain business data and logins), wipes with `supabase db reset`, empties every table in the dump, restores with the runbook's `psql --single-transaction` command (as the local superuser), requires an identical fingerprint, then `check.psql` checks for orphaned links, negative stock and over-reservation and posts a transfer as an owner on the restored data.
 
 ## Notes
 
