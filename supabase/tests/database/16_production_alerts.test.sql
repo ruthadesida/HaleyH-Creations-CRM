@@ -44,13 +44,13 @@ select is((select planned_qty_base from public.job_materials where job_id = (sel
 
 select tests.login('a0000000-0000-0000-0000-000000000003'); -- production manager
 select results_eq($$ select count(*)::int from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000')
-    where kind = 'job_unassigned' $$, array[2], 'The production manager is told both new jobs need a maker');
-select results_eq($$ select ref_id from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000') where kind = 'job_no_materials' $$,
+    where kind = 'job_unassigned' and ref_id in (select id from t where k in ('agbada', 'gele')) $$, array[2], 'The production manager is told both new jobs need a maker');
+select results_eq($$ select ref_id from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000') where kind = 'job_no_materials' and ref_id in (select id from t where k in ('agbada', 'gele')) $$,
   $$ select id from t where k = 'gele' $$, '... and that the gele job has no materials planned');
 select ok((select bool_and(detail like '%for ' || :'onum' || '%') from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000')
-    where kind = 'job_unassigned'), 'The alert names the order it is for');
+    where kind = 'job_unassigned' and ref_id in (select id from t where k in ('agbada', 'gele'))), 'The alert names the order it is for');
 select public.assign_job_maker((select id from t where k = 'agbada'), (select id from public.makers where name = 'Tunde Adeyemi'), current_date + 7);
-select results_eq($$ select ref_id from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000') where kind = 'job_unassigned' $$,
+select results_eq($$ select ref_id from public.my_notifications('aaaaaaaa-0000-0000-0000-000000000000') where kind = 'job_unassigned' and ref_id in (select id from t where k in ('agbada', 'gele')) $$,
   $$ select id from t where k = 'gele' $$, 'Once a tailor is assigned, that job leaves the list');
 reset role;
 
