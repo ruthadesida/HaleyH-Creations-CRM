@@ -6,6 +6,8 @@ _Last updated: 2026-11-04 (Phase 4 built and reviewed; backlog pass)_
 
 ## Where things stand
 
+- **2026-11-05 (owner testing begins):** confirming an order sends each product line to production as a job with its recipe's materials planned (this already worked). New: the production manager's bell lists jobs that need a maker and jobs with no materials planned (migration 0022, applied); the order form and order page warn when a made-to-order line isn't linked to a product (such lines don't reach production). For staff testing on phones the app goes on Vercel: see `docs/DEPLOY.md` (owner signs in and imports the repo).
+
 - **Phase 4 of Spec 2 is built and reviewed** (migrations 0016–0021, all applied to the dev project):
   - 17 reports with definitions, date filters and CSV export (`/w/[slug]/reports`); owner overview on Today; notifications (bell + page); global search; printable job sheets; editable WhatsApp message templates (Settings); CSV import of customers and products with external IDs (Settings → Import); Integrations page (honest status); nightly encrypted backup workflow + `docs/BACKUPS.md`; restore tested in CI (Spec 2 test O).
   - All 15 required Spec 2 tests (A–O) are now covered by automated tests.
