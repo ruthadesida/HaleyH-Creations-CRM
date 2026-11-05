@@ -50,6 +50,7 @@ test("someone who already has an account signs in from the invite instead", asyn
   });
   await page.goto(`/invite/${token}`);
   await page.getByRole("link", { name: "Sign in instead" }).click();
+  await expect(page).toHaveURL(/\/login\?next=/);
   await page.getByLabel("Email").fill(existing.email);
   await page.getByLabel("Password").fill(existing.password);
   await page.getByRole("button", { name: "Sign in" }).click();
