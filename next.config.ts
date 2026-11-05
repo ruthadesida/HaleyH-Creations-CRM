@@ -44,7 +44,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
-  allowedDevOrigins: lanAddresses,
+  // Dev only: phones on the same Wi-Fi, and a temporary Cloudflare tunnel for testing on any phone.
+  allowedDevOrigins: [...lanAddresses, "*.trycloudflare.com"],
   experimental: {
     // CSV imports send up to 5,000 rows (a 2 MB file) in one call; the default limit is 1 MB.
     serverActions: { bodySizeLimit: "4mb" },
