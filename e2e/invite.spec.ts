@@ -49,8 +49,10 @@ test("someone who already has an account signs in from the invite instead", asyn
     p_business_id: business.id, p_email: existing.email, p_role: "production_manager",
   });
   await page.goto(`/invite/${token}`);
-  await page.getByRole("link", { name: "Sign in instead" }).click();
-  await expect(page).toHaveURL(/\/login\?next=/);
+  // Open the link's address directly: a client-side swap briefly has both pages' Email fields on screen.
+  const href = await page.getByRole("link", { name: "Sign in instead" }).getAttribute("href");
+  expect(href).toBe(`/login?next=${encodeURIComponent(`/invite/${token}`)}`);
+  await page.goto(href!);
   await page.getByLabel("Email").fill(existing.email);
   await page.getByLabel("Password").fill(existing.password);
   await page.getByRole("button", { name: "Sign in" }).click();
