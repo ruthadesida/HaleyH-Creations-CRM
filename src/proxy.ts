@@ -10,6 +10,13 @@ const PUBLIC_PATHS = ["/login", "/signup", "/reset-password", "/auth"];
  * Action and data read checks the session again, and RLS guards the data.
  */
 export async function proxy(request: NextRequest) {
+  // An email link whose return address isn't on Supabase's allowed list lands on the site root with ?code=.
+  // Hand it to the confirmation handler instead of dropping it.
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const confirm = request.nextUrl.clone();
+    confirm.pathname = "/auth/confirm";
+    return NextResponse.redirect(confirm);
+  }
   let response = NextResponse.next({ request });
   const { url, key } = supabaseEnv();
 
