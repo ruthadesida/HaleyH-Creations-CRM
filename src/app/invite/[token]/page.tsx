@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Card } from "@/components/ui/bits";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/wordmark";
-import { requireUser } from "@/lib/dal";
+import { getUser, requireUser } from "@/lib/dal";
 import { ROLE_LABEL } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,8 +21,10 @@ async function accept(token: string) {
 }
 
 async function Invite({ params, searchParams }: PageProps<"/invite/[token]">) {
-  const user = await requireUser();
   const { token } = await params;
+  // New staff don't have a password yet: send them to create one, then straight back here to accept.
+  const user = await getUser();
+  if (!user) redirect(`/signup?next=${encodeURIComponent(`/invite/${token}`)}`);
   const { error } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.rpc("invitation_preview", { p_token: token });

@@ -35,7 +35,8 @@ export async function proxy(request: NextRequest) {
 
   if (!signedIn && !isPublic) {
     const login = request.nextUrl.clone();
-    login.pathname = "/login";
+    // Someone opening an invite usually has no account yet: start them on "create your account".
+    login.pathname = path.startsWith("/invite/") ? "/signup" : "/login";
     login.search = "";
     login.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(login);

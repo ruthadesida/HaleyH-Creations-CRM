@@ -86,7 +86,7 @@ export function SignUpForm() {
       </Button>
       <p className="text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="text-gold-ink underline underline-offset-4">Sign in</Link>
+        <Link href={`/login${params.get("next") ? `?next=${encodeURIComponent(params.get("next")!)}` : ""}`} className="text-gold-ink underline underline-offset-4">Sign in</Link>
       </p>
     </form>
   );

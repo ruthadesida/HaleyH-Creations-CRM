@@ -76,13 +76,14 @@ export function InviteForm({ action, businessName }: {
   const [copied, setCopied] = useState(false);
 
   if (state.ok && state.link) {
-    const message = `You've been invited to ${businessName} on HaleyH Creations CRM. Sign up or sign in with ${state.invitedEmail}, then open: ${state.link}`;
+    const message = `You've been invited to ${businessName} on HaleyH Creations CRM. Open this link, then create your account with ${state.invitedEmail} and choose your own password: ${state.link}`;
     return (
       <div className="flex flex-col gap-4">
         <div role="status" className="rounded-[var(--radius-card)] border border-success/25 bg-success-soft p-4">
           <p className="font-medium text-success">Invitation ready for {state.invitedEmail}</p>
           <p className="mt-1 text-sm">
-            Share this link with them. It works once, for that email only, and expires in 7 days.
+            No email is sent: copy this link or share it on WhatsApp. They open it, create their account with that email and choose their own password.
+            It works once, for that email only, and expires in 7 days.
             You won&rsquo;t be able to see it again.
           </p>
           <p className="mt-3 rounded-lg bg-surface px-3 py-2 font-mono text-sm break-all">{state.link}</p>
