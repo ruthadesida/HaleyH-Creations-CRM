@@ -6,6 +6,8 @@ _Last updated: 2026-11-04 (Phase 4 built and reviewed; backlog pass)_
 
 ## Where things stand
 
+- **2026-11-05 invites:** the invite link is the whole sign-up. A signed-out visitor sees their invited email, types a name and password, and lands in the business (account created already confirmed through a server-only admin client, used only in `src/app/invite/[token]/actions.ts`; the email always comes from the invitation; links are single-use). No confirmation email for staff. Covered by `e2e/invite.spec.ts`. Testing on phones goes through a temporary Cloudflare tunnel (`.tools/cloudflared.exe`, not committed) with `SITE_URL` in `.env.local` set to the tunnel address; the tunnel address changes on restart.
+
 - **2026-11-05 (owner testing begins):** confirming an order sends each product line to production as a job with its recipe's materials planned (this already worked). New: the production manager's bell lists jobs that need a maker and jobs with no materials planned (migration 0022, applied); the order form and order page warn when a made-to-order line isn't linked to a product (such lines don't reach production). For staff testing on phones the app goes on Vercel: see `docs/DEPLOY.md` (owner signs in and imports the repo).
 
 - **Phase 4 of Spec 2 is built and reviewed** (migrations 0016–0021, all applied to the dev project):

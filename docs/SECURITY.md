@@ -30,3 +30,7 @@ Customer contact details and measurements, order values, payment records, staff 
 - HSTS `includeSubDomains; preload` deliberately off until the production domain is final.
 - Rate limiting on auth and invite acceptance relies on Supabase Auth limits; review before launch.
 - Supabase MCP should be scoped to the dev project (`?project_ref=`) once it exists.
+
+## Secret key use (2026-11-05)
+
+The Supabase secret key is used server-side in exactly one place: joining by invite link (`src/app/invite/[token]/actions.ts` via `src/lib/supabase/admin.ts`, `server-only`). It looks the invitation up by the SHA-256 of the link's token, refuses expired, revoked or used invitations, and creates the account only for the invitation's email (never one the visitor types), already confirmed. Then it signs in as that user and accepts through the normal `accept_invitation` RPC, so membership rules stay in the database. Anyone holding the link can join as the invited person, which is why links are single-use, expire in 7 days, can be cancelled, and should only be sent to that person.
