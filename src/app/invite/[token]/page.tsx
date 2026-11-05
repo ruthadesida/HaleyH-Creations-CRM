@@ -7,6 +7,8 @@ import { Wordmark } from "@/components/wordmark";
 import { getUser, requireUser } from "@/lib/dal";
 import { ROLE_LABEL } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
+import { JoinForm } from "./join-form";
+import { lookupInvite } from "./lookup";
 
 export const metadata: Metadata = { title: "Join a workspace" };
 
@@ -22,22 +24,25 @@ async function accept(token: string) {
 
 async function Invite({ params, searchParams }: PageProps<"/invite/[token]">) {
   const { token } = await params;
-  // New staff don't have a password yet: send them to create one, then straight back here to accept.
   const user = await getUser();
-  if (!user) redirect(`/signup?next=${encodeURIComponent(`/invite/${token}`)}`);
+  // Not signed in: the link itself is the sign-up. Name and password, and they're in (no email needed).
+  if (!user) {
+    const info = await lookupInvite(token);
+    if (!info?.valid) return <InvalidInvite />;
+    return (
+      <Card className="p-6">
+        <h1 className="font-display text-3xl font-medium">Join {info.businessName}</h1>
+        <p className="mt-2 text-muted">You&rsquo;ve been invited as <strong className="text-ink">{ROLE_LABEL[info.role as keyof typeof ROLE_LABEL] ?? info.role}</strong>. Choose a password to get started.</p>
+        <JoinForm token={token} email={info.email} />
+      </Card>
+    );
+  }
   const { error } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.rpc("invitation_preview", { p_token: token });
   const invite = data?.[0];
 
-  if (!invite || invite.expired) {
-    return (
-      <Card className="p-6">
-        <h1 className="font-display text-3xl font-medium">This invitation isn&rsquo;t valid</h1>
-        <p className="mt-2 text-muted">It may have expired, been used already or been cancelled. Ask the owner for a new link.</p>
-      </Card>
-    );
-  }
+  if (!invite || invite.expired) return <InvalidInvite />;
   const wrongEmail = invite.email !== user.email.toLowerCase();
   return (
     <Card className="p-6">
@@ -53,6 +58,15 @@ async function Invite({ params, searchParams }: PageProps<"/invite/[token]">) {
           <Button type="submit" size="lg" block>Accept and open workspace</Button>
         </form>
       )}
+    </Card>
+  );
+}
+
+function InvalidInvite() {
+  return (
+    <Card className="p-6">
+      <h1 className="font-display text-3xl font-medium">This invitation isn&rsquo;t valid</h1>
+      <p className="mt-2 text-muted">It may have expired, been used already or been cancelled. Ask the owner for a new link.</p>
     </Card>
   );
 }
