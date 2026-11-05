@@ -120,7 +120,9 @@ export function OrderForm({ slug, variants, customer, enquiry, exchange, currenc
               {v && l.item_type === "ready_made" && Number(l.quantity) > v.available && (
                 <p className="text-sm text-warn">Only {Math.max(v.available, 0)} available: confirming will start a production job for the rest.</p>
               )}
-              {!l.variant && <p className="text-sm text-muted">Custom items aren&rsquo;t stock-tracked. Pick a catalogue product to reserve stock or start production.</p>}
+              {!l.variant && (l.item_type === "made_to_order"
+                ? <p className="text-sm text-warn">Pick a product so this goes to the production manager when the order is confirmed. For one-off designs, add a product such as &ldquo;Custom agbada&rdquo; under Stock &rarr; Products.</p>
+                : <p className="text-sm text-muted">Custom items aren&rsquo;t stock-tracked. Pick a catalogue product to reserve stock or start production.</p>)}
             </div>
           );
         })}

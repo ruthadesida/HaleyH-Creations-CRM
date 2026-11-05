@@ -155,7 +155,7 @@ async function Order({ params }: PageProps<"/w/[slug]/orders/[id]">) {
                       </span>
                       <span className="text-sm text-muted">
                         {i.item_type === "made_to_order" ? "Made to order" : "Ready-made"}
-                        {!i.variant_id && " · not stock-tracked"}
+                        {!i.variant_id && (i.item_type === "made_to_order" ? <span className="text-warn"> · not linked to a product, so it wasn&rsquo;t sent to production</span> : " · not stock-tracked")}
                         {confirmed && reserved > 0 && ` · ${reserved} reserved`}
                         {i.dispatched_quantity > 0 && ` · ${i.dispatched_quantity} dispatched`}
                         {returned > 0 && ` · ${returned} returned`}
