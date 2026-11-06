@@ -9,7 +9,7 @@ import { Wordmark } from "@/components/wordmark";
 import { requireUser } from "@/lib/dal";
 import { ROLE_LABEL } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
-import { openDemoWorkspace } from "./actions";
+import { openDemoWorkspace, resetDemoWorkspace } from "./actions";
 import { CreateWorkspaceForm } from "./create-form";
 
 export const metadata: Metadata = { title: "Workspaces" };
@@ -72,13 +72,20 @@ async function WorkspaceList({ searchParams }: { searchParams: Promise<{ error?:
             <p className="font-medium">
               Demo workspace <Chip tone="gold" className="ml-1 align-middle">Fictional data</Chip>
             </p>
-            <p className="text-sm text-muted">Practise with sample customers and orders. Kept separate from real records.</p>
+            <p className="text-sm text-muted">Practise with sample customers, stock, production, orders and repairs, all fictional. Kept separate from real records; start it again any time.</p>
           </div>
         </div>
         {demo ? (
-          <Link href={`/w/${demo.businesses.slug}`} className="shrink-0 font-medium text-gold-ink underline underline-offset-4">
-            Open demo
-          </Link>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <Link href={`/w/${demo.businesses.slug}`} className="inline-flex min-h-11 items-center font-medium text-gold-ink underline underline-offset-4">
+              Open demo
+            </Link>
+            {demo.role === "owner" && (
+              <form action={resetDemoWorkspace}>
+                <Button type="submit" variant="ghost" size="sm">Start the demo again</Button>
+              </form>
+            )}
+          </div>
         ) : (
           <form action={openDemoWorkspace}>
             <Button type="submit" variant="secondary" className="w-full whitespace-nowrap sm:w-auto">Open demo</Button>

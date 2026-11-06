@@ -2,6 +2,7 @@ import { ArrowLeftRight, Bell, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { cache, Suspense } from "react";
 import { signOut } from "@/app/(auth)/actions";
+import { resetDemoWorkspace } from "@/app/workspaces/actions";
 import { Wordmark } from "@/components/wordmark";
 import { getWorkspace } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -58,12 +59,17 @@ async function BellLink({ slug, className }: { slug: string; className?: string 
 
 async function TopBar({ params }: SlugParams) {
   const { slug } = await params;
-  const { business } = await getWorkspace(slug);
+  const { business, role } = await getWorkspace(slug);
   return (
     <>
       {business.is_demo && (
-        <div role="note" className="bg-gold-soft px-4 py-2 text-center text-sm font-medium text-gold-ink">
-          Demo workspace — fictional sample data, separate from live records.
+        <div role="note" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gold-soft px-4 py-2 text-center text-sm font-medium text-gold-ink print:hidden">
+          <span>Demo workspace: fictional sample data, separate from live records.</span>
+          {role === "owner" && (
+            <form action={resetDemoWorkspace}>
+              <button type="submit" className="min-h-11 underline underline-offset-4">Start the demo again</button>
+            </form>
+          )}
         </div>
       )}
       <header className="material sticky top-0 z-20 flex h-14 print:hidden items-center justify-between gap-3 border-b border-line bg-ivory/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">

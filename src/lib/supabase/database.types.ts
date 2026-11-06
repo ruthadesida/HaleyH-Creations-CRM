@@ -3716,6 +3716,7 @@ export type Database = {
         Returns: string
       }
       create_demo_workspace: { Args: never; Returns: string }
+      reset_demo_workspace: { Args: never; Returns: string }
       create_enquiry_with_customer: {
         Args: {
           p_business_id: string
