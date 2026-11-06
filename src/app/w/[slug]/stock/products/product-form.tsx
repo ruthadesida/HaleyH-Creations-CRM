@@ -42,6 +42,10 @@ export function ProductForm({ action }: { action: (p: ActionState, fd: FormData)
         <Field label="Selling price (₦)" htmlFor="price" error={err("price")}>
           <Input id="price" name="price" inputMode="decimal" defaultValue={v("price")} placeholder="45000" />
         </Field>
+        <Field label="Cost price (₦)" htmlFor="cost" optional error={err("cost")}
+          hint="What one costs you. Used for profit when an item has no production or purchase cost. Only owners see it.">
+          <Input id="cost" name="cost" inputMode="decimal" defaultValue={v("cost")} placeholder="20000" />
+        </Field>
       </div>
       <fieldset className="flex flex-col gap-5 rounded-[var(--radius-card)] border border-line bg-surface p-4">
         <legend className="px-1 font-medium">Variants</legend>

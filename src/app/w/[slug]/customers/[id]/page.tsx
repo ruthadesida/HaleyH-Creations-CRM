@@ -13,7 +13,7 @@ import { can, getWorkspace } from "@/lib/dal";
 import { FEATURES } from "@/lib/features";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
-  ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE, PAYMENT_METHOD_LABEL, PAYMENT_TONE, SOURCE_LABEL, TASK_KIND_LABEL, stageLabel,
+  ENQUIRY_STAGE_LABEL, ENQUIRY_STAGE_TONE, PAYMENT_METHOD_LABEL, PAYMENT_TONE, REPAIR_STATUS, type RepairStatus, SOURCE_LABEL, TASK_KIND_LABEL, stageLabel,
 } from "@/lib/labels";
 import { PAYMENT_STATUS_LABEL, type PaymentStatus } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
@@ -32,7 +32,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
   const { data: c } = await supabase.from("customers").select("*").eq("id", id).eq("business_id", business.id).maybeSingle();
   if (!c) notFound();
 
-  const [enquiries, orders, tasks, staff] = await Promise.all([
+  const [enquiries, orders, tasks, staff, repairs] = await Promise.all([
     supabase.from("enquiries").select("id, stage, product_interest, follow_up_at, created_at")
       .eq("business_id", business.id).eq("customer_id", id).is("archived_at", null).order("created_at", { ascending: false }),
     supabase.from("order_summaries").select("id, order_number, order_date, status, confirmed_at, fulfilment_stage, total_minor, balance_minor, payment_status")
@@ -40,6 +40,10 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
     supabase.from("tasks").select("id, kind, title, due_at, status")
       .eq("business_id", business.id).eq("customer_id", id).order("due_at", { ascending: true, nullsFirst: false }).limit(20),
     getStaff(business.id),
+    FEATURES.repairs
+      ? supabase.from("repair_summaries").select("id, number, item, status, received_on, balance_minor")
+          .eq("business_id", business.id).eq("customer_id", id).order("received_on", { ascending: false }).limit(20)
+      : Promise.resolve({ data: [] }),
   ]);
   const orderIds = (orders.data ?? []).map((o) => o.id!);
   const payments = orderIds.length
@@ -74,6 +78,7 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <ButtonLink href={`${base}/enquiries/new?customer=${c.id}`} variant="primary"><Plus aria-hidden /> Enquiry</ButtonLink>
           {FEATURES.orders && <ButtonLink href={`${base}/orders/new?customer=${c.id}`} variant="gold"><Plus aria-hidden /> Order</ButtonLink>}
+          {FEATURES.repairs && <ButtonLink href={`${base}/repairs/new?customer=${c.id}`} variant="secondary"><Plus aria-hidden /> Repair</ButtonLink>}
           <WhatsAppButton phone={c.whatsapp || c.phone} message={`Hello ${firstName}, this is ${business.name}. `} />
           {c.phone && (
             <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className={buttonStyles({ variant: "secondary" })}>
@@ -171,6 +176,33 @@ async function CustomerDetail({ params }: PageProps<"/w/[slug]/customers/[id]">)
               </Card>
             )}
           </section>}
+
+          {FEATURES.repairs && (repairs.data ?? []).length > 0 && (
+            <section>
+              <SectionTitle>Repairs</SectionTitle>
+              <Card>
+                <ul>
+                  {(repairs.data ?? []).map((rp) => {
+                    const st = REPAIR_STATUS[rp.status as RepairStatus];
+                    return (
+                      <li key={rp.id} className="border-b border-line last:border-b-0">
+                        <Link href={`${base}/repairs/${rp.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ink/[0.03] active:bg-ink/5">
+                          <span className="min-w-0">
+                            <span className="block font-medium">{rp.number} · {rp.item}</span>
+                            <span className="block text-sm text-muted">{rp.received_on && formatDate(rp.received_on)}</span>
+                          </span>
+                          <span className="flex flex-col items-end gap-1">
+                            <Chip tone={st.tone}>{st.label}</Chip>
+                            {(rp.balance_minor ?? 0) > 0 && rp.status !== "cancelled" && <span className="text-sm"><Money minor={rp.balance_minor ?? 0} currency={cur} /> owed</span>}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            </section>
+          )}
 
           <section>
             <SectionTitle>Enquiries</SectionTitle>

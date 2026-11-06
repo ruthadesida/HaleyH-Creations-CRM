@@ -6,6 +6,7 @@ import { z } from "zod";
 import { type ActionState, fieldErrors, formValues, friendlyDbError } from "@/lib/action-state";
 import { authorize, can } from "@/lib/dal";
 import { parseMoneyInput } from "@/lib/money";
+import { orNull } from "@/lib/rpc";
 import { createClient } from "@/lib/supabase/server";
 import {
   listInput, locationSchema, makeSku, makerSchema, materialSchema, productSchema, supplierSchema, transferSchema,
@@ -134,6 +135,9 @@ export async function createProduct(slug: string, _prev: ActionState, formData: 
   });
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
   if (price === null) return { fieldErrors: { price: "Enter a selling price like 45000." }, values };
+  const costText = String(formData.get("cost") ?? "").trim();
+  const cost = costText ? parseMoneyInput(costText) : null;
+  if (costText && cost === null) return { fieldErrors: { cost: "Enter the cost price like 20000, or leave it blank." }, values };
   const p = parsed.data;
 
   const supabase = await createClient();
@@ -161,7 +165,29 @@ export async function createProduct(slug: string, _prev: ActionState, formData: 
       values,
     };
   }
+  if (cost !== null) {
+    const { error: cError } = await supabase.rpc("set_product_cost", { p_product: product.id, p_variant: orNull(""), p_cost_minor: cost });
+    if (cError) return { message: `The product was created, but its cost price wasn't saved: ${friendlyDbError(cError)}`, values };
+  }
   redirect(`/w/${slug}/stock/products/${product.id}?created=1`);
+}
+
+/** Owners set the cost price of a product (variantId null) or of one size/colour. Blank clears it. */
+export async function setProductCost(slug: string, productId: string, variantId: string | null, costText: string): Promise<Result> {
+  await authorize(slug, can.own);
+  if (!z.string().uuid().safeParse(productId).success || (variantId !== null && !z.string().uuid().safeParse(variantId).success)) {
+    return { ok: false, message: "Refresh the page and try again." };
+  }
+  const text = costText.trim();
+  const cost = text ? parseMoneyInput(text) : null;
+  if (text && cost === null) return { ok: false, message: "Enter the cost price like 20000, or leave it blank." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_product_cost", {
+    p_product: productId, p_variant: orNull(variantId ?? ""), p_cost_minor: cost as unknown as number,
+  });
+  if (error) return { ok: false, message: friendlyDbError(error) };
+  refresh();
+  return { ok: true, message: text ? "Cost price saved." : variantId ? "Cleared: this size uses the product's cost price." : "Cost price cleared." };
 }
 
 const variantPatch = z.object({ price: z.string(), sku: z.string().trim().max(60) });

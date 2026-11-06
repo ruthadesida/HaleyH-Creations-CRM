@@ -146,6 +146,16 @@ export const BATCH_STATUS = {
   discarded: { label: "Discarded", tone: "neutral" },
 } as const;
 
+/** Repair stages, coloured by meaning like order progress. */
+export const REPAIR_STATUS = {
+  received: { label: "Received", tone: "neutral" },
+  in_repair: { label: "In repair", tone: "info" },
+  ready: { label: "Ready for collection", tone: "gold" },
+  collected: { label: "Collected", tone: "success" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
+} as const satisfies Record<string, { label: string; tone: Tone }>;
+export type RepairStatus = keyof typeof REPAIR_STATUS;
+
 export const PO_STATUS = {
   draft: { label: "Request: waiting for owner approval", short: "Request", tone: "warn" },
   ordered: { label: "Ordered", short: "Ordered", tone: "info" },

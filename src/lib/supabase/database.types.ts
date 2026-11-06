@@ -378,6 +378,7 @@ export type Database = {
           next_po_number: number
           next_qc_number: number
           next_receipt_number: number
+          next_repair_number: number
           next_return_number: number
           next_stock_doc_number: number
           next_supplier_return_number: number
@@ -405,6 +406,7 @@ export type Database = {
           next_po_number?: number
           next_qc_number?: number
           next_receipt_number?: number
+          next_repair_number?: number
           next_return_number?: number
           next_stock_doc_number?: number
           next_supplier_return_number?: number
@@ -432,6 +434,7 @@ export type Database = {
           next_po_number?: number
           next_qc_number?: number
           next_receipt_number?: number
+          next_repair_number?: number
           next_return_number?: number
           next_stock_doc_number?: number
           next_supplier_return_number?: number
@@ -1975,6 +1978,36 @@ export type Database = {
         }
         Relationships: []
       }
+      product_costs: {
+        Row: {
+          business_id: string
+          cost_minor: number
+          id: string
+          product_id: string
+          updated_at: string
+          updated_by: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          business_id: string
+          cost_minor: number
+          id?: string
+          product_id: string
+          updated_at?: string
+          updated_by?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          cost_minor?: number
+          id?: string
+          product_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          variant_id?: string | null
+        }
+        Relationships: []
+      }
       product_variants: {
         Row: {
           archived_at: string | null
@@ -2501,6 +2534,137 @@ export type Database = {
             referencedColumns: ["business_id", "id"]
           },
         ]
+      }
+      repairs: {
+        Row: {
+          business_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          charge_minor: number
+          collected_at: string | null
+          created_at: string
+          created_by: string
+          customer_id: string
+          id: string
+          item: string
+          maker_id: string | null
+          notes: string | null
+          number: string
+          problem: string
+          promised_date: string | null
+          ready_at: string | null
+          received_on: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          charge_minor?: number
+          collected_at?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id: string
+          id?: string
+          item: string
+          maker_id?: string | null
+          notes?: string | null
+          number: string
+          problem: string
+          promised_date?: string | null
+          ready_at?: string | null
+          received_on: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          charge_minor?: number
+          collected_at?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id?: string
+          id?: string
+          item?: string
+          maker_id?: string | null
+          notes?: string | null
+          number?: string
+          problem?: string
+          promised_date?: string | null
+          ready_at?: string | null
+          received_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repairs_business_id_customer_id_fkey"
+            columns: ["business_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "repairs_business_id_maker_id_fkey"
+            columns: ["business_id", "maker_id"]
+            isOneToOne: false
+            referencedRelation: "makers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]      }
+      repair_payments: {
+        Row: {
+          amount_minor: number
+          business_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["payment_kind"]
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          recorded_by: string
+          reference: string | null
+          repair_id: string
+          verification: Database["public"]["Enums"]["payment_verification"]
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_minor: number
+          business_id: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_kind"]
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_on: string
+          recorded_by?: string
+          reference?: string | null
+          repair_id: string
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          business_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_kind"]
+          method?: Database["public"]["Enums"]["payment_method"]
+          paid_on?: string
+          recorded_by?: string
+          reference?: string | null
+          repair_id?: string
+          verification?: Database["public"]["Enums"]["payment_verification"]
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: []
       }
       stock_documents: {
         Row: {
@@ -3344,6 +3508,46 @@ export type Database = {
           },
         ]
       }
+      repair_summaries: {
+        Row: {
+          balance_minor: number | null
+          business_id: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          charge_minor: number | null
+          collected_at: string | null
+          created_at: string | null
+          created_by: string | null
+          customer_id: string | null
+          id: string | null
+          item: string | null
+          maker_id: string | null
+          net_paid_minor: number | null
+          notes: string | null
+          number: string | null
+          problem: string | null
+          promised_date: string | null
+          ready_at: string | null
+          received_on: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repairs_business_id_customer_id_fkey"
+            columns: ["business_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "repairs_business_id_maker_id_fkey"
+            columns: ["business_id", "maker_id"]
+            isOneToOne: false
+            referencedRelation: "makers"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]      }
       stock_availability: {
         Row: {
           available: number | null
@@ -3621,6 +3825,73 @@ export type Database = {
       }
       link_exchange_replacement: {
         Args: { p_order: string; p_return: string }
+        Returns: undefined
+      }
+      assign_repair_maker: {
+        Args: { p_maker_id: string; p_repair: string }
+        Returns: undefined
+      }
+      create_repair: {
+        Args: {
+          p_business_id: string
+          p_charge_minor: number
+          p_customer_id: string
+          p_item: string
+          p_maker_id: string
+          p_notes: string
+          p_problem: string
+          p_promised_date: string
+          p_received_on: string
+        }
+        Returns: string
+      }
+      production_repairs: {
+        Args: { p_business_id: string }
+        Returns: {
+          id: string
+          item: string
+          maker: string
+          maker_id: string
+          number: string
+          problem: string
+          promised_date: string
+          received_on: string
+          status: string
+        }[]
+      }
+      record_repair_payment: {
+        Args: {
+          p_amount_minor: number
+          p_kind: Database["public"]["Enums"]["payment_kind"]
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_paid_on: string
+          p_reference: string
+          p_repair: string
+        }
+        Returns: string
+      }
+      set_product_cost: {
+        Args: { p_cost_minor: number; p_product: string; p_variant: string }
+        Returns: undefined
+      }
+      set_repair_status: {
+        Args: { p_reason: string; p_repair: string; p_status: string }
+        Returns: undefined
+      }
+      update_repair: {
+        Args: {
+          p_charge_minor: number
+          p_item: string
+          p_maker_id: string
+          p_notes: string
+          p_problem: string
+          p_promised_date: string
+          p_repair: string
+        }
+        Returns: undefined
+      }
+      void_repair_payment: {
+        Args: { p_payment: string; p_reason: string }
         Returns: undefined
       }
       maker_location: { Args: { p_maker_id: string }; Returns: string }

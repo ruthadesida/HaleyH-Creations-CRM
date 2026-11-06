@@ -14,6 +14,8 @@ export const FEATURES = {
   production: true,
   /** Phase 3: quotations, orders, reservations, dispatch, returns; customer payments and refunds. */
   orders: true,
+  /** Repairs: their own records, separate from orders (stages, maker, charge and payments). */
+  repairs: true,
   payments: true,
   /** Phase 4: reports with CSV exports, owner overview, notifications, search, job sheets, templates, imports. */
   reports: true,

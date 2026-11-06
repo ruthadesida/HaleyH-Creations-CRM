@@ -23,6 +23,7 @@ import {
   UserPlus,
   MessageSquarePlus,
   ShoppingBag,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -45,6 +46,7 @@ function items(slug: string, role: Role) {
       FEATURES.inventory && { href: `${stock}/counts`, label: "Counts", icon: ClipboardCheck },
     ];
     const extra: (Item | false)[] = [
+      FEATURES.repairs && { href: `${base}/repairs`, label: "Repairs", icon: Wrench },
       FEATURES.reports && { href: `${base}/reports`, label: "Reports", icon: BarChart3 },
       FEATURES.inventory && { href: `${stock}/makers`, label: "Makers", icon: Scissors },
       FEATURES.inventory && { href: `${stock}/movements`, label: "Movements", icon: History },
@@ -63,6 +65,7 @@ function items(slug: string, role: Role) {
     FEATURES.inventory && { href: stock, label: "Stock", icon: Boxes },
   ];
   const extra: (Item | false)[] = [
+    FEATURES.repairs && { href: `${base}/repairs`, label: "Repairs", icon: Wrench },
     FEATURES.production && role === "owner" && { href: `${base}/production`, label: "Production", icon: Factory },
     FEATURES.purchasing && role === "owner" && { href: `${base}/purchasing`, label: "Purchasing", icon: Truck },
     FEATURES.reports && { href: `${base}/reports`, label: "Reports", icon: BarChart3 },
@@ -172,6 +175,7 @@ const NEW_ACTIONS = (slug: string) =>
   [
     { href: `/w/${slug}/enquiries/new`, label: "New enquiry", hint: "Someone asked about an item", icon: MessageSquarePlus },
     FEATURES.orders && { href: `/w/${slug}/orders/new`, label: "New order", hint: "Items, delivery and price", icon: ShoppingBag },
+    FEATURES.repairs && { href: `/w/${slug}/repairs/new`, label: "New repair", hint: "An item brought in to be fixed", icon: Wrench },
     { href: `/w/${slug}/customers/new`, label: "New customer", hint: "Contact details and sizes", icon: UserPlus },
     FEATURES.payments && { href: `/w/${slug}/orders?pay=1`, label: "Record a payment", hint: "Find the order, then record it", icon: Wallet },
   ].filter(Boolean) as { href: string; label: string; hint: string; icon: LucideIcon }[];

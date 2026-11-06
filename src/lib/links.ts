@@ -5,6 +5,7 @@ export function refHref(slug: string, type: string, id: string | null): string {
     case "order": return `${w}/orders/${id}`;
     case "customer": return `${w}/customers/${id}`;
     case "job": return `${w}/production/${id}`;
+    case "repair": return `${w}/repairs/${id}`;
     case "purchase_order": return `${w}/purchasing/${id}`;
     case "item": return `${w}/stock/items/${id}`;
     case "adjustment": return `${w}/stock/counts`;
