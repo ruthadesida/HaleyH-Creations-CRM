@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 \ir ../shared/fixtures.psql
 
-select plan(16);
+select plan(18);
 
 grant usage on schema tests to authenticated;
 create or replace function tests.loc(p_name text) returns uuid language sql stable security definer as $$
@@ -99,6 +99,20 @@ select throws_like($$ select public.update_repair((select id from t where k = 'r
   'This repair is closed%', 'A collected repair can''t be changed');
 reset role;
 
+-- A cancelled repair owes nothing: the deposit shows as to refund; a payment can't be voided out from under a refund.
+select tests.login('a0000000-0000-0000-0000-000000000002');
+insert into t select 'repair2', public.create_repair('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a',
+  'Loafers', 'Resole', current_date, null, 800000, null, null);
+insert into t select 'deposit', public.record_repair_payment((select id from t where k = 'repair2'), 'payment', 300000, 'cash', current_date, null);
+select public.set_repair_status((select id from t where k = 'repair2'), 'cancelled', 'Customer changed their mind');
+select results_eq($$ select balance_minor from public.repair_summaries where id = (select id from t where k = 'repair2') $$,
+  array[-300000::bigint], 'A cancelled repair owes nothing; the deposit shows as to refund');
+reset role;
+select tests.login('a0000000-0000-0000-0000-000000000001');
+select public.record_repair_payment((select id from t where k = 'repair2'), 'refund', 300000, 'cash', current_date, null);
+select throws_like($$ select public.void_repair_payment((select id from t where k = 'deposit'), 'Mistake') $$,
+  'Void the refund first%', 'A payment can''t be voided if that would leave more refunded than received');
+reset role;
 select tests.login('b0000000-0000-0000-0000-000000000001');
 select throws_ok($$ select public.create_repair('aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a',
   'Bag', 'Strap', current_date, null, 0, null, null) $$, '42501', null, 'Another business cannot add repairs here');

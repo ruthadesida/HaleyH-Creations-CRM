@@ -30,7 +30,8 @@ test.beforeAll(async ({ browser }) => {
   const zip = (await itemId(business.id, "ZIP-20"))!;
   const p2 = await seedPhase2(owner, business.id);
   const p3 = await seedPhase3(owner, business.id, p2.variant);
-  await owner.client.rpc("set_product_cost", { p_product: p2.product, p_variant: null as unknown as string, p_cost_minor: 2000000 });
+  const { error: costError } = await owner.client.rpc("set_product_cost", { p_product: p2.product, p_variant: null as unknown as string, p_cost_minor: 2000000 });
+  if (costError) throw new Error(`set_product_cost failed: ${costError.message}`);
   const { data: repair, error: repairError } = await owner.client.rpc("create_repair", {
     p_business_id: business.id, p_customer_id: p3.customer, p_item: "Agbada", p_problem: "Torn sleeve",
     p_received_on: new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date()), p_promised_date: null as unknown as string,

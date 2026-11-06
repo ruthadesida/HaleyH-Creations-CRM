@@ -78,3 +78,9 @@ Owners always. A production manager only if an owner ticks **Can see production 
 - **Customer returns** go into Quarantine at the average cost they left this order at. Inspection either restocks them (a transfer back to a saleable location) or scraps them (a write-off). **A refund is money only and never restocks anything.**
 - **Cancelling** a confirmed order releases its reservations. Linked jobs not yet started are cancelled; jobs already holding work in progress carry on for stock (unlinked) so nothing is wasted. Orders with anything dispatched can't be cancelled: record a return.
 - The order's stage (confirmed, in production, ready for dispatch, dispatched) is derived from these records; delivered is confirmed by staff once everything is out.
+
+## Product cost price (2026-11-06)
+
+Owners can set a **cost price** on a product, and optionally on each size or colour (Stock → Products → the product). Profit (`order_profit`, Sales by product, Estimated gross profit) uses the **ledger cost** of what went out whenever there is one (from production, a purchase receipt or opening stock with a cost). Only where an item went out with **no ledger cost** does it use the size's cost price, else the product's. Such items count as costed, so profit isn't marked incomplete.
+
+The cost price used is the **current** one, not the one on the day of the sale: changing a cost price changes the profit shown for past sales of items that had no ledger cost. Stock valuation still uses the ledger only (items without a ledger cost show as cost missing there).

@@ -102,6 +102,13 @@ async function Repair({ params }: PageProps<"/w/[slug]/repairs/[id]">) {
           {` · ${r.item} · received ${formatDate(r.received_on!)}`}{r.promised_date && ` · promised ${formatDate(r.promised_date)}`}
         </p>
         {r.cancel_reason && <p className="rounded-lg bg-ink/5 px-3 py-2">Cancelled: {r.cancel_reason}</p>}
+        {!open && (balance > 0 || (can.own(role) && (r.net_paid_minor ?? 0) > 0)) && (
+          // Money can still be settled after the repair is closed: the rest of a payment, or a refund.
+          <div className="flex flex-wrap gap-2">
+            {balance > 0 && status !== "cancelled" && <RepairPaymentSheet slug={slug} id={id} kind="payment" today={today} suggested={String(balance / 100)} />}
+            {can.own(role) && (r.net_paid_minor ?? 0) > 0 && <RepairPaymentSheet slug={slug} id={id} kind="refund" today={today} suggested={balance < 0 ? String(-balance / 100) : undefined} />}
+          </div>
+        )}
         {open && (
           <div className="flex flex-wrap gap-2">
             <StageButtons slug={slug} id={id} status={status} office balance={balance} currency={cur} />

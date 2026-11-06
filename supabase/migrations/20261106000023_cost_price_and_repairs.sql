@@ -105,7 +105,8 @@ as $$
   from o, sold, cost
 $$;
 
--- Sales and gross-profit reports: the same fallback to the product's cost price.create or replace function public.report_sales_by_product(p_business_id uuid, p_from date, p_to date)
+-- Sales and gross-profit reports: the same fallback to the product's cost price.
+create or replace function public.report_sales_by_product(p_business_id uuid, p_from date, p_to date)
 returns table (product text, units numeric, sales numeric, cogs numeric, gross_profit numeric, cost_complete boolean)
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -238,7 +239,8 @@ create index repair_payments_repair_idx on public.repair_payments (business_id, 
 create view public.repair_summaries with (security_invoker = true) as
 select r.*,
   coalesce(p.net_paid, 0)::bigint as net_paid_minor,
-  (r.charge_minor - coalesce(p.net_paid, 0))::bigint as balance_minor
+  -- A cancelled repair owes nothing; anything received shows as negative (to refund).
+  ((case when r.status = 'cancelled' then 0 else r.charge_minor end) - coalesce(p.net_paid, 0))::bigint as balance_minor
 from public.repairs r
 left join lateral (
   select sum(case when y.kind = 'refund' then -y.amount_minor else y.amount_minor end) as net_paid
@@ -320,7 +322,8 @@ begin
   if r.status in ('collected', 'cancelled') then
     raise exception 'This repair is closed.' using errcode = 'P0001';
   end if;
-  if p_maker_id is not null and not exists (select 1 from public.makers where id = p_maker_id and business_id = r.business_id) then
+  if p_maker_id is not null and p_maker_id is distinct from r.maker_id
+     and not exists (select 1 from public.makers where id = p_maker_id and business_id = r.business_id and archived_at is null) then
     raise exception 'Choose a maker from the list.' using errcode = 'P0001';
   end if;
   if p_promised_date is not null and p_promised_date < r.received_on then
@@ -425,6 +428,7 @@ create or replace function public.void_repair_payment(p_payment uuid, p_reason t
 returns void language plpgsql security definer set search_path = '' as $$
 declare
   y public.repair_payments;
+  -- (locks the repair below, like every other repair change)
 begin
   select * into y from public.repair_payments where id = p_payment;
   if y.id is null or not app.is_owner(y.business_id) then
@@ -432,6 +436,14 @@ begin
   end if;
   if coalesce(btrim(p_reason), '') = '' then
     raise exception 'Give a reason.' using errcode = 'P0001';
+  end if;
+  perform app.lock_repair(y.repair_id);
+  select * into y from public.repair_payments where id = p_payment;
+  if y.voided_at is not null then return; end if;
+  if y.kind = 'payment' and (
+    select coalesce(sum(case when kind = 'refund' then -amount_minor else amount_minor end), 0)
+    from public.repair_payments where repair_id = y.repair_id and voided_at is null and id <> y.id) < 0 then
+    raise exception 'Void the refund first: without this payment, more would have been refunded than received.' using errcode = 'P0001';
   end if;
   update public.repair_payments set voided_at = now(), voided_by = (select auth.uid()), void_reason = left(btrim(p_reason), 500)
   where id = p_payment and voided_at is null;
@@ -469,7 +481,8 @@ begin
   end loop;
 end $$;
 
--- Notifications: repairs ready for collection or late (office), and repairs with no maker (production).create or replace function public.my_notifications(p_business_id uuid)
+-- Notifications: repairs ready for collection or late (office), and repairs with no maker (production).
+create or replace function public.my_notifications(p_business_id uuid)
 returns table (kind text, severity text, title text, detail text, ref_type text, ref_id uuid)
 language plpgsql stable security definer set search_path = '' as $$
 declare

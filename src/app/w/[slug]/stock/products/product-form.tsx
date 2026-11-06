@@ -43,7 +43,7 @@ export function ProductForm({ action }: { action: (p: ActionState, fd: FormData)
           <Input id="price" name="price" inputMode="decimal" defaultValue={v("price")} placeholder="45000" />
         </Field>
         <Field label="Cost price (₦)" htmlFor="cost" optional error={err("cost")}
-          hint="What one costs you. Used for profit when an item has no production or purchase cost. Only owners see it.">
+          hint="What one costs you. Used for profit when an item has no production or purchase cost. Only owners (and staff you allow to see costs) see it.">
           <Input id="cost" name="cost" inputMode="decimal" defaultValue={v("cost")} placeholder="20000" />
         </Field>
       </div>
