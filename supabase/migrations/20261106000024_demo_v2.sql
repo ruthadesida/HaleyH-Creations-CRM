@@ -107,7 +107,7 @@ begin
       'location_id', l_store, 'quantity', 100, 'unit', 'pc', 'unit_cost', '15000'),
     jsonb_build_object('line', 5, 'code', 'DEMO-KAF-M', 'location_id', l_show, 'quantity', 4, 'unit', 'pc', 'unit_cost', '1500000'),
     jsonb_build_object('line', 6, 'code', 'DEMO-KAF-L', 'location_id', l_show, 'quantity', 3, 'unit', 'pc', 'unit_cost', '1500000'),
-    jsonb_build_object('line', 7, 'code', 'DEMO-MULE-40', 'location_id', l_show, 'quantity', 3, 'unit', 'pc', 'unit_cost', '900000'),
+    jsonb_build_object('line', 7, 'code', 'DEMO-MULE-40', 'location_id', l_show, 'quantity', 3, 'unit', 'pair', 'unit_cost', '900000'), -- shoes are counted in pairs
     jsonb_build_object('line', 8, 'code', 'DEMO-TOTE', 'location_id', l_show, 'quantity', 6, 'unit', 'pc', 'unit_cost', '600000'))),
     gen_random_uuid());
   select id into i_fab from public.stock_items where business_id = v_biz and code = 'DEMO-FAB';
