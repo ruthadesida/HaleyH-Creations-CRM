@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 import { Sheet } from "@/app/w/[slug]/nav";
+import { MakerHint } from "@/components/maker-hint";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { PAYMENT_METHOD_LABEL } from "@/lib/labels";
@@ -219,6 +220,7 @@ export function AssignSheet({ slug, jobId, makers, maker, due }: {
               {makers.map((m) => <option key={m.id} value={m.id}>{m.name}{m.is_external ? " (external)" : ""}</option>)}
             </Select>
           </Field>
+          <MakerHint slug={slug} canAdd />
           <Field label="Due" htmlFor="as-due" optional><Input id="as-due" name="due_date" type="date" defaultValue={due} /></Field>
           <Button type="submit" size="lg" block disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
         </form>

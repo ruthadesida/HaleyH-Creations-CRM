@@ -12,14 +12,14 @@ export const metadata: Metadata = { title: "New repair" };
 async function NewRepair({ params, searchParams }: PageProps<"/w/[slug]/repairs/new">) {
   const { slug } = await params;
   const sp = await searchParams;
-  const { business } = await pageWorkspace(slug, can.office);
+  const { business, role } = await pageWorkspace(slug, can.office);
   const supabase = await createClient();
   const customerId = typeof sp.customer === "string" && /^[0-9a-f-]{36}$/i.test(sp.customer) ? sp.customer : null;
   const [{ data: customer }, { data: makers }] = await Promise.all([
     customerId ? supabase.from("customers").select("id, full_name, phone, city").eq("id", customerId).eq("business_id", business.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("makers").select("id, name").eq("business_id", business.id).is("archived_at", null).order("name"),
   ]);
-  return <NewRepairForm slug={slug} customer={customer} makers={makers ?? []} today={todayIn(business.timezone)} />;
+  return <NewRepairForm slug={slug} customer={customer} makers={makers ?? []} today={todayIn(business.timezone)} canAddMakers={can.production(role)} />;
 }
 
 export default function Page(props: PageProps<"/w/[slug]/repairs/new">) {

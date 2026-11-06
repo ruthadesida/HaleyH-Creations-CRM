@@ -68,7 +68,7 @@ async function Repair({ params }: PageProps<"/w/[slug]/repairs/[id]">) {
         </header>
         <div className="flex max-w-2xl flex-col gap-6">
           <Card className="p-4 sm:p-5"><p className="text-sm text-muted">What needs fixing</p><p className="mt-1 whitespace-pre-line">{r.problem}</p></Card>
-          <Card className="p-4 sm:p-5"><AssignMaker slug={slug} id={r.id} makers={makers ?? []} current={r.maker_id} /></Card>
+          <Card className="p-4 sm:p-5"><AssignMaker slug={slug} id={r.id} makers={makers ?? []} current={r.maker_id} canAddMakers /></Card>
         </div>
       </>
     );
@@ -152,7 +152,7 @@ async function Repair({ params }: PageProps<"/w/[slug]/repairs/[id]">) {
           {open && (
             <section>
               <SectionTitle>Assign</SectionTitle>
-              <Card className="p-4 sm:p-5"><AssignMaker slug={slug} id={id} makers={makers ?? []} current={r.maker_id} /></Card>
+              <Card className="p-4 sm:p-5"><AssignMaker slug={slug} id={id} makers={makers ?? []} current={r.maker_id} canAddMakers={can.production(role)} /></Card>
             </section>
           )}
         </div>

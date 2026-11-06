@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Drawer } from "vaul";
 import { Sheet } from "@/app/w/[slug]/nav";
 import { CustomerPicker, type PickedCustomer } from "@/components/customer-picker";
+import { MakerHint } from "@/components/maker-hint";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, Select, Textarea } from "@/components/ui/field";
 import { initialState } from "@/lib/action-state";
@@ -25,7 +26,9 @@ function MakerOptions({ makers }: { makers: Maker[] }) {
 }
 
 /** A new repair: who brought it, what it is, what's wrong, when it's promised and what it costs. */
-export function NewRepairForm({ slug, customer, makers, today }: { slug: string; customer: PickedCustomer | null; makers: Maker[]; today: string }) {
+export function NewRepairForm({ slug, customer, makers, today, canAddMakers }: {
+  slug: string; customer: PickedCustomer | null; makers: Maker[]; today: string; canAddMakers: boolean;
+}) {
   const [state, action, pending] = useActionState(createRepair.bind(null, slug), initialState);
   const v = (k: string, d = "") => state.values?.[k] ?? d;
   const err = (k: string) => state.fieldErrors?.[k];
@@ -51,9 +54,12 @@ export function NewRepairForm({ slug, customer, makers, today }: { slug: string;
         <Field label="Charge (₦)" htmlFor="charge" optional error={err("charge")} hint="What the customer pays for the repair.">
           <Input id="charge" name="charge" inputMode="decimal" defaultValue={v("charge")} placeholder="8000" />
         </Field>
-        <Field label="Maker" htmlFor="maker_id" optional hint="The production manager can assign it later.">
-          <Select id="maker_id" name="maker_id" defaultValue={v("maker_id")}><MakerOptions makers={makers} /></Select>
-        </Field>
+        <div className="flex flex-col gap-1">
+          <Field label="Maker" htmlFor="maker_id" optional hint="The production manager can assign it later.">
+            <Select id="maker_id" name="maker_id" defaultValue={v("maker_id")}><MakerOptions makers={makers} /></Select>
+          </Field>
+          <MakerHint slug={slug} canAdd={canAddMakers} />
+        </div>
       </div>
       <Field label="Notes" htmlFor="notes" optional>
         <Textarea id="notes" name="notes" rows={2} defaultValue={v("notes")} />
@@ -147,7 +153,9 @@ export function RepairPaymentSheet({ slug, id, kind, today, suggested }: { slug:
 }
 
 /** The production manager (or the office) gives the repair to a maker. */
-export function AssignMaker({ slug, id, makers, current }: { slug: string; id: string; makers: Maker[]; current: string | null }) {
+export function AssignMaker({ slug, id, makers, current, canAddMakers }: {
+  slug: string; id: string; makers: Maker[]; current: string | null; canAddMakers: boolean;
+}) {
   const [value, setValue] = useState(current ?? "");
   const [pending, start] = useTransition();
   return (
@@ -159,6 +167,7 @@ export function AssignMaker({ slug, id, makers, current }: { slug: string; id: s
         const r = await assignRepairMaker(slug, id, value);
         (r.ok ? toast.success : toast.error)(r.message);
       })}>Save</Button>
+      <span className="basis-full"><MakerHint slug={slug} canAdd={canAddMakers} /></span>
     </div>
   );
 }

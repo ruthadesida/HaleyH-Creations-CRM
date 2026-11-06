@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { MakerHint } from "@/components/maker-hint";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { createJob } from "../actions";
@@ -57,12 +58,15 @@ export function JobForm({ slug, products, variants, boms, makers, defaultVariant
             {options.map((b) => <option key={b.id} value={b.id}>{b.label}{b.status === "draft" ? " (draft)" : ""}</option>)}
           </Select>
         </Field>
-        <Field label="Maker" htmlFor="maker" optional hint={makers.length === 0 ? "Add tailors and makers under Stock → Makers." : undefined}>
-          <Select id="maker" name="maker" defaultValue="">
-            <option value="">Not assigned yet</option>
-            {makers.map((m) => <option key={m.id} value={m.id}>{m.name}{m.is_external ? " (external)" : ""}</option>)}
-          </Select>
-        </Field>
+        <div className="flex flex-col gap-1">
+          <Field label="Maker" htmlFor="maker" optional>
+            <Select id="maker" name="maker" defaultValue="">
+              <option value="">Not assigned yet</option>
+              {makers.map((m) => <option key={m.id} value={m.id}>{m.name}{m.is_external ? " (external)" : ""}</option>)}
+            </Select>
+          </Field>
+          <MakerHint slug={slug} canAdd />
+        </div>
         <Field label="Due" htmlFor="due_date" optional><Input id="due_date" name="due_date" type="date" /></Field>
       </div>
       <Field label="Notes for the maker" htmlFor="notes" optional>
