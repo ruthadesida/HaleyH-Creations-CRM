@@ -99,10 +99,10 @@ begin
 
   -- Opening stock with costs: materials in the store, finished goods in the showroom.
   perform public.post_opening_batch(public.save_opening_batch(v_biz, 'demo-opening-stock.csv', 'Demo opening stock', jsonb_build_array(
-    jsonb_build_object('line', 2, 'code', 'DEMO-FAB', 'name', 'Demo Ankara fabric', 'kind', 'raw_material', 'base_unit', 'yd',
-      'location_id', l_store, 'quantity', 60, 'unit', 'yd', 'unit_cost', '350000'),
-    jsonb_build_object('line', 3, 'code', 'DEMO-LIN', 'name', 'Demo lining', 'kind', 'raw_material', 'base_unit', 'yd',
-      'location_id', l_store, 'quantity', 40, 'unit', 'yd', 'unit_cost', '120000'),
+    jsonb_build_object('line', 2, 'code', 'DEMO-FAB', 'name', 'Demo Ankara fabric', 'kind', 'raw_material', 'base_unit', 'm',
+      'location_id', l_store, 'quantity', 60, 'unit', 'm', 'unit_cost', '350000'),
+    jsonb_build_object('line', 3, 'code', 'DEMO-LIN', 'name', 'Demo lining', 'kind', 'raw_material', 'base_unit', 'm',
+      'location_id', l_store, 'quantity', 40, 'unit', 'm', 'unit_cost', '120000'),
     jsonb_build_object('line', 4, 'code', 'DEMO-ZIP', 'name', 'Demo invisible zip 20 cm', 'kind', 'raw_material', 'base_unit', 'pc',
       'location_id', l_store, 'quantity', 100, 'unit', 'pc', 'unit_cost', '15000'),
     jsonb_build_object('line', 5, 'code', 'DEMO-KAF-M', 'location_id', l_show, 'quantity', 4, 'unit', 'pc', 'unit_cost', '1500000'),
@@ -120,7 +120,7 @@ begin
 
   -- Purchasing: an approved order for more fabric, received in full with the supplier's bill, part-paid.
   v_po := public.save_purchase_order(v_biz, null, s_fab, d + 3, 'Demo: restock Ankara',
-    jsonb_build_array(jsonb_build_object('item', i_fab, 'qty', 30, 'unit', 'yd', 'unit_price', 380000)));
+    jsonb_build_array(jsonb_build_object('item', i_fab, 'qty', 30, 'unit', 'm', 'unit_price', 380000)));
   perform public.approve_purchase_order(v_po);
   perform public.receive_goods(v_biz, v_po, null, l_store, d, 'DEMO-INV-001', 0,
     jsonb_build_array(jsonb_build_object('po_line', (select id from public.purchase_order_lines where po_id = v_po limit 1), 'accepted', 30)),
@@ -130,8 +130,8 @@ begin
   -- Production: the wrap dress recipe, and a stock run of 2 finished through QC.
   v_bom := public.save_bom(v_biz, null, p_dress, 'Demo wrap dress', false, 500000, 0, 'Double-stitch the hem. Press before QC.',
     jsonb_build_array(
-      jsonb_build_object('item', i_fab, 'qty', 3, 'unit', 'yd', 'wastage_pct', 5),
-      jsonb_build_object('item', i_lin, 'qty', 2, 'unit', 'yd'),
+      jsonb_build_object('item', i_fab, 'qty', 3, 'unit', 'm', 'wastage_pct', 5),
+      jsonb_build_object('item', i_lin, 'qty', 2, 'unit', 'm'),
       jsonb_build_object('item', i_zip, 'qty', 1, 'unit', 'pc')));
   perform public.activate_bom(v_bom);
   v_job := public.create_production_job(v_biz, v_wrap10, 2, v_bom, m_tunde, d + 7, 'Demo: stock run for the showroom', gen_random_uuid());

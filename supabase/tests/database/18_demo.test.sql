@@ -22,7 +22,7 @@ select ok((select count(*) > 0 from public.stock_movements where business_id = (
 select results_eq($$ select s.on_hand from public.stock_balances s join public.stock_items i on i.id = s.stock_item_id
     join public.locations l on l.id = s.location_id
     where i.business_id = (select id from t where k = 'demo') and i.code = 'DEMO-FAB' and l.kind = 'store' $$,
-  array[83.7::numeric], 'Fabric: 60 opening + 30 received − 6.3 issued to the stock run');
+  array[83.7::numeric], 'Fabric: 60 m opening + 30 m received − 6.3 m issued to the stock run');
 select is((select status from public.purchase_orders where business_id = (select id from t where k = 'demo')), 'received', 'The fabric order was received');
 
 -- Production and orders at every stage.
