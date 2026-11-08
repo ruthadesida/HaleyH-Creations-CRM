@@ -87,13 +87,20 @@ export function InviteForm({ action, businessName }: {
             It works once, for that email only, and expires in 7 days.
             You won&rsquo;t be able to see it again.
           </p>
-          <p className="mt-3 rounded-lg bg-surface px-3 py-2 font-mono text-sm break-all">{state.link}</p>
+          <p id="invite-link" className="mt-3 rounded-lg bg-surface px-3 py-2 font-mono text-sm break-all select-all">{state.link}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={async () => {
-            await navigator.clipboard.writeText(state.link!);
-            setCopied(true);
-            toast.success("Link copied.");
+            try {
+              await navigator.clipboard.writeText(state.link!);
+              setCopied(true);
+              toast.success("Link copied.");
+            } catch {
+              // Some browsers (in-app ones especially) block copying. Select the link so it can be copied by hand.
+              const el = document.getElementById("invite-link");
+              if (el) window.getSelection()?.selectAllChildren(el);
+              toast.error("This browser blocked copying. The link is selected: press and hold it (or Ctrl+C) to copy, or use Share on WhatsApp.");
+            }
           }}>
             {copied ? <Check aria-hidden /> : <Copy aria-hidden />} {copied ? "Copied" : "Copy link"}
           </Button>

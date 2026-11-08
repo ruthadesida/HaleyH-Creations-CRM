@@ -160,6 +160,17 @@ test("front office sells, dispatches and takes a return; the owner approves and 
     expect(await officeCsv.text()).not.toContain("Est. gross profit"); // the column is dropped, not just blank
     const officeProfit = await officePage.request.get(`${w()}/reports/gross-profit/export`);
     expect(officeProfit.status()).toBe(403);
+    // The button downloads from inside the page (no separate page load), and the person stays signed in.
+    await page.goto(`${w()}/reports/sales-by-product?from=${day}&to=${day}`);
+    // Retry: a click that lands before the page has hydrated does nothing.
+    await expect(async () => {
+      const [download] = await Promise.all([
+        page.waitForEvent("download", { timeout: 5_000 }),
+        page.getByRole("button", { name: "Download CSV" }).click(),
+      ]);
+      expect(download.suggestedFilename()).toBe(`sales-by-product-${day}-to-${day}.csv`);
+    }).toPass({ timeout: 30_000 });
+    await expect(page).toHaveURL(new RegExp(`${w()}/reports/sales-by-product`));
   });
 
   await officePage.context().close();

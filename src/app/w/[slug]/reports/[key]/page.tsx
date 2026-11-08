@@ -1,10 +1,10 @@
-import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BackLink } from "@/components/back-link";
+import { DownloadCsv } from "@/components/download-csv";
 import { EmptyState } from "@/components/ui/bits";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { getWorkspace } from "@/lib/dal";
 import { formatDate } from "@/lib/dates";
@@ -45,7 +45,7 @@ async function ReportView({ params, searchParams }: PageProps<"/w/[slug]/reports
               <Button type="submit" variant="secondary">Show</Button>
             </form>
           )}
-          <ButtonLink href={exportHref} variant="ghost" prefetch={false}><Download aria-hidden /> Download CSV</ButtonLink>
+          <DownloadCsv href={exportHref} fallbackName={`${report.key}.csv`} />
         </div>
         {report.range && <p className="text-sm text-muted">{formatDate(from)} to {formatDate(to)}</p>}
       </header>

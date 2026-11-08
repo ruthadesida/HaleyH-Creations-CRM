@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card } from "@/components/ui/bits";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Wordmark } from "@/components/wordmark";
 import { getUser, requireUser } from "@/lib/dal";
 import { ROLE_LABEL } from "@/lib/labels";
@@ -28,6 +29,7 @@ async function Invite({ params, searchParams }: PageProps<"/invite/[token]">) {
   // Not signed in: the link itself is the sign-up. Name and password, and they're in (no email needed).
   if (!user) {
     const info = await lookupInvite(token);
+    if (info?.used) return <AlreadyJoined email={info.email} businessName={info.businessName} />;
     if (!info?.valid) return <InvalidInvite />;
     return (
       <Card className="p-6">
@@ -62,11 +64,30 @@ async function Invite({ params, searchParams }: PageProps<"/invite/[token]">) {
   );
 }
 
+/** Invite links work once. Someone opening theirs again has an account: send them to sign in. */
+function AlreadyJoined({ email, businessName }: { email: string; businessName: string }) {
+  return (
+    <Card className="p-6">
+      <h1 className="font-display text-3xl font-medium">You&rsquo;ve already joined</h1>
+      <p className="mt-2 text-muted">
+        This link was used to join {businessName}, and it only works once. Sign in with <strong className="text-ink break-all">{email}</strong> and
+        the password you chose.
+      </p>
+      <ButtonLink href="/login" size="lg" block className="mt-6">Sign in</ButtonLink>
+      <p className="mt-3 text-sm text-muted">Forgot the password? Use &ldquo;Forgot password?&rdquo; on the sign-in page, or ask the owner.</p>
+    </Card>
+  );
+}
+
 function InvalidInvite() {
   return (
     <Card className="p-6">
       <h1 className="font-display text-3xl font-medium">This invitation isn&rsquo;t valid</h1>
       <p className="mt-2 text-muted">It may have expired, been used already or been cancelled. Ask the owner for a new link.</p>
+      <p className="mt-4 text-muted">
+        Already joined?{" "}
+        <Link href="/login" className="inline-flex min-h-11 items-center font-medium text-gold-ink underline underline-offset-4">Sign in here</Link>
+      </p>
     </Card>
   );
 }

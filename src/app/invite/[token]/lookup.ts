@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type InviteInfo = { email: string; role: string; businessName: string; valid: boolean };
+export type InviteInfo = { email: string; role: string; businessName: string; valid: boolean; used: boolean };
 
 /**
  * Finds an invitation by its secret token (only the token's hash is stored). Null if no such invitation.
@@ -23,5 +23,6 @@ export async function lookupInvite(token: string): Promise<InviteInfo | null> {
     role: data.role,
     businessName: data.businesses?.name ?? "the business",
     valid: !data.revoked_at && !data.accepted_at && new Date(data.expires_at) > new Date(),
+    used: Boolean(data.accepted_at),
   };
 }
