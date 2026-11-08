@@ -3,6 +3,7 @@
 import { Check, Copy, MessageCircle } from "lucide-react";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Field, FormError, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/lib/action-state";
@@ -144,8 +145,9 @@ export function MemberRow({ member, update }: {
   const [role, setRole] = useState(member.role);
   const [title, setTitle] = useState(member.title ?? "");
   const [costs, setCosts] = useState(member.can_view_costs);
-  const run = (patch: Parameters<typeof update>[0], rollback?: () => void, confirmText?: string) => {
-    if (confirmText && !window.confirm(confirmText)) return rollback?.();
+  const [confirm, confirmDialog] = useConfirm();
+  const run = async (patch: Parameters<typeof update>[0], rollback?: () => void, confirmText?: string) => {
+    if (confirmText && !(await confirm(confirmText))) return rollback?.();
     start(async () => {
       const r = await update(patch);
       (r.ok ? toast.success : toast.error)(r.message);
@@ -164,6 +166,7 @@ export function MemberRow({ member, update }: {
           onClick={() => run({ active: !active }, undefined, active ? `Deactivate ${member.name}? They lose access immediately. Their history is kept.` : undefined)}>
           {active ? "Deactivate" : "Reactivate"}
         </Button>
+        {confirmDialog}
       </div>
       {active && (
         <div className="grid gap-3 sm:grid-cols-3">

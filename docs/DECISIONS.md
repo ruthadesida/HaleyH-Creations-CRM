@@ -2,6 +2,10 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-08
+
+- **No `window.confirm`.** Confirmations use the app's own dialog (`useConfirm`). Embedded and in-app browsers (WhatsApp, Instagram, preview panes) can block native dialogs and return "no" instantly, so destructive actions silently did nothing. Staff often open links from WhatsApp, so this matters.
+
 ## 2026-11-04 (Phase 4)
 
 - **Reports are database functions that re-check the role**; the screen and the CSV export share them, so an export can never show more than the screen. Columns a role can't see come back empty and are dropped. Definitions live in `src/lib/reports.ts` and are written into every CSV.

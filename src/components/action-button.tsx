@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 
 type Result = { ok: boolean; message: string } | undefined | void;
@@ -26,25 +27,29 @@ export function ActionButton({
   className?: string;
 }) {
   const [pending, start] = useTransition();
+  const [ask, confirmDialog] = useConfirm();
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      disabled={pending}
-      onClick={() => {
-        if (confirm && !window.confirm(confirm)) return;
-        start(async () => {
-          try {
-            const r = await action();
-            if (r) (r.ok ? toast.success : toast.error)(r.message);
-          } catch {
-            toast.error("Something went wrong. Please try again.");
-          }
-        });
-      }}
-    >
-      {children}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        disabled={pending}
+        onClick={async () => {
+          if (confirm && !(await ask(confirm))) return;
+          start(async () => {
+            try {
+              const r = await action();
+              if (r) (r.ok ? toast.success : toast.error)(r.message);
+            } catch {
+              toast.error("Something went wrong. Please try again.");
+            }
+          });
+        }}
+      >
+        {children}
+      </Button>
+      {confirmDialog}
+    </>
   );
 }

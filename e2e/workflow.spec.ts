@@ -85,6 +85,7 @@ test("owner, production manager and front office run Phase 1 stock end to end", 
     batchPath = new URL(page.url()).pathname;
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(0); // saving posts nothing
     await page.getByRole("button", { name: "Approve and post" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Yes, continue" }).click();
     await expect(page.getByText("Approved and posted. Opening stock is now on hand.")).toBeVisible();
     expect(await onHand(business.id, "FAB-001", "Raw material store")).toBeCloseTo(109.728, 4);
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(300);

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 import { Sheet } from "@/app/w/[slug]/nav";
+import { useConfirm } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { PAYMENT_METHOD_LABEL } from "@/lib/labels";
@@ -161,8 +162,9 @@ export function InspectButtons({ slug, lineId, locations, defaultLocation }: { s
   const [key] = useState(() => crypto.randomUUID());
   const [to, setTo] = useState(defaultLocation ?? locations[0]?.id ?? "");
   const [pending, start] = useTransition();
-  const run = (decision: "restock" | "scrap") => {
-    if (decision === "scrap" && !window.confirm("Write this item off? It leaves stock for good.")) return;
+  const [confirm, confirmDialog] = useConfirm();
+  const run = async (decision: "restock" | "scrap") => {
+    if (decision === "scrap" && !(await confirm("Write this item off? It leaves stock for good."))) return;
     start(async () => {
       const r = await decideReturn(slug, lineId, decision, to, key);
       (r.ok ? toast.success : toast.error)(r.message);
@@ -175,6 +177,7 @@ export function InspectButtons({ slug, lineId, locations, defaultLocation }: { s
       </Select>
       <Button size="sm" variant="secondary" disabled={pending} onClick={() => run("restock")}>Restock</Button>
       <Button size="sm" variant="ghost" disabled={pending} onClick={() => run("scrap")}>Scrap</Button>
+      {confirmDialog}
     </div>
   );
 }

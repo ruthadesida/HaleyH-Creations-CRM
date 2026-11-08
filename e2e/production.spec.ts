@@ -69,6 +69,7 @@ test("purchasing and production run end to end", async ({ page, browser }) => {
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Purchase request saved.")).toBeVisible();
     await page.getByRole("button", { name: "Approve order" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Yes, continue" }).click();
     await expect(page.getByText("Approved. The order can now be sent and received.")).toBeVisible();
     await expect(page.getByText("Ordered", { exact: true })).toBeVisible();
     expect(await onHand(business.id, "ZIP-20", "Raw material store")).toBe(300);

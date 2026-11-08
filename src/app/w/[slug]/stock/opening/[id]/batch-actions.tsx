@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 import { Sheet } from "@/app/w/[slug]/nav";
+import { useConfirm } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { discardOpening, postOpening, reverseOpening } from "../actions";
@@ -13,8 +14,9 @@ export function BatchActions({ slug, id, status, isOwner }: { slug: string; id: 
   const [reverseKey] = useState(() => crypto.randomUUID());
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const run = (fn: () => Promise<{ ok: boolean; message: string }>, confirmText?: string) => {
-    if (confirmText && !window.confirm(confirmText)) return;
+  const [confirm, confirmDialog] = useConfirm();
+  const run = async (fn: () => Promise<{ ok: boolean; message: string }>, confirmText?: string) => {
+    if (confirmText && !(await confirm(confirmText))) return;
     start(async () => {
       const r = await fn();
       (r.ok ? toast.success : toast.error)(r.message);
@@ -36,6 +38,7 @@ export function BatchActions({ slug, id, status, isOwner }: { slug: string; id: 
         <Button variant="ghost" disabled={pending} onClick={() => run(() => discardOpening(slug, id), "Discard this draft? Nothing has been posted.")}>
           Discard draft
         </Button>
+        {confirmDialog}
       </div>
     );
   }
