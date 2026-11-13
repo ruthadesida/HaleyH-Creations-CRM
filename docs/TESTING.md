@@ -31,7 +31,7 @@ Every page test checks: loads with one `h1`, no console errors, no horizontal ov
 
 ## Database tests
 
-Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, an owner/sales/production/deactivated user in A, an owner in B and a platform admin. `tests.login(uuid)` switches to that user (sets the JWT claims and `authenticated` role); `reset role` switches back.
+Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, an owner/sales/production/deactivated user in A, an owner in B and a platform admin. Fixtures set the session to Lagos time (`set local timezone`), so `current_date` is the business's day even between 23:00 and midnight UTC. `tests.login(uuid)` switches to that user (sets the JWT claims and `authenticated` role); `reset role` switches back.
 
 - `01_isolation` — business B attacking A through reads, writes, RPCs, views and forged foreign keys; deactivated staff; platform admin; anonymous.
 - `02_roles` — production, sales and owner limits; no deletes; audit log immutable; last owner protected.
@@ -54,6 +54,7 @@ Shared fixtures (`supabase/tests/shared/fixtures.psql`) create two businesses, a
 - `23_books_expenses_bank` — expenses: options for the front office, approval, input VAT, paid by a director, unpaid then paid, void, receipt must be in storage; bank: import, re-import skipped, suggestions, auto-match, post a line, set aside and reopen, reconciliation agrees and refuses a wrong balance, front office refused.
 - `24_books_bank_fixes` — posting a line is idempotent; reopening reverses its journal and posting again counts once; control accounts refused; clear import errors; open lines block reconciling; reconciled periods locked; no future reconciliation; expense VAT capped by the rate.
 - `25_books_phase_d` — VAT summary and documents, return offsets and pays the net, no overlapping periods, void restores; tax payment; pay run accounts (salaries, contract pay, employer pension, PAYE, pension, WHT, net) and void; deductions above gross refused; asset purchase, depreciation by days, idempotent rerun, disposal at a loss; an asset already in the books isn't posted; loan, repayment with interest, overpayment refused; director money and share capital; everything balances; front office refused.
+- `26_books_phase_d_fixes` — records dated in the imported year refused (tax payment, depreciation run) or register-only (loan, asset already in the books, which needs its depreciation date); nobody paid twice in a month; removed staff can't be paid; an asset added by mistake removed with its purchase reversed.
 - `05_ledger_hardening` — regressions for the Phase 1 review: average cost after transfer reversal, key reuse refused, generic reversal keeps opening batches and count requests in step, counts use expected-at-count quantities, blank quantities refused, unknown costs flagged, rounding, future dates, cross-business items, direct ledger inserts refused, cost permissions.
 
 Total: **300+** database tests (see CI for the exact count).
