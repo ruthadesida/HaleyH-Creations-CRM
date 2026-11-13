@@ -119,6 +119,7 @@ test("purchasing and production run end to end", async ({ page, browser }) => {
     await pmPage.getByRole("button", { name: "Save draft" }).click();
     await expect(pmPage.getByText("Recipe saved as a draft.")).toBeVisible();
     await pmPage.getByRole("button", { name: "Use for new jobs" }).click();
+    await pmPage.getByRole("alertdialog").getByRole("button", { name: "Yes, continue" }).click();
     await expect(pmPage.getByText("This recipe is now used for new jobs.", { exact: false })).toBeVisible();
   });
 

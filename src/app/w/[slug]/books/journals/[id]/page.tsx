@@ -51,13 +51,13 @@ async function Journal({ params }: PageProps<"/w/[slug]/books/journals/[id]">) {
           {j.reversed_by_id && <Chip tone="warn">Reversed</Chip>}
         </div>
       </header>
-      <Card className="grid gap-4 p-5 sm:grid-cols-3">
+      <Card className="px-5 py-2"><dl className="grid gap-x-6 sm:grid-cols-3">
         <Detail label="Date">{formatDate(j.effective_date)}</Detail>
         <Detail label="Amount"><Money minor={total} currency={business.currency} /></Detail>
         <Detail label="Recorded">{formatDateTime(j.created_at, business.timezone)}{who?.full_name ? ` by ${who.full_name}` : ""}</Detail>
         {j.reverses_id && <Detail label="Reverses"><Link className="underline" href={`${base}/journals/${j.reverses_id}`}>{num(j.reverses_id) ?? "journal"}</Link></Detail>}
         {j.reversed_by_id && <Detail label="Reversed by"><Link className="underline" href={`${base}/journals/${j.reversed_by_id}`}>{num(j.reversed_by_id) ?? "journal"}</Link></Detail>}
-      </Card>
+      </dl></Card>
 
       <div className="scroll-shadows overflow-x-auto rounded-[var(--radius-card)] border border-line" tabIndex={0} role="region" aria-label="Journal lines">
         <table className="w-full min-w-max text-left text-sm">

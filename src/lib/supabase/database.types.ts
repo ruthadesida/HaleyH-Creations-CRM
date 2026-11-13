@@ -4763,6 +4763,7 @@ export type Database = {
       setup_books: {
         Args: {
           p_business_id: string
+          p_chart?: Json
           p_first_year_imported: boolean
           p_first_year_start: string
           p_incorporation_date: string

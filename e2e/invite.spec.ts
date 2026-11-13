@@ -34,10 +34,12 @@ test("a new person joins the owner's business from the invite link alone", async
     expect(data).toEqual({ role: "front_office", status: "active" });
   });
 
-  await test.step("the link can't be used again", async () => {
+  await test.step("the link can't be used again: it points to sign in instead", async () => {
     await page.context().clearCookies();
     await page.goto(`/invite/${token}`);
-    await expect(page.getByRole("heading", { name: "This invitation isn’t valid" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "You’ve already joined" })).toBeVisible();
+    await expect(page.getByLabel("Choose a password")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
   });
 });
 

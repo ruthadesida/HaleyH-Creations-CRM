@@ -12,6 +12,7 @@ import { Field, FormError, Input, Select, Textarea } from "@/components/ui/field
 import { initialState } from "@/lib/action-state";
 import { ACCOUNT_GROUPS, GROUP_LABEL, journalTotals, parseTrialBalanceCsv, type AccountGroup } from "@/lib/books";
 import { formatMoney, parseMoneyInput } from "@/lib/money";
+import { ChartImporter } from "./chart-importer";
 import {
   closeYear, createAccount, importTrialBalance, postAssetAdjustment, postJournal, postStockAdjustment, reopenYear,
   reverseJournal, setAccountArchived, setBooksLock, setupBooks, updateAccount, updateBooksSettings,
@@ -46,6 +47,9 @@ function AccountSelect({ accounts, value, onChange, id, ariaLabel }: {
 export function SetupForm({ slug, defaultStart }: { slug: string; defaultStart: string }) {
   const [state, action, pending] = useActionState(setupBooks.bind(null, slug), initialState);
   const [vat, setVat] = useState(state.values?.vat_registered === "on");
+  const [chartSource, setChartSource] = useState<"template" | "import">("template");
+  const [chart, setChart] = useState("");
+  const [chartReady, setChartReady] = useState(false);
   const v = (k: string, d = "") => state.values?.[k] ?? d;
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
@@ -76,7 +80,24 @@ export function SetupForm({ slug, defaultStart }: { slug: string; defaultStart: 
           <Input id="vat_rate" name="vat_rate" inputMode="decimal" defaultValue={v("vat_rate")} className="max-w-40" />
         </Field>
       )}
-      <Button type="submit" size="lg" disabled={pending} className="self-start">{pending ? "Setting up…" : "Set up the books"}</Button>
+      <fieldset className="flex flex-col gap-3">
+        <legend className="mb-2 font-medium">Chart of accounts</legend>
+        <label className="flex min-h-11 items-start gap-3">
+          <input type="radio" name="chart_source" value="template" checked={chartSource === "template"} onChange={() => setChartSource("template")} className="mt-1 size-5 accent-[var(--color-ink)]" />
+          <span><span className="font-medium">Use the standard chart</span><span className="block text-sm text-muted">Set up for a fashion business: sales by clothing, shoes and bags, stock, production, VAT, payroll. You can rename and add accounts later.</span></span>
+        </label>
+        <label className="flex min-h-11 items-start gap-3">
+          <input type="radio" name="chart_source" value="import" checked={chartSource === "import"} onChange={() => setChartSource("import")} className="mt-1 size-5 accent-[var(--color-ink)]" />
+          <span><span className="font-medium">Import my own chart</span><span className="block text-sm text-muted">From Zoho Books or a spreadsheet. You check every account before anything is saved.</span></span>
+        </label>
+      </fieldset>
+      {chartSource === "import" && (
+        <ChartImporter onChange={(payload, ready) => { setChart(payload); setChartReady(ready); }} />
+      )}
+      <input type="hidden" name="chart" value={chartSource === "import" ? chart : ""} />
+      <Button type="submit" size="lg" disabled={pending || (chartSource === "import" && !chartReady)} className="self-start">
+        {pending ? "Setting up…" : "Set up the books"}
+      </Button>
     </form>
   );
 }
@@ -269,12 +290,13 @@ export function StockAdjustmentForm({ slug, yearId }: { slug: string; yearId: st
   const [pending, start] = useTransition();
   const [ask, confirmDialog] = useConfirm();
   return (
-    <form className="flex flex-col gap-4" noValidate onSubmit={(e) => {
+    <form className="flex flex-col gap-4" noValidate onSubmit={async (e) => {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
       const s = (k: string) => String(fd.get(k) ?? "");
+      // Ask first: updates made inside a transition only show once it finishes, so the dialog would never appear.
+      if (!(await ask("Post the stock adjustment? It changes cost of sales and the closing stock for this year."))) return;
       start(async () => {
-        if (!(await ask("Post the stock adjustment? It changes cost of sales and the closing stock for this year."))) return;
         const r = await postStockAdjustment(slug, {
           year_id: yearId, opening: s("opening"), closing: s("closing"),
           inventory_key: s("inventory_key") as "inv_finished", equity_key: s("equity_key") as "opening_equity", keys,
@@ -459,12 +481,14 @@ export function CloseYearButton({ slug, yearId, label: text }: { slug: string; y
   const [ask, confirmDialog] = useConfirm();
   return (
     <>
-      <Button variant="gold" disabled={pending} onClick={() => start(async () => {
+      <Button variant="gold" disabled={pending} onClick={async () => {
         if (!(await ask(`Close ${text}? Income and expenses move to retained earnings and the year is locked. You can reopen it later if needed.`))) return;
-        const r = await closeYear(slug, yearId, key);
-        (r.ok ? toast.success : toast.error)(r.message);
-        if (r.ok) setKey(crypto.randomUUID());
-      })}>{pending ? "Closing…" : "Close the year"}</Button>
+        start(async () => {
+          const r = await closeYear(slug, yearId, key);
+          (r.ok ? toast.success : toast.error)(r.message);
+          if (r.ok) setKey(crypto.randomUUID());
+        });
+      }}>{pending ? "Closing…" : "Close the year"}</Button>
       {confirmDialog}
     </>
   );

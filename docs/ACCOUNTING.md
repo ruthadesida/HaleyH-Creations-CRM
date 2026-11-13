@@ -56,6 +56,10 @@ The draft's working notes raise matters for the owner and accountant to settle b
 
 ## Chart of accounts
 
+**Own chart (2026-11-13):** at setup an owner can import their own chart (e.g. Zoho Books → Chart of Accounts → Export). The app maps each account type to a group, suggests which accounts play the app's roles (bank, receivables, customer deposits, sales by category, materials, rent, depreciation…), leaves out Zoho's housekeeping accounts and inactive ones, gives blank codes a code in their group's range, and flags oddities (e.g. a rent account typed as income; an owner's contribution account treated as a director's current account, a liability). The owner reviews every row before saving. Roles the chart doesn't cover get the template account on a free code. Codes may have sub-codes (1001-1). The imported chart lives only in the business's data, never in this repository.
+
+The standard template:
+
 Seeded per business from a template that suits a Nigerian fashion business under IFRS for SMEs. Owners can add sub-accounts and rename non-system accounts; **system accounts** (the ones auto-posting uses) can't be deleted or retyped. Accounts are archived, never deleted, once used.
 
 | Code | Group | Examples |

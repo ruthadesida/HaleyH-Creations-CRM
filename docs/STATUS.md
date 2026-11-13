@@ -117,7 +117,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Feature | Status | Notes |
 |---|---|---|
 | Set up the books (first year, imported or live; incorporation date; VAT and owner-entered rate) | ✅ | Owners only, under More → Books |
-| Chart of accounts (seeded template; add, rename, recode, archive) | ✅ | System accounts keep their code and can't be archived |
+| Chart of accounts: standard template **or the owner's own chart imported at setup** (Zoho Books CSV or any CSV with name, code, type), reviewed account by account with suggested app roles; add, rename, recode, archive later | ✅ | System accounts keep their code and can't be archived |
 | Import a trial balance (CSV, previewed, must balance) | ✅ | Imported years only; one journal per import, so a year split at incorporation keeps both parts |
 | Opening adjustments: stock (opening and closing), fixed asset left out (with catch-up depreciation), other journal | ✅ | Listed separately; trial balance shows draft, adjustments and adjusted figures |
 | Manual journals, reversals | ✅ | Never edited or deleted |

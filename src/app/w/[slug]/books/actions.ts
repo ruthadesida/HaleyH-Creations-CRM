@@ -29,7 +29,16 @@ const setupSchema = z.object({
   incorporation_date: z.union([date, z.literal("")]).optional(),
   vat_registered: z.string().optional(),
   vat_rate: z.string().optional(),
+  chart_source: z.enum(["template", "import"]).optional(),
+  chart: z.string().max(400_000).optional(),
 });
+
+const chartSchema = z.array(z.object({
+  code: z.string().regex(/^[0-9][0-9A-Za-z-]{0,15}$/),
+  name: z.string().trim().min(1).max(120),
+  group: z.string().max(40),
+  system_key: z.string().regex(/^[a-z0-9_]{2,40}$/).nullable(),
+})).min(1).max(1000);
 
 export async function setupBooks(slug: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const { business } = await authorize(slug, can.own);
@@ -40,10 +49,19 @@ export async function setupBooks(slug: string, _prev: ActionState, formData: For
   const registered = v.vat_registered === "on";
   const rate = vatRate(v.vat_rate);
   if (registered && (rate === null || Number.isNaN(rate))) return { fieldErrors: { vat_rate: "Enter the VAT rate, e.g. 7.5." }, values };
+  let chart: z.infer<typeof chartSchema> | null = null;
+  if (v.chart_source === "import") {
+    let raw: unknown = null;
+    try { raw = JSON.parse(v.chart ?? ""); } catch { /* reported below */ }
+    const parsedChart = chartSchema.safeParse(raw);
+    if (!parsedChart.success) return { message: "Choose your chart file and fix the problems listed before setting up.", values };
+    chart = parsedChart.data;
+  }
   const supabase = await createClient();
   const { error } = await supabase.rpc("setup_books", {
     p_business_id: business.id, p_first_year_start: `${v.first_year_start}-01`, p_first_year_imported: v.imported === "on",
     p_incorporation_date: orNull(v.incorporation_date), p_vat_registered: registered, p_vat_rate: registered ? rate! : (null as unknown as number),
+    p_chart: chart ?? undefined,
   });
   if (error) return { message: friendlyDbError(error), values };
   redirect(`/w/${slug}/books?setup=1`);
