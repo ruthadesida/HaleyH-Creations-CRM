@@ -9,7 +9,7 @@ select plan(30);
 
 -- Stock documents, dispatches and returns post at commit, once all their lines are in. Tests never commit, so
 -- :flush runs whatever is waiting, as a commit would (switching to immediate runs pending checks at once).
-\set flush 'set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received immediate; set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received deferred;'
+\set flush 'set constraints books_post_stock_document, books_post_dispatch, books_post_return immediate; set constraints books_post_stock_document, books_post_dispatch, books_post_return deferred;'
 
 grant usage on schema tests to authenticated;
 create or replace function tests.loc(p_name text) returns uuid language sql stable security definer as $$

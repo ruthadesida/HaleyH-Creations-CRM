@@ -44,7 +44,9 @@ async function Overview({ params }: PageProps<"/w/[slug]/books">) {
 
   const supabase = await createClient();
   const [{ data: journals }, { data: problems }, { data: payAccounts }] = await Promise.all([
-    supabase.from("journals").select("fiscal_year_id, kind").eq("business_id", business.id),
+    // Only the imported year's checklist needs counts: ask for those, not every journal.
+    supabase.from("journals").select("fiscal_year_id, kind").eq("business_id", business.id)
+      .in("kind", ["opening_import", "opening_adjustment"]).eq("fiscal_year_id", openImportedYear?.id ?? "00000000-0000-0000-0000-000000000000").limit(1000),
     supabase.from("books_posting_problems").select("source_type, source_id, message, last_tried_at").eq("business_id", business.id)
       .order("last_tried_at", { ascending: false }).limit(50),
     supabase.from("books_payment_accounts").select("method, account_id").eq("business_id", business.id),

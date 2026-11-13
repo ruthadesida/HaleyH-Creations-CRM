@@ -20,7 +20,9 @@ async function Checks({ params, searchParams }: PageProps<"/w/[slug]/books/check
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("books_checks", { p_business_id: business.id, p_as_of: asOf });
   const rows = data ?? [];
-  const stockOff = rows.some((r) => r.check_key.startsWith("stock:") && Number(r.difference_minor) !== 0);
+  // Stock values carry fractions of a kobo; the books post whole kobo per document, so up to ₦1 is rounding.
+  const ROUNDING = 100;
+  const stockOff = rows.some((r) => r.check_key.startsWith("stock:") && Math.abs(Number(r.difference_minor)) > ROUNDING);
   const cur = business.currency;
 
   return (
@@ -40,12 +42,13 @@ async function Checks({ params, searchParams }: PageProps<"/w/[slug]/books/check
             {rows.map((r) => {
               const diff = r.difference_minor === null ? null : Number(r.difference_minor);
               const isCount = r.check_key === "problems";
-              const ok = isCount ? Number(r.books_minor) === 0 : diff === null ? Number(r.books_minor) === 0 : diff === 0;
+              const ok = isCount ? Number(r.books_minor) === 0 : diff === null ? Number(r.books_minor) === 0 : Math.abs(diff) <= ROUNDING;
+              const rounding = ok && diff !== null && diff !== 0;
               return (
                 <li key={r.check_key} className="flex flex-col gap-1 border-b border-line px-4 py-3 last:border-b-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{r.label}</span>
-                    <Chip tone={ok ? "success" : "warn"}>{ok ? "Agrees" : isCount ? `${r.books_minor} to fix` : diff === null ? "Balance left" : "Differs"}</Chip>
+                    <Chip tone={ok ? "success" : "warn"}>{ok ? (rounding ? "Agrees (rounding)" : "Agrees") : isCount ? `${r.books_minor} to fix` : diff === null ? "Balance left" : "Differs"}</Chip>
                   </div>
                   {!isCount && (
                     <dl className="grid grid-cols-1 gap-x-6 text-sm sm:grid-cols-3">

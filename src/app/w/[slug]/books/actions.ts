@@ -354,11 +354,23 @@ export async function reopenYear(slug: string, yearId: string, input: { reason: 
 export async function postExistingRecords(slug: string): Promise<Result> {
   const { business } = await authorize(slug, can.own);
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("books_post_existing", { p_business_id: business.id });
-  if (error) return { ok: false, message: friendlyDbError(error) };
+  // In batches, so a long history never hits the database's time limit; each batch says where to carry on.
+  let posted = 0;
+  let problems = 0;
+  let after: { p_after_date?: string; p_after_created?: string; p_after_id?: string } = {};
+  for (let batch = 0; batch < 100; batch++) {
+    const { data, error } = await supabase.rpc("books_post_existing", { p_business_id: business.id, p_limit: 200, ...after });
+    if (error) {
+      refresh();
+      return { ok: false, message: `${posted ? `Posted ${posted} journals, then stopped: ` : ""}${friendlyDbError(error)}` };
+    }
+    const r = data?.[0];
+    posted += r?.posted ?? 0;
+    problems = r?.problems ?? 0;
+    if (!r?.next_id) break;
+    after = { p_after_date: r.next_date ?? undefined, p_after_created: r.next_created ?? undefined, p_after_id: r.next_id };
+  }
   refresh();
-  const posted = data?.[0]?.posted ?? 0;
-  const problems = data?.[0]?.problems ?? 0;
   const first = posted === 0 ? "Nothing new to post." : `Posted ${posted} journal${posted === 1 ? "" : "s"}.`;
   const second = problems ? ` ${problems} record${problems === 1 ? "" : "s"} still can't be posted: see the list.` : "";
   return { ok: problems === 0, message: first + second };

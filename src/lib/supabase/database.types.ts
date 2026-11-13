@@ -4087,8 +4087,17 @@ export type Database = {
         Returns: string
       }
       books_post_existing: {
-        Args: { p_business_id: string }
+        Args: {
+          p_after_created?: string
+          p_after_date?: string
+          p_after_id?: string
+          p_business_id: string
+          p_limit?: number
+        }
         Returns: {
+          next_created: string
+          next_date: string
+          next_id: string
           posted: number
           problems: number
         }[]
