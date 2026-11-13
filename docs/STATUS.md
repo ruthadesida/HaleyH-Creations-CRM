@@ -126,7 +126,8 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Automatic journals from sales, payments, refunds, returns, repairs, purchases, supplier and maker money, stock and production | ✅ | Phase B: from the first live year; never blocks the record; problems listed with a retry; Post existing records is safe to repeat |
 | Checks: stock in the books vs stock records (with one-click match), WIP, goods received not invoiced, unposted records | ✅ | Books → Checks |
 | Where payments land (per payment method) and VAT start date | ✅ | Books overview |
-| Expenses, bank import and reconciliation | 🙈 | Phase C |
+| Expenses with receipt photos: front office records, owner approves; paid by bank, a director personally, or later; void | ✅ | Phase C; menu → Expenses |
+| Bank, cash and POS accounts; statement CSV import (column guess, preview, no duplicates); match, auto-match, post a line, set aside; reconcile and lock | ✅ | Phase C; Books → Bank and cash. Statements are imported files: not a bank connection |
 | VAT summary, payroll, fixed asset register, loans | 🙈 | Phase D (VAT rate is stored now) |
 | Financial statements and annual accounts | 🙈 | Phases E–F |
 | Accountant role | 🙈 | Deferred: both directors are owners; added when an outside accountant needs access |

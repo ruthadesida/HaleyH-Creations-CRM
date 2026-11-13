@@ -198,6 +198,10 @@ RPCs (all owner-checked): `setup_books`, `update_books_settings`, `create_accoun
 
 `journals` gain `kind = 'auto'`, `source_part` and a sub-ledger reference (`ref_type` order/repair/supplier/maker/job, `ref_id`). `books_settings.vat_charged_from`. New tables: `books_payment_accounts` (payment method → account) and `books_posting_problems` (records that couldn't be posted). Triggers on stock documents, dispatches and returns (deferred to commit, when their lines exist), payments, repair payments, repairs (collected), supplier bills and payments, maker payments (insert and void) and jobs (fee approval) call `app.books_safe`, which runs the matching `app.books_post_*` handler and records a problem instead of failing the operation. RPCs: `books_post_existing`, `set_books_payment_account`, `books_checks`, `books_match_stock`; `update_books_settings` takes `p_vat_charged_from`; `reverse_journal` refuses automatic journals.
 
+## Books Phase C (migrations 0030–0031)
+
+Tables: `expenses` (EX-numbers, status submitted/approved/rejected/voided, paid from a chart account or not yet, receipt path), `bank_accounts` (chart account, kind, remembered CSV layout), `bank_statement_imports`, `bank_statement_lines` (signed amount, fingerprint unique per account, status open/matched/ignored, matched journal line unique), `bank_reconciliations`. Storage bucket `receipts` (private; insert/select only for owners and the front office of the business in the first path folder). RPCs: `expense_options`, `record_expense`, `decide_expense`, `pay_expense`, `void_expense` (posting through `app.books_post_expense` like Phase B), `add_bank_account`, `import_bank_statement`, `bank_line_suggestions`, `match_bank_line`, `bank_auto_match`, `post_bank_line`, `ignore_bank_line`, `reopen_bank_line`, `bank_reconciliation_status`, `reconcile_bank`.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

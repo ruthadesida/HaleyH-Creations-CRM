@@ -120,6 +120,18 @@ The order, payment and stock records are unchanged: they keep their own commerci
 - **Batches:** Post existing records runs in batches of 200, oldest first, so a long history can't hit the database's time limit.
 - **Known limits:** an order paid before the first live year but dispatched after it shows the whole sale as a receivable (its deposit sits in the imported figures); correct with a manual journal if it happens. Input VAT and bills for services come in Phase C–D.
 
+## Expenses and the bank (Phase C, built)
+
+- **Expenses** (menu → Expenses; owners and the front office): date, who was paid, what for, kind of expense (operating costs, cost of sales, fixed assets, prepayments), amount, VAT in it, how it was paid (a bank/cash/POS account, a director personally, or not paid yet), and a photo or PDF of the receipt.
+  - The front office's expenses wait for an owner; an owner's are approved at once. Approved expenses post Dr the expense (net of VAT), Dr input VAT, Cr the bank or the director's current account, or Cr accruals until **Mark paid** posts Dr accruals, Cr the bank. **Void** reverses both. Rejected expenses never post.
+  - VAT is allowed only for a VAT-registered business and never more than the owner's rate gives on the amount.
+  - Receipts are stored privately per business (`receipts` bucket, `<business>/<expense>/file`), uploaded through the server (photos are shrunk on the phone first, up to 3.5 MB), and shown through the app's own address: photos inline, PDFs as downloads, never as a web page.
+- **Bank and cash** (Books → Bank and cash; owners): each bank account, cash box or POS is linked to its account in the chart.
+  - **Import a statement (CSV):** the app finds the header row and guesses the columns (date, description, money in/out or one amount, balance, reference, day/month order); the owner confirms with a preview. The layout is remembered for files laid out the same way. Overlapping statements are safe: a line already imported (same date, amount and description, in the same order within the day) is skipped.
+  - **Each line:** *Find a match* (entries in the books on that account with the same amount within 10 days, not reversed), *Match the obvious ones* (exactly one candidate within 3 days, used by no other line), *Post it* (against another account, with optional input VAT; accounts the app keeps itself, like receivables or payables, are refused: record those in the app and match), or *Set aside* with a reason. *Reopen* undoes a decision and reverses any journal posted from the line.
+  - **Reconcile:** books − entries not yet on the statement (up to the date) + set-aside lines = statement balance, with no open lines. A reconciled period is locked for that account.
+  - Nothing talks to the bank: lines come from the statement files the owner imports.
+
 ## New source documents
 
 | Module | What staff do | Journal |
