@@ -205,7 +205,8 @@ const stockSchema = z.object({
   closing: z.string().max(30),
   inventory_key: z.enum(INVENTORY_KEYS),
   equity_key: z.enum(EQUITY_KEYS),
-  keys: z.array(uuid).length(2),
+  // [opening journal key, closing journal key]: each journal always uses its own, so a retry can't mix them up.
+  keys: z.array(uuid).length(2).refine(([a, b]) => a !== b),
 });
 
 export async function postStockAdjustment(slug: string, input: z.input<typeof stockSchema>): Promise<Result> {
@@ -221,7 +222,9 @@ export async function postStockAdjustment(slug: string, input: z.input<typeof st
     openingMinor: opening, closingMinor: closing, yearStart: year.start_date, yearEnd: year.end_date,
     inventoryKey: parsed.data.inventory_key, openingEquityKey: parsed.data.equity_key,
   });
-  const r = await postPlanned(business.id, planned, "stock", parsed.data.keys);
+  // The opening journal is dated the first day of the year; the closing one the last.
+  const keys = planned.map((j) => (j.date === year.start_date ? parsed.data.keys[0] : parsed.data.keys[1]));
+  const r = await postPlanned(business.id, planned, "stock", keys);
   return r.ok ? { ...r, message: `Stock adjustment posted (${planned.length} journal${planned.length === 1 ? "" : "s"}).` } : r;
 }
 

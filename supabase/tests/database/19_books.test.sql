@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 \ir ../shared/fixtures.psql
 
-select plan(34);
+select plan(40);
 
 \set A '\'aaaaaaaa-0000-0000-0000-000000000000\''
 \set B '\'bbbbbbbb-0000-0000-0000-000000000000\''
@@ -131,6 +131,26 @@ select lives_ok($$ select public.reopen_fiscal_year('aaaaaaaa-0000-0000-0000-000
   'An owner reopens FY2025');
 select is((select sum(l.debit_minor - l.credit_minor)::bigint from public.journal_lines l where l.account_id = pg_temp.acct('retained_earnings')), 0::bigint,
   '... the closing journal is reversed and retained earnings go back to nil');
+select results_eq($$ select other_minor from public.trial_balance('aaaaaaaa-0000-0000-0000-000000000000', '2025-01-01', '2025-12-31')
+    where system_key in ('sales_clothing', 'retained_earnings') order by code $$,
+  $$ values (0::bigint), (0::bigint) $$, 'The close and its reversal stay out of the reopened year''s figures');
+
+-- Closing again counts the profit once, not twice.
+select throws_like($$ select public.close_fiscal_year('aaaaaaaa-0000-0000-0000-000000000000',
+    (select id from public.fiscal_years where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and start_date = '2025-01-01'),
+    (select idempotency_key from public.journals where kind = 'year_close' and business_id = 'aaaaaaaa-0000-0000-0000-000000000000')) $$,
+  '%Refresh the page%', 'A close can''t reuse the request key of an earlier close');
+select lives_ok($$ select public.close_fiscal_year('aaaaaaaa-0000-0000-0000-000000000000',
+    (select id from public.fiscal_years where business_id = 'aaaaaaaa-0000-0000-0000-000000000000' and start_date = '2025-01-01'), gen_random_uuid()) $$,
+  'An owner closes FY2025 again');
+select is((select opening_minor from public.trial_balance(:A, '2026-01-01', '2026-12-31') where system_key = 'retained_earnings'), -13000::bigint,
+  '... and the profit reaches retained earnings once');
+select is((select opening_minor from public.trial_balance(:A, '2026-01-01', '2026-12-31') where system_key = 'sales_clothing'), 0::bigint,
+  '... with income cleared to nil');
+
+-- A journal with no lines at all is refused.
+select throws_like($$ select public.post_manual_journal('aaaaaaaa-0000-0000-0000-000000000000', '2026-01-15', 'Empty', 'manual', null, null, gen_random_uuid()) $$,
+  '%at least two lines%', 'A journal with no lines is refused');
 
 select * from finish();
 rollback;

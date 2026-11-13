@@ -265,7 +265,7 @@ export function ImportForm({ slug, codes, dates }: { slug: string; codes: string
 // ---------------------------------------------------------------- guided opening adjustments
 
 export function StockAdjustmentForm({ slug, yearId }: { slug: string; yearId: string }) {
-  const [keys] = useState(() => [crypto.randomUUID(), crypto.randomUUID()]);
+  const [keys, setKeys] = useState(() => [crypto.randomUUID(), crypto.randomUUID()]);
   const [pending, start] = useTransition();
   const [ask, confirmDialog] = useConfirm();
   return (
@@ -280,6 +280,7 @@ export function StockAdjustmentForm({ slug, yearId }: { slug: string; yearId: st
           inventory_key: s("inventory_key") as "inv_finished", equity_key: s("equity_key") as "opening_equity", keys,
         });
         (r.ok ? toast.success : toast.error)(r.message);
+        if (r.ok) setKeys([crypto.randomUUID(), crypto.randomUUID()]);
       });
     }}>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -453,7 +454,7 @@ export function ReverseSheet({ slug, journalId, defaultDate }: { slug: string; j
 }
 
 export function CloseYearButton({ slug, yearId, label: text }: { slug: string; yearId: string; label: string }) {
-  const [key] = useKey();
+  const [key, setKey] = useKey();
   const [pending, start] = useTransition();
   const [ask, confirmDialog] = useConfirm();
   return (
@@ -462,6 +463,7 @@ export function CloseYearButton({ slug, yearId, label: text }: { slug: string; y
         if (!(await ask(`Close ${text}? Income and expenses move to retained earnings and the year is locked. You can reopen it later if needed.`))) return;
         const r = await closeYear(slug, yearId, key);
         (r.ok ? toast.success : toast.error)(r.message);
+        if (r.ok) setKey(crypto.randomUUID());
       })}>{pending ? "Closing…" : "Close the year"}</Button>
       {confirmDialog}
     </>
@@ -470,7 +472,7 @@ export function CloseYearButton({ slug, yearId, label: text }: { slug: string; y
 
 export function ReopenYearSheet({ slug, yearId }: { slug: string; yearId: string }) {
   const [open, setOpen] = useState(false);
-  const [key] = useKey();
+  const [key, setKey] = useKey();
   const [pending, start] = useTransition();
   return (
     <Drawer.Root open={open} onOpenChange={setOpen}>
@@ -482,7 +484,7 @@ export function ReopenYearSheet({ slug, yearId }: { slug: string; yearId: string
           start(async () => {
             const r = await reopenYear(slug, yearId, { reason: String(fd.get("reason") ?? ""), key });
             (r.ok ? toast.success : toast.error)(r.message);
-            if (r.ok) setOpen(false);
+            if (r.ok) { setOpen(false); setKey(crypto.randomUUID()); }
           });
         }}>
           <p className="text-muted">The closing journal is reversed and the year opens for changes. Close it again when you&rsquo;re done.</p>
