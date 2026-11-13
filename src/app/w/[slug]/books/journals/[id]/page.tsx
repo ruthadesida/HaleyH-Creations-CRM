@@ -20,7 +20,7 @@ async function Journal({ params }: PageProps<"/w/[slug]/books/journals/[id]">) {
   const { business, accounts, years, settings } = await loadBooks(slug);
   const supabase = await createClient();
   const { data: j } = await supabase.from("journals")
-    .select("id, number, effective_date, narration, kind, adjustment_type, fiscal_year_id, reverses_id, reversed_by_id, created_by, created_at, journal_lines(line_no, account_id, debit_minor, credit_minor, description)")
+    .select("id, number, effective_date, narration, kind, adjustment_type, fiscal_year_id, reverses_id, reversed_by_id, created_by, created_at, source_type, ref_type, ref_id, journal_lines(line_no, account_id, debit_minor, credit_minor, description)")
     .eq("id", id).eq("business_id", business.id).maybeSingle();
   if (!j) notFound();
   const linked = [j.reverses_id, j.reversed_by_id].filter(Boolean) as string[];
@@ -33,11 +33,21 @@ async function Journal({ params }: PageProps<"/w/[slug]/books/journals/[id]">) {
   const lines = [...j.journal_lines].sort((a, b) => a.line_no - b.line_no);
   const total = lines.reduce((s, l) => s + l.debit_minor, 0);
   const year = years.find((y) => y.id === j.fiscal_year_id);
-  const canReverse = !j.reversed_by_id && j.kind !== "reversal" && j.kind !== "year_close" && year?.status === "open";
+  const canReverse = !j.reversed_by_id && !["reversal", "year_close", "auto"].includes(j.kind) && year?.status === "open";
   const today = todayIn(business.timezone);
   const defaultDate = settings?.locked_through && j.effective_date <= settings.locked_through
     ? (today < (year?.end_date ?? today) ? today : year?.end_date ?? today) : j.effective_date;
   const base = `/w/${slug}/books`;
+  const w = `/w/${slug}`;
+  // Where an automatic journal came from.
+  const from: { href: string; label: string } | null =
+    j.ref_type === "order" && j.ref_id ? { href: `${w}/orders/${j.ref_id}`, label: "The order" }
+    : j.ref_type === "repair" && j.ref_id ? { href: `${w}/repairs/${j.ref_id}`, label: "The repair" }
+    : j.ref_type === "job" && j.ref_id ? { href: `${w}/production/${j.ref_id}`, label: "The production job" }
+    : j.ref_type === "supplier" ? { href: `${w}/purchasing/suppliers`, label: "Supplier balances" }
+    : j.ref_type === "maker" ? { href: `${w}/stock/makers`, label: "Makers" }
+    : j.source_type === "stock_document" ? { href: `${w}/stock/movements`, label: "Stock movements" }
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,6 +65,7 @@ async function Journal({ params }: PageProps<"/w/[slug]/books/journals/[id]">) {
         <Detail label="Date">{formatDate(j.effective_date)}</Detail>
         <Detail label="Amount"><Money minor={total} currency={business.currency} /></Detail>
         <Detail label="Recorded">{formatDateTime(j.created_at, business.timezone)}{who?.full_name ? ` by ${who.full_name}` : ""}</Detail>
+        {from && <Detail label="Posted from"><Link className="underline" href={from.href}>{from.label}</Link></Detail>}
         {j.reverses_id && <Detail label="Reverses"><Link className="underline" href={`${base}/journals/${j.reverses_id}`}>{num(j.reverses_id) ?? "journal"}</Link></Detail>}
         {j.reversed_by_id && <Detail label="Reversed by"><Link className="underline" href={`${base}/journals/${j.reversed_by_id}`}>{num(j.reversed_by_id) ?? "journal"}</Link></Detail>}
       </dl></Card>

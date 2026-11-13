@@ -65,6 +65,7 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/books/adjustments`, heading: `FY${lastYear} opening adjustments` },
     { path: `${w}/books/trial-balance`, heading: `Trial balance: FY${lastYear}` },
     { path: `${w}/books/accounts`, heading: "Chart of accounts" },
+    { path: `${w}/books/checks`, heading: "Checks" },
     { path: `${w}/books/ledger/${acct("bank_main")}`, heading: "1010 · Business bank account" },
     { path: w, heading: "" },
     { path: `${w}/stock`, heading: "Stock" },

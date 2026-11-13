@@ -7,8 +7,9 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(30);
 
--- Deferred postings run at commit; tests never commit, so run them as each statement finishes.
-set constraints all immediate;
+-- Deferred postings run at commit; tests never commit, so run the posting triggers as each statement finishes.
+-- (The journal balance check stays deferred: it runs once all of a journal's lines are in.)
+set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received immediate;
 
 grant usage on schema tests to authenticated;
 create or replace function tests.loc(p_name text) returns uuid language sql stable security definer as $$

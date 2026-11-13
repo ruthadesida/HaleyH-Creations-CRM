@@ -11,6 +11,7 @@ async function Tabs({ params }: { params: Promise<{ slug: string }> }) {
     { href: base, label: "Overview", exact: true },
     { href: `${base}/journals`, label: "Journals" },
     { href: `${base}/trial-balance`, label: "Trial balance" },
+    { href: `${base}/checks`, label: "Checks" },
     { href: `${base}/accounts`, label: "Chart of accounts" },
   ];
   if (openImportedYear) {

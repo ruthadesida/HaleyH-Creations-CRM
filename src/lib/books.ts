@@ -29,6 +29,7 @@ export const JOURNAL_KIND_LABEL: Record<string, string> = {
   opening_adjustment: "Opening adjustment",
   year_close: "Year-end close",
   reversal: "Reversal",
+  auto: "Automatic",
 };
 
 /** Balances are stored debit-positive. Shows "Dr ₦…" / "Cr ₦…" the way accountants read them. */

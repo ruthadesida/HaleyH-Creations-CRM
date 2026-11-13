@@ -70,7 +70,8 @@ export async function setupBooks(slug: string, _prev: ActionState, formData: For
 export async function updateBooksSettings(slug: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const { business } = await authorize(slug, can.own);
   const values = formValues(formData);
-  const parsed = setupSchema.pick({ incorporation_date: true, vat_registered: true, vat_rate: true }).safeParse(Object.fromEntries(formData));
+  const parsed = setupSchema.pick({ incorporation_date: true, vat_registered: true, vat_rate: true })
+    .extend({ vat_charged_from: z.union([date, z.literal("")]).optional() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
   const registered = parsed.data.vat_registered === "on";
   const rate = vatRate(parsed.data.vat_rate);
@@ -79,6 +80,7 @@ export async function updateBooksSettings(slug: string, _prev: ActionState, form
   const { error } = await supabase.rpc("update_books_settings", {
     p_business_id: business.id, p_incorporation_date: orNull(parsed.data.incorporation_date), p_vat_registered: registered,
     p_vat_rate: registered ? rate! : (null as unknown as number),
+    p_vat_charged_from: registered ? orNull(parsed.data.vat_charged_from) : undefined,
   });
   if (error) return { message: friendlyDbError(error), values };
   refresh();
@@ -345,4 +347,44 @@ export async function reopenYear(slug: string, yearId: string, input: { reason: 
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();
   return { ok: true, message: "Year reopened." };
+}
+
+// ---------------------------------------------------------------- automatic posting (Phase B)
+
+export async function postExistingRecords(slug: string): Promise<Result> {
+  const { business } = await authorize(slug, can.own);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("books_post_existing", { p_business_id: business.id });
+  if (error) return { ok: false, message: friendlyDbError(error) };
+  refresh();
+  const posted = data?.[0]?.posted ?? 0;
+  const problems = data?.[0]?.problems ?? 0;
+  const first = posted === 0 ? "Nothing new to post." : `Posted ${posted} journal${posted === 1 ? "" : "s"}.`;
+  const second = problems ? ` ${problems} record${problems === 1 ? "" : "s"} still can't be posted: see the list.` : "";
+  return { ok: problems === 0, message: first + second };
+}
+
+const METHODS = ["cash", "bank_transfer", "pos", "online", "other"] as const;
+
+export async function setPaymentAccount(slug: string, method: string, accountId: string): Promise<Result> {
+  const { business } = await authorize(slug, can.own);
+  const m = z.enum(METHODS).safeParse(method);
+  if (!m.success || (accountId !== "" && !uuid.safeParse(accountId).success)) return bad();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_books_payment_account", {
+    p_business_id: business.id, p_method: m.data, p_account_id: orNull(accountId),
+  });
+  if (error) return { ok: false, message: friendlyDbError(error) };
+  refresh();
+  return { ok: true, message: "Saved. New payments post there." };
+}
+
+export async function matchStock(slug: string, input: { date: string; key: string }): Promise<Result> {
+  const { business } = await authorize(slug, can.own);
+  if (!date.safeParse(input.date).success || !uuid.safeParse(input.key).success) return bad();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("books_match_stock", { p_business_id: business.id, p_date: input.date, p_idempotency_key: input.key });
+  if (error || !data) return { ok: false, message: friendlyDbError(error) };
+  refresh();
+  return { ok: true, message: "Stock in the books now matches the stock records.", id: data };
 }

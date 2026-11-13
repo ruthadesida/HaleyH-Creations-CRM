@@ -8,7 +8,7 @@ export const loadBooks = cache(async (slug: string) => {
   const ws = await pageWorkspace(slug, can.own);
   const supabase = await createClient();
   const [{ data: settings }, { data: years }, { data: accounts }] = await Promise.all([
-    supabase.from("books_settings").select("first_year_start, incorporation_date, vat_registered, vat_rate, locked_through")
+    supabase.from("books_settings").select("first_year_start, incorporation_date, vat_registered, vat_rate, vat_charged_from, locked_through")
       .eq("business_id", ws.business.id).maybeSingle(),
     supabase.from("fiscal_years").select("id, start_date, end_date, kind, status, closed_at")
       .eq("business_id", ws.business.id).order("start_date"),

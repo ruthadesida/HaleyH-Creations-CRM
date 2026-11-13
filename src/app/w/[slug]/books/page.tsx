@@ -7,13 +7,27 @@ import { ButtonLink } from "@/components/ui/button";
 import { formatDate, todayIn } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { loadBooks, yearLabel } from "./data";
+import { PaymentAccountPicker, PostExistingButton } from "./auto-forms";
 import { CloseYearButton, LockForm, ReopenYearSheet, SettingsForm, SetupForm } from "./forms";
+
+const SOURCE_LABEL: Record<string, string> = {
+  stock_document: "Stock movement", payment: "Customer payment", order_dispatch: "Dispatch", order_return: "Customer return",
+  repair_payment: "Repair payment", repair: "Repair collected", supplier_bill: "Supplier bill", supplier_payment: "Supplier payment",
+  maker_payment: "Maker payment", production_job: "Maker fee",
+};
+const METHODS: { method: string; label: string; standard: string }[] = [
+  { method: "cash", label: "Cash", standard: "Cash in hand" },
+  { method: "bank_transfer", label: "Bank transfer", standard: "Main business bank account" },
+  { method: "pos", label: "POS", standard: "POS and transfer clearing" },
+  { method: "online", label: "Online", standard: "POS and transfer clearing" },
+  { method: "other", label: "Other", standard: "Main business bank account" },
+];
 
 export const metadata: Metadata = { title: "Books" };
 
 async function Overview({ params }: PageProps<"/w/[slug]/books">) {
   const { slug } = await params;
-  const { business, settings, years, openImportedYear } = await loadBooks(slug);
+  const { business, settings, years, openImportedYear, activeAccounts } = await loadBooks(slug);
   const base = `/w/${slug}/books`;
   const today = todayIn(business.timezone);
 
@@ -29,7 +43,14 @@ async function Overview({ params }: PageProps<"/w/[slug]/books">) {
   }
 
   const supabase = await createClient();
-  const { data: journals } = await supabase.from("journals").select("fiscal_year_id, kind").eq("business_id", business.id);
+  const [{ data: journals }, { data: problems }, { data: payAccounts }] = await Promise.all([
+    supabase.from("journals").select("fiscal_year_id, kind").eq("business_id", business.id),
+    supabase.from("books_posting_problems").select("source_type, source_id, message, last_tried_at").eq("business_id", business.id)
+      .order("last_tried_at", { ascending: false }).limit(50),
+    supabase.from("books_payment_accounts").select("method, account_id").eq("business_id", business.id),
+  ]);
+  const autoFrom = years.find((y) => y.kind === "live")?.start_date ?? null;
+  const assetAccounts = activeAccounts.filter((a) => a.type === "asset" && !a.system_key?.startsWith("inv_") && !a.system_key?.startsWith("ppe_"));
   const count = (yearId: string, kind: string) => (journals ?? []).filter((j) => j.fiscal_year_id === yearId && j.kind === kind).length;
   const lastClosed = [...years].reverse().find((y) => y.status === "closed");
   const firstOpen = years.find((y) => y.status === "open");
@@ -96,6 +117,48 @@ async function Overview({ params }: PageProps<"/w/[slug]/books">) {
         </Card>
       </section>
 
+      <section>
+        <SectionTitle>Automatic posting</SectionTitle>
+        <Card className="flex flex-col gap-4 p-5">
+          {autoFrom ? (
+            <p className="text-muted">
+              Sales, payments, refunds, returns, repairs, purchases, supplier and maker money, stock and production post their own journals
+              from <strong className="text-ink">{formatDate(autoFrom)}</strong>. Records before that date are covered by the imported figures.
+              Opening stock counts aren&rsquo;t posted again: use <Link className="underline" href={`${base}/checks`}>Checks</Link> to bring stock in line.
+            </p>
+          ) : (
+            <p className="text-muted">Starts once the imported year is closed: from then on, the app&rsquo;s records post their own journals.</p>
+          )}
+          {(problems ?? []).length > 0 && (
+            <div role="alert" className="rounded-[var(--radius-card)] bg-warn-soft p-4">
+              <p className="font-medium text-warn">{problems!.length} record{problems!.length === 1 ? "" : "s"} couldn&rsquo;t be posted</p>
+              <p className="mt-1 text-sm">The records themselves are saved. Fix the cause, then post existing records again.</p>
+              <ul className="mt-2 flex flex-col gap-1 text-sm">
+                {problems!.map((p) => (
+                  <li key={p.source_type + p.source_id}><strong>{SOURCE_LABEL[p.source_type] ?? p.source_type}:</strong> {p.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {autoFrom && (
+            <div className="flex flex-col items-start gap-2">
+              <PostExistingButton slug={slug} />
+              <p className="text-sm text-muted">Posts anything from {formatDate(autoFrom)} that isn&rsquo;t in the books yet, oldest first. Safe to repeat: nothing posts twice.</p>
+            </div>
+          )}
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>Where payments land</SectionTitle>
+        <Card className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          {METHODS.map((m) => (
+            <PaymentAccountPicker key={m.method} slug={slug} method={m.method} label={m.label} defaultLabel={m.standard}
+              current={(payAccounts ?? []).find((p) => p.method === m.method)?.account_id ?? ""} accounts={assetAccounts} />
+          ))}
+        </Card>
+      </section>
+
       <div className="grid gap-8 lg:grid-cols-2">
         <section>
           <SectionTitle>Month close</SectionTitle>
@@ -106,7 +169,7 @@ async function Overview({ params }: PageProps<"/w/[slug]/books">) {
         <section>
           <SectionTitle>Company and VAT</SectionTitle>
           <Card className="p-5">
-            <SettingsForm slug={slug} settings={{ incorporation_date: settings.incorporation_date, vat_registered: settings.vat_registered, vat_rate: settings.vat_rate }} />
+            <SettingsForm slug={slug} settings={{ incorporation_date: settings.incorporation_date, vat_registered: settings.vat_registered, vat_rate: settings.vat_rate, vat_charged_from: settings.vat_charged_from }} />
           </Card>
         </section>
       </div>

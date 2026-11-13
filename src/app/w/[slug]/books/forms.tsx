@@ -103,7 +103,7 @@ export function SetupForm({ slug, defaultStart }: { slug: string; defaultStart: 
   );
 }
 
-export function SettingsForm({ slug, settings }: { slug: string; settings: { incorporation_date: string | null; vat_registered: boolean; vat_rate: number | null } }) {
+export function SettingsForm({ slug, settings }: { slug: string; settings: { incorporation_date: string | null; vat_registered: boolean; vat_rate: number | null; vat_charged_from: string | null } }) {
   const [state, action, pending] = useActionState(updateBooksSettings.bind(null, slug), initialState);
   const [vat, setVat] = useState(settings.vat_registered);
   return (
@@ -118,9 +118,15 @@ export function SettingsForm({ slug, settings }: { slug: string; settings: { inc
         <span className="font-medium">Registered for VAT</span>
       </label>
       {vat && (
+        <>
         <Field label="VAT rate (%)" htmlFor="s-vat" error={state.fieldErrors?.vat_rate}>
           <Input id="s-vat" name="vat_rate" inputMode="decimal" defaultValue={settings.vat_rate ?? ""} className="max-w-40" />
         </Field>
+        <Field label="Charging VAT on sales from" htmlFor="s-vat-from" optional error={state.fieldErrors?.vat_charged_from}
+          hint="From this date, VAT is taken out of sale and repair prices (prices include VAT). Leave blank until you start charging it.">
+          <Input id="s-vat-from" name="vat_charged_from" type="date" defaultValue={settings.vat_charged_from ?? ""} className="w-auto" />
+        </Field>
+        </>
       )}
       <Button type="submit" variant="secondary" disabled={pending} className="self-start">{pending ? "Saving…" : "Save"}</Button>
     </form>
