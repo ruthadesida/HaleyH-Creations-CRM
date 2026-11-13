@@ -10,6 +10,13 @@ The owner decided on 2026-11-13 that the app keeps the books itself, from source
 | Standard | IFRS for SMEs (FRC Nigeria) |
 | Tax | Owner enters VAT and other rates; the app tracks and summarises, never guesses a rate, never files |
 | Extra source documents | Expenses with receipts, bank statements, fixed assets and loans, payroll |
+| Business type | Registered company (Ltd), incorporated during 2025; before that it traded as a business name. Two shareholders, 50% each, both directors and both app owners. Equity section uses **share capital** |
+| VAT | Registered. Owner-entered rate: 7.5% (stored as a setting, not hard-coded). Still to confirm: the date VAT charging started, and whether app prices include VAT |
+| Financial year | 1 January to 31 December |
+| Who keeps the books | One owner is an accountant (also CEO, sales and branding) and reviews the books; the other owner is creative director and runs production. No separate accountant login needed yet; the accountant role stays optional for an outside firm |
+| Starting point | The owner's **draft FY2025 statements** (prepared from bank statements, without opening stock and some fixed assets). Load them first, then post opening adjustment journals. See *Starting from the FY2025 draft* |
+
+**Privacy:** this repository is public. Real figures (statements, balances, pay, personal account details) are never written into code, migrations, seed data, tests or docs. They are entered or imported inside the app, where only owners can see them.
 
 ## The flow
 
@@ -29,8 +36,23 @@ Most journals are **posted automatically** by the documents the app already crea
 - **Never edited or deleted.** A mistake gets a reversing journal (exact mirror) that points at the original. Voiding a payment, reversing an opening batch or cancelling a bill posts its reversal automatically.
 - **Linked both ways.** Each journal records `source_type` and `source_id`; every report line can open the document behind it.
 - **Dates:** each journal has an effective date (when it happened) and a created-at time (when it was recorded). Owners **close a month** (no more postings dated in it) and **close a year** (closing journal to retained earnings, then locked). This joins the existing "Stock closed up to" date: closing a period closes stock too.
-- **Bookkeeping start date.** When an owner turns the books on, they pick a start date and enter an **opening trial balance** (usually from their accountant or last year's accounts). Documents dated on or after the start date are posted automatically, including ones already in the app (a one-time backfill, idempotent). Documents before it are covered by the opening balances and are not posted.
+- **Bookkeeping start date.** The day after the last imported year (for HaleyH: 1 January 2026, after FY2025 is imported, adjusted and closed). Documents dated on or after it are posted automatically, including ones already in the app (a one-time backfill, idempotent). Documents before it are covered by the imported year and are not posted. A new business with no history can instead start on any month with an opening trial balance.
 - **Reconciliation checks** run on demand and on the dashboard: inventory accounts = `stock_valuation()`; receivables and deposits = the order balances; payables = `supplier_balances`; bank accounts = reconciled statement balance. Any difference is shown, never hidden.
+
+## Starting from the FY2025 draft
+
+The business didn't keep books in 2025. An owner drafted FY2025 statements from the bank statements: the business account, plus business items from a director's personal accounts, routed through a **director's current account**. The draft treats stock as nil at every date and leaves out some fixed assets. The app starts from that draft:
+
+1. **FY2025 is an imported year.** An owner enters (or uploads as CSV) the FY2025 **trial balance** in the app's account codes: one row per account with its debit or credit balance at 31 December 2025, including the income and expense totals for the year. The draft splits the year at the incorporation date (business-name period, then the company), so the import takes **two dated trial balances**: one for the business-name period and one for the company period. Each is posted as a single journal of source type `opening_import`, with the spreadsheet attached as its source document. It must balance or it's refused.
+2. **Opening adjustment journals.** While FY2025 is still open, owners post adjustments as journals of type `opening_adjustment`, each with a narration, a date in FY2025 and an optional attachment (stock count sheet, receipt, valuation note). The app gives guided forms for the expected ones:
+   - **Stock:** opening stock at 1 January 2025 and closing stock at 31 December 2025 (Dr Inventory · Cr Cost of sales for closing stock; opening stock against opening equity). The closing figure becomes the stock ledger's opening balances for 2026, item by item, through the existing opening-stock batch, so the general ledger and the stock ledger agree from day one.
+   - **Fixed assets left out:** each asset goes into the fixed asset register with cost, date bought, how it was paid (business bank, a director personally, contributed for shares) and useful life. The app posts Dr Asset · Cr the right account (bank, director's current account, share capital), plus catch-up depreciation to 31 December 2025.
+   - **Any other correction:** a free-form balanced journal (owner only).
+   Every adjustment shows in a list of **FY2025 adjustments**, and the statements show the draft figure, the adjustments and the adjusted figure side by side, so the accountant can see exactly what changed from the draft.
+3. **Close FY2025.** When the adjustments are agreed, an owner runs the year-end close: income and expenses go to retained earnings and FY2025 is locked. Its closing balances become the **opening balances on 1 January 2026**, and FY2025 becomes the comparative year in the 2026 accounts.
+4. **2026 onwards.** From 1 January 2026 the books are kept in the app. Documents already in the app from that date are posted automatically (backfill). Months of 2026 before the app was in use are brought in from bank statements through the statement import and matching (Phase C).
+
+The draft's working notes raise matters for the owner and accountant to settle before closing FY2025. The app records the decisions; it doesn't make them: whether the company's first accounts start at the incorporation date (and how the business-name period is presented), VAT on 2025 sales, withholding tax and PAYE estimates, and the director's current account balance (see *Open questions*).
 
 ## Chart of accounts
 
@@ -38,14 +60,14 @@ Seeded per business from a template that suits a Nigerian fashion business under
 
 | Code | Group | Examples |
 |---|---|---|
-| 1000s | Current assets | Cash in hand, each bank account, Paystack/POS clearing, Trade receivables, Inventory: raw materials, Inventory: work in progress, Inventory: finished goods, Inventory: in quarantine, VAT receivable (input), Prepayments, Staff advances |
+| 1000s | Current assets | Cash in hand, each bank account, Paystack/POS clearing, Trade receivables, Inventory: raw materials, Inventory: work in progress, Inventory: finished goods, Inventory: in quarantine, VAT receivable (input), Prepayments, Staff advances, Due from directors (when a director's current account is in debit), Share capital unpaid |
 | 1500s | Non-current assets | Plant and machinery (sewing machines), Furniture and fittings, Generators and equipment, Motor vehicles, Computers, each with accumulated depreciation |
-| 2000s | Current liabilities | Trade payables, Goods received not invoiced, Maker fees payable, Customer deposits, VAT payable (output), PAYE payable, Pension payable, Accruals, Short-term loans |
+| 2000s | Current liabilities | Trade payables, Goods received not invoiced, Maker fees payable, Customer deposits, VAT payable (output), PAYE payable, Withholding tax payable, Pension payable, Company income tax payable, Accruals, Short-term loans, **Director's current account** (one per director: money the company owes a director, or is owed, when a director pays business costs personally or receives business money) |
 | 2500s | Non-current liabilities | Long-term loans |
-| 3000s | Equity | Share capital *or* Owner's capital (depends on business type), Owner drawings, Retained earnings, Opening balance equity (cleared at go-live) |
-| 4000s | Income | Sales: clothing, shoes, bags (split by product category), Repair income, Delivery charges, Discounts given (contra), Other income |
+| 3000s | Equity | Share capital (company), Business-name capital taken over at incorporation, Retained earnings, Opening balance equity (cleared once FY2025 is closed), Dividends (when declared) |
+| 4000s | Income | Sales: clothing, shoes, bags (split by product category), Repair income, Delivery charges, Discounts given (contra), Sales returns (contra), Other income (e.g. gifts received, non-trade) |
 | 5000s | Cost of sales | Cost of goods sold, Production labour and maker fees, Production losses and rework, Stock write-offs and count differences, Inbound delivery |
-| 6000s | Operating expenses | Rent, Salaries and wages, Pension (employer), Electricity and diesel, Internet and data, Transport and logistics, Marketing and adverts, Bank charges, Repairs and maintenance, Depreciation, Professional fees, Office and sundry |
+| 6000s | Operating expenses | Rent, Salaries and wages, Contract staff pay, Staff welfare, Social media management, Cleaning, Photography and creatives, PAYE and withholding tax borne by the company, Pension (employer), Electricity and diesel, Internet and data, Transport and logistics, Marketing and adverts, Bank charges, Repairs and maintenance, Depreciation, Professional fees, Office and sundry |
 | 7000s | Finance and tax | Interest, Income tax expense |
 | 9999 | Rounding | Kobo rounding from stock values |
 
@@ -112,7 +134,7 @@ Each phase is finished and tested (pgTAP for balancing, isolation, idempotency a
 
 | Phase | Delivers |
 |---|---|
-| **A. Ledger core** | Chart of accounts (seeded template, owner edits), journals with the balancing trigger, manual journals, reversals, accounting periods and month close, bookkeeping start date, opening trial balance, general ledger and trial balance reports, accountant role |
+| **A. Ledger core and FY2025** | Chart of accounts (seeded template, owner edits), journals with the balancing trigger, manual journals, reversals, accounting periods and month close; **FY2025 trial balance import** (two dated parts, CSV or on-screen), **opening adjustment journals** with guided forms (stock, missing fixed assets, other), the draft vs adjusted view, FY2025 close into 2026 opening balances; general ledger and trial balance reports; VAT rate setting; accountant role |
 | **B. Automatic posting** | Journals for every existing document in the table above, backfill from the start date, reconciliation checks (inventory, receivables/deposits, payables) |
 | **C. Expenses and bank** | Expenses with receipt photos and approval, bank/cash/processor accounts, statement CSV import, matching and reconciliation |
 | **D. Tax, payroll, assets, loans** | VAT settings and summary, payroll with owner-entered deductions and payslips, fixed asset register and depreciation run, loans, capital and drawings |
@@ -121,9 +143,11 @@ Each phase is finished and tested (pgTAP for balancing, isolation, idempotency a
 
 ## Open questions for the owner
 
-1. **Financial year end:** 31 December, or another date?
-2. **Bookkeeping start date:** the start of the current financial year (needs last year's closing balances) or a recent month start?
-3. **Business type:** registered company (Ltd: share capital) or business name/enterprise (owner's capital)? This changes the equity section and the annual accounts format.
-4. **VAT:** registered with FIRS? If so, the rate to use and whether prices in the app include VAT.
-5. **Accountant:** do you have one who should get a login, and who reviews the annual accounts before filing?
-6. **Bank accounts:** which banks, cash boxes and payment processors (POS, Paystack, transfers) should be set up?
+Answered 2026-11-13: year end 31 December; company (Ltd) with two 50% shareholders; VAT-registered, rate 7.5%; start from the FY2025 draft with opening adjustments; an owner who is an accountant reviews the books.
+
+Still open (none of these block building Phase A; they're decisions recorded in the app):
+
+1. **VAT start date and pricing:** from what date must sales carry 7.5% VAT, and do the prices in the app include VAT? (The FY2025 draft has no VAT; turnover below the small-company threshold may explain that, so the accountant should confirm.)
+2. **First company accounts:** do the company's first statutory accounts run from the incorporation date to 31 December 2025, with the business-name period shown separately (as the draft does), or something else?
+3. **Bank, cash and payment accounts** to set up (business bank account, cash box, POS, transfer apps), and how business money paid through directors' personal accounts will be handled from 2026 (ideally: through the business account only, with the director's current account for the exceptions).
+4. **Closing stock at 31 December 2025** and the **missing fixed assets**: figures and dates, to be entered as opening adjustments.
