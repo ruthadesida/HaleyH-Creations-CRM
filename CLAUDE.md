@@ -12,6 +12,8 @@ These rules come from the owner. Follow all of them in every session. If a rule 
 
 An integrated CRM, sales, purchasing, inventory and production system: Enquiry → Sales order → Stock or production → QC → Dispatch → Delivery → After-sales, and Opening inventory/purchases → Raw materials → WIP → Finished goods → Sale/return. Build in the four phases in `docs/GAP-ANALYSIS.md`; finish and test each core workflow before advanced features.
 
+**Bookkeeping (owner decision, 2026-11-13):** the app also keeps the books, from source documents to annual accounts under **IFRS for SMEs**: Source documents → Journals → General ledger → Trial balance → Financial statements → Year-end close. Design and phases: `docs/ACCOUNTING.md`.
+
 ## Inventory, production and costing rules
 
 - The **inventory movement ledger is the source of truth**. Stock changes only through posted documents written by database functions in one transaction. Never update or delete a posted movement; reverse it with a mirror document.
@@ -21,8 +23,18 @@ An integrated CRM, sales, purchasing, inventory and production system: Enquiry �
 - Quantities are decimals with explicit units; never mix units without a defined conversion. Prices and payments are exact integer kobo; unit costs may carry fractional kobo.
 - Separate effective date from creation timestamp; refuse postings before the owner's closed-period date.
 - Only QC-passed items become saleable. Returned/rejected goods go to quarantine until inspected. A refund never restocks anything by itself.
-- Valuation: moving weighted average (document changes in `docs/COSTING.md`). Label profit "estimated" when costs are missing; never call gross profit net profit. No assumed tax rates.
+- Valuation: moving weighted average (document changes in `docs/COSTING.md`). Label profit "estimated" when costs are missing; never call gross profit net profit. No assumed tax rates: VAT, PAYE, pension and other rates come only from what an owner enters in settings.
 - Keep commercial, payment, production and fulfilment status separate; show one clear progress summary.
+## Bookkeeping rules
+
+- **Double entry, enforced in the database.** Every journal balances (total debits = total credits, in whole kobo) or it can't be posted. Journals are written only by database posting functions, in one transaction with the source document, with an idempotency key.
+- **Posted journals are never edited or deleted.** Corrections are reversing journals; both stay in the ledger. Each journal links to its source document (order, payment, receipt, expense, bank line…) and each source document to its journal.
+- **The operational records feed the books automatically.** Sales, payments, refunds, returns, repairs, purchases, supplier bills and payments, production, stock adjustments and maker payments post their own journals. Staff never re-key them. The stock ledger stays the source of truth for quantities; the general ledger's inventory accounts must always equal the stock valuation (a reconciliation check proves it).
+- **Periods:** effective date separate from creation time. Owners close months and years; postings into a closed period are refused. Year-end close moves profit to retained earnings and locks the year.
+- **Revenue at delivery, not payment.** Money received before dispatch is a customer deposit (a liability). Opening balances never create revenue, expenses or cash movements.
+- **Honesty:** financial statements say "Prepared from the records in this app. Not audited." until an accountant has reviewed them. Tax returns are prepared for filing, never filed automatically. Bank lines are "Imported from statement" or "Recorded manually", never "verified" unless a bank feed is connected and tested.
+- Only owners (and an accountant role, if added) post manual journals, close periods, or see the books. Production staff never see financial records; the front office can submit expenses for owner approval only.
+
 - Roles (Spec 2): two **owners** (Managing Director/CEO, Creative Director), **front office manager**, **production manager/QC**, and **makers** as a directory without logins (optional restricted logins later). Production staff never see payments or financial reports; costs only if an owner allows.
 - Feature switchboard: `src/lib/features.ts`. Hide every link/button/card for an area until it works end to end. Never ship screens that imply unbuilt functionality.
 
@@ -73,7 +85,7 @@ An integrated CRM, sales, purchasing, inventory and production system: Enquiry �
 - Subscription controls are labelled **"Managed manually"** until a payment provider is connected and tested. No live recurring billing yet.
 - Never display fake integration success or simulated payment verification.
 - The demo workspace is clearly marked and uses **fictional data only**, separate from live business records.
-- Don't build a replacement accounting system. Zoho/WooCommerce integrations are a later phase; CSV import/export for now.
+- The app keeps its own books (see Bookkeeping rules); it doesn't depend on Zoho. Zoho/WooCommerce integrations are a later phase; CSV import/export for now. Annual accounts are prepared for an accountant to review, not presented as audited.
 
 ## Data and security rules
 
@@ -124,6 +136,7 @@ At the end of every session, update whichever of these changed:
 | `docs/SECURITY.md` | Threat model, controls, how isolation is tested |
 | `docs/TESTING.md` | How to run each test layer, what each covers |
 | `docs/PLAN.md` | Phases, external services and costs |
+| `docs/ACCOUNTING.md` | Bookkeeping design: chart of accounts, posting rules per source document, periods, statements, phases |
 | `docs/DECISIONS.md` | Dated log of significant decisions and why |
 | `DESIGN.md` | Design system and concept |
 | `README.md` | Setup and scripts |

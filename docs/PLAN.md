@@ -20,6 +20,7 @@
 1. **Core (v1):** auth; workspace, roles, staff invites and deactivation; customers with duplicate warnings; enquiries (list view and drag-and-drop pipeline); follow-up tasks and reminders; products with variants; orders with items, fulfilment stages, cancellation and returns; manual payments and refunds; the dashboard; the audit log; the demo workspace.
 2. **Operations:** production board, quality-check checklist, dispatch and delivery, partial fulfilment, message templates and the "Open in WhatsApp" button, reports with CSV export, CSV import with preview.
 3. **Platform:** platform admin console, subscription plans and limits (managed manually), onboarding new businesses, logo upload, and later integrations (Zoho, WooCommerce, Paystack).
+4. **Bookkeeping (added 2026-11-13):** double-entry books fed by the app's own documents, expenses and receipts, bank reconciliation, VAT, payroll, fixed assets and loans, financial statements and IFRS for SMEs annual accounts. Phases A–F in `docs/ACCOUNTING.md`.
 
 ## External services and costs
 

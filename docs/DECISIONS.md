@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, and why.
 
+## 2026-11-13
+
+- **The app keeps the books.** Owner decision: full bookkeeping from source documents to annual accounts, under IFRS for SMEs, replacing "don't build a replacement accounting system". Why: the business wants one system; the app already holds every sale, payment, purchase and stock movement, so the books can be posted automatically instead of re-keyed into Zoho.
+- **Revenue at dispatch, deposits before.** Payments before dispatch are customer deposits (a liability), so revenue follows delivery (IFRS for SMEs Section 23), matching how the app already records cost of goods sold at dispatch.
+- **No built-in tax tables.** VAT, PAYE and pension amounts or rates come from the owner; the app tracks and summarises, and never files. Why: rates change and depend on the business's registration; a wrong assumed rate is worse than none.
+- **Annual accounts are labelled "Not audited"** until an accountant signs them off in the app.
+
 ## 2026-11-08
 
 - **No `window.confirm`.** Confirmations use the app's own dialog (`useConfirm`). Embedded and in-app browsers (WhatsApp, Instagram, preview panes) can block native dialogs and return "no" instantly, so destructive actions silently did nothing. Staff often open links from WhatsApp, so this matters.
