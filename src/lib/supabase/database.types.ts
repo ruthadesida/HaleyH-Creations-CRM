@@ -4393,6 +4393,7 @@ export type Database = {
           book_balance_minor: number
           difference_minor: number
           open_lines: number
+          set_aside_minor: number
           statement_balance_minor: number
           uncleared_books_minor: number
           unposted_statement_minor: number

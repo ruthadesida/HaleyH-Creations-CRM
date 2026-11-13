@@ -16,7 +16,9 @@ const bad = (message = "Refresh the page and try again."): Result => ({ ok: fals
 const RECEIPT_TYPES: Record<string, string> = {
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "application/pdf": "pdf",
 };
-const MAX_RECEIPT = 4 * 1024 * 1024;
+// Under the 4 MB server-action limit, leaving room for the form's own overhead.
+const MAX_RECEIPT = 3.5 * 1024 * 1024;
+const BY_EXTENSION: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", heif: "image/heif", pdf: "application/pdf" };
 
 /** Uploads a receipt into the business's private folder for this expense. Returns its storage path. */
 export async function uploadReceipt(slug: string, expenseId: string, formData: FormData): Promise<Result> {
@@ -24,12 +26,14 @@ export async function uploadReceipt(slug: string, expenseId: string, formData: F
   if (!uuid.safeParse(expenseId).success) return bad();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return bad("Choose a photo or PDF of the receipt.");
-  const ext = RECEIPT_TYPES[file.type];
+  // Some browsers report no type for HEIC photos: fall back to the file name.
+  const type = file.type || BY_EXTENSION[file.name.split(".").pop()?.toLowerCase() ?? ""] || "";
+  const ext = RECEIPT_TYPES[type];
   if (!ext) return bad("The receipt must be a photo (JPEG, PNG, WebP, HEIC) or a PDF.");
-  if (file.size > MAX_RECEIPT) return bad("That file is over 4 MB. Take the photo again, or save the PDF smaller.");
+  if (file.size > MAX_RECEIPT) return bad("That file is over 3.5 MB. Take the photo again, or save the PDF smaller.");
   const path = `${business.id}/${expenseId}/${crypto.randomUUID()}.${ext}`;
   const supabase = await createClient();
-  const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: file.type, upsert: false });
+  const { error } = await supabase.storage.from("receipts").upload(path, file, { contentType: type, upsert: false });
   if (error) return bad("The receipt didn't upload. Check the connection and try again.");
   return { ok: true, message: "Receipt added.", path };
 }

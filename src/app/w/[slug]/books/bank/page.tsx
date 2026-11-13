@@ -21,7 +21,8 @@ async function Bank({ params }: PageProps<"/w/[slug]/books/bank">) {
   const supabase = await createClient();
   const [{ data: banks }, { data: lines }, { data: recs }, { data: tb }] = await Promise.all([
     supabase.from("bank_accounts").select("id, account_id, name, kind").eq("business_id", business.id).is("archived_at", null).order("name"),
-    supabase.from("bank_statement_lines").select("bank_account_id, status, line_date").eq("business_id", business.id).eq("status", "open").limit(5000),
+    // Open lines per account, counted by the database (not capped by the API's row limit).
+    supabase.from("bank_accounts").select("id, bank_statement_lines(count)").eq("business_id", business.id).eq("bank_statement_lines.status", "open"),
     supabase.from("bank_reconciliations").select("bank_account_id, through_date").eq("business_id", business.id).order("through_date", { ascending: false }),
     supabase.rpc("trial_balance", { p_business_id: business.id, p_from: years[0]?.start_date ?? today, p_to: today }),
   ]);
@@ -40,7 +41,7 @@ async function Bank({ params }: PageProps<"/w/[slug]/books/bank">) {
         <Card>
           <ul>
             {banks!.map((b) => {
-              const open = (lines ?? []).filter((l) => l.bank_account_id === b.id).length;
+              const open = Number((lines ?? []).find((l) => l.id === b.id)?.bank_statement_lines?.[0]?.count ?? 0);
               const rec = (recs ?? []).find((r) => r.bank_account_id === b.id);
               return (
                 <li key={b.id} className="border-b border-line last:border-b-0">

@@ -35,10 +35,11 @@ async function BankAccount({ params, searchParams }: PageProps<"/w/[slug]/books/
     supabase.from("bank_statement_lines").select("id, line_date, description, reference, amount_minor, balance_minor, status, ignore_reason, journal_line_id, journal_lines(journal_id, journals(number))")
       .eq("bank_account_id", bank.id).eq("status", view.key).order("line_date", { ascending: view.key === "open" }).limit(300),
     supabase.rpc("bank_reconciliation_status", { p_bank_account: bank.id, p_through: today }),
-    supabase.from("bank_statement_lines").select("status").eq("bank_account_id", bank.id).limit(10000),
+    Promise.all(VIEWS.map((v) => supabase.from("bank_statement_lines").select("id", { count: "exact", head: true }).eq("bank_account_id", bank.id).eq("status", v.key)
+      .then((r) => [v.key, r.count ?? 0] as const))).then((pairs) => ({ data: Object.fromEntries(pairs) as Record<string, number> })),
   ]);
   const st = status?.[0];
-  const count = (k: string) => (counts ?? []).filter((c) => c.status === k).length;
+  const count = (k: string) => counts?.[k] ?? 0;
   const others = activeAccounts.filter((a) => a.id !== bank.account_id).map((a) => ({ id: a.id, code: a.code, name: a.name }));
   const cur = business.currency;
   const base = `/w/${slug}/books/bank/${bank.id}`;
@@ -66,6 +67,7 @@ async function BankAccount({ params, searchParams }: PageProps<"/w/[slug]/books/
               <div><dt className="text-muted">In the books today</dt><dd className="tabular"><Signed minor={Number(st.book_balance_minor)} currency={cur} /></dd></div>
               <div><dt className="text-muted">Statement balance (latest line)</dt><dd className="tabular">{st.statement_balance_minor === null ? "—" : <Signed minor={Number(st.statement_balance_minor)} currency={cur} />}</dd></div>
               <div><dt className="text-muted">In the books, not on the statement</dt><dd className="tabular"><Signed minor={Number(st.uncleared_books_minor)} currency={cur} /></dd></div>
+              {Number(st.set_aside_minor) !== 0 && <div><dt className="text-muted">Set aside (e.g. bank errors)</dt><dd className="tabular"><Signed minor={Number(st.set_aside_minor)} currency={cur} /></dd></div>}
               <div><dt className="text-muted">On the statement, not in the books</dt><dd className="tabular"><Signed minor={Number(st.unposted_statement_minor)} currency={cur} /> ({st.open_lines} line{st.open_lines === 1 ? "" : "s"})</dd></div>
             </dl>
             {st.difference_minor !== null && (

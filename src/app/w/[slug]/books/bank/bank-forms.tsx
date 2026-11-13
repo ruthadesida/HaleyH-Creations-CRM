@@ -8,7 +8,7 @@ import { Sheet } from "@/app/w/[slug]/nav";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, Select } from "@/components/ui/field";
 import { initialState } from "@/lib/action-state";
-import { type ColumnMap, readStatement, statementLines } from "@/lib/bank-csv";
+import { type ColumnMap, headerSignature, readStatement, statementLines } from "@/lib/bank-csv";
 import { formatDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { addBankAccount, autoMatch, ignoreLine, importStatement, lineSuggestions, matchLine, postLine, reconcile, reopenLine } from "./actions";
@@ -66,7 +66,8 @@ export function StatementImport({ slug, bankId, savedMap }: { slug: string; bank
           if (!f) return;
           if (f.size > 3_000_000) { toast.error("That file is too big. Export a shorter period."); return; }
           const { rows: r, guess } = readStatement(await f.text());
-          const saved = savedMap && r[savedMap.header] ? savedMap : null;
+          // Reuse the remembered columns only for a file laid out exactly the same way.
+          const saved = savedMap?.signature && headerSignature(r[savedMap.header]) === savedMap.signature ? savedMap : null;
           if (!guess && !saved) { toast.error("Couldn't find the header row with a date and an amount. Check it's the CSV export."); return; }
           setFileName(f.name);
           setRows(r);
@@ -105,7 +106,7 @@ export function StatementImport({ slug, bankId, savedMap }: { slug: string; bank
             ))}
           </ul>
           <Button disabled={pending || preview.errors.length > 0 || preview.lines.length === 0} className="self-start" onClick={() => start(async () => {
-            const columnMap = Object.fromEntries(Object.entries(map).filter(([, v]) => v !== undefined)) as Record<string, number | boolean>;
+            const columnMap = Object.fromEntries(Object.entries({ ...map, signature: headerSignature(rows[map.header]) }).filter(([, v]) => v !== undefined)) as Record<string, number | boolean | string>;
             const r = await importStatement(slug, bankId, {
               fileName, key, columnMap,
               lines: preview.lines.map((l) => ({ date: l.date, description: l.description, reference: l.reference, amount: l.amount, balance: l.balance ?? null })),

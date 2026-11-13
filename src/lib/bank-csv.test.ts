@@ -67,4 +67,35 @@ describe("reading a statement", () => {
   it("returns no guess when there's no date and amount header", () => {
     expect(guessColumns([["a", "b"], ["1", "2"]])).toBeNull();
   });
+
+  it("takes the narration, not the 'Transaction Date' column, as the description", () => {
+    const g = guessColumns([["Transaction Date", "Transaction Ref", "Narration", "Debit", "Credit", "Balance"]])!;
+    expect(g).toMatchObject({ date: 0, description: 2, reference: 1, moneyOut: 3, moneyIn: 4, balance: 5 });
+  });
+
+  it("reads 'Transaction Amount' and ignores a single Debit/Credit indicator column", () => {
+    const g = guessColumns([["Date", "Details", "Transaction Amount", "Debit/Credit"]])!;
+    expect(g.amount).toBe(2);
+    expect(g.moneyIn).toBeUndefined();
+  });
+
+  it("reports a money column with something that isn't a number instead of treating it as nil", () => {
+    const rows = readStatement("Date,Narration,Debit,Credit\n02/03/2026,Fee,abc,\n").rows;
+    expect(statementLines(rows, guessColumns(rows)!).errors).toEqual([expect.stringMatching(/Row 2: the amount isn't a number/)]);
+  });
+});
+
+describe("more dates and amounts", () => {
+  it("reads month names in capitals or in full", () => {
+    expect(parseStatementDate("15-OCT-2026")).toBe("2026-10-15");
+    expect(parseStatementDate("15-SEPT-2026")).toBe("2026-09-15");
+    expect(parseStatementDate("15 March 2026")).toBe("2026-03-15");
+  });
+  it("treats DR with a minus sign as money out, and reads short decimals and the Unicode minus", () => {
+    expect(parseStatementAmount("-1,000.00 DR")).toBe(-100000);
+    expect(parseStatementAmount("(1,200) DR")).toBe(-120000);
+    expect(parseStatementAmount(".50")).toBe(50);
+    expect(parseStatementAmount("1000.")).toBe(100000);
+    expect(parseStatementAmount("−250")).toBe(-25000);
+  });
 });

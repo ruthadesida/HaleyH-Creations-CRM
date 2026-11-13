@@ -27,7 +27,8 @@ async function Expense({ params }: PageProps<"/w/[slug]/expenses/[id]">) {
   const { data: people } = await supabase.from("profiles").select("id, full_name").in("id", ids);
   const who = (uid: string | null) => people?.find((p) => p.id === uid)?.full_name ?? "staff";
   const owner = can.own(role);
-  const isPdf = e.receipt_path?.endsWith(".pdf");
+  // PDFs and HEIC photos (which most browsers other than Safari can't show) open as files instead of an image.
+  const isPdf = /.(pdf|heic|heif)$/.test(e.receipt_path ?? "");
   const receiptUrl = `/w/${slug}/expenses/${e.id}/receipt`;
   const status = EXPENSE_STATUS[e.status];
 
@@ -62,7 +63,7 @@ async function Expense({ params }: PageProps<"/w/[slug]/expenses/[id]">) {
         <h2 className="font-medium">Receipt</h2>
         {e.receipt_path ? (
           isPdf ? (
-            <Link href={receiptUrl} className="self-start underline underline-offset-4" target="_blank" rel="noopener">Open the receipt (PDF)</Link>
+            <Link href={receiptUrl} className="self-start underline underline-offset-4" target="_blank" rel="noopener">Open the receipt ({e.receipt_path?.endsWith(".pdf") ? "PDF" : "photo"})</Link>
           ) : (
             <a href={receiptUrl} target="_blank" rel="noopener" className="self-start">
               {/* eslint-disable-next-line @next/next/no-img-element -- private file served by our own route */}

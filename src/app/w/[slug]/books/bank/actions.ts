@@ -41,7 +41,7 @@ const lineSchema = z.object({
 const importSchema = z.object({
   fileName: z.string().max(200),
   lines: z.array(lineSchema).min(1, "No lines to import.").max(5000, "Import at most 5,000 lines at a time."),
-  columnMap: z.record(z.string(), z.union([z.number(), z.boolean()])).nullable(),
+  columnMap: z.record(z.string(), z.union([z.number(), z.boolean(), z.string().max(1500)])).nullable(),
   key: uuid,
 });
 
@@ -123,16 +123,17 @@ export async function reopenLine(slug: string, lineId: string): Promise<Result> 
   const { error } = await supabase.rpc("reopen_bank_line", { p_line: lineId });
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();
-  return { ok: true, message: "Back to open. If it was posted from here, reverse that journal too." };
+  return { ok: true, message: "Back to open. Anything posted from this line has been reversed." };
 }
 
 export async function reconcile(slug: string, bankId: string, through: string, balance: string): Promise<Result> {
   await authorize(slug, can.own);
-  const amount = parseMoneyInput(balance.replace(/^-/, ""));
+  const trimmed = balance.trim();
+  const amount = parseMoneyInput(trimmed.replace(/^-/, ""));
   if (!uuid.safeParse(bankId).success || !date.safeParse(through).success || amount === null) return bad("Enter the date and the statement balance.");
   const supabase = await createClient();
   const { error } = await supabase.rpc("reconcile_bank", {
-    p_bank_account: bankId, p_through: through, p_statement_balance_minor: balance.trim().startsWith("-") ? -amount : amount,
+    p_bank_account: bankId, p_through: through, p_statement_balance_minor: trimmed.startsWith("-") ? -amount : amount,
   });
   if (error) return { ok: false, message: friendlyDbError(error) };
   refresh();

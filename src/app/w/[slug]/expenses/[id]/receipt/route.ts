@@ -12,10 +12,14 @@ export async function GET(_request: Request, { params }: RouteContext<"/w/[slug]
   if (!expense?.receipt_path) return new Response("Not found", { status: 404 });
   const { data: file, error } = await supabase.storage.from("receipts").download(expense.receipt_path);
   if (error || !file) return new Response("Not found", { status: 404 });
+  const type = file.type || "application/octet-stream";
+  const image = type.startsWith("image/");
   return new Response(file, {
     headers: {
-      "Content-Type": file.type || "application/octet-stream",
-      "Content-Disposition": "inline",
+      "Content-Type": type,
+      // Photos show in the page; PDFs download, so nothing uploaded ever runs as a page on this site.
+      "Content-Disposition": image ? "inline" : "attachment; filename=\"receipt.pdf\"",
+      "Content-Security-Policy": "default-src 'none'; img-src 'self'; sandbox",
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },
