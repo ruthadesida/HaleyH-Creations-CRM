@@ -62,7 +62,7 @@ select is(tests.gl('pension'), -18000::bigint, 'Employee and employer pension is
 select is(tests.gl('wht'), -1000::bigint, 'Withholding tax on the contractor is owed (less what was paid)');
 select is((select sum(net_minor)::bigint from public.payroll_lines where run_id = (select id from t where k = 'run')), 135000::bigint,
   'Net pay is gross less the deductions');
-select throws_like($$ select public.post_payroll_run('aaaaaaaa-0000-0000-0000-000000000000', date_trunc('month', current_date)::date - interval '1 month', current_date,
+select throws_like($$ select public.post_payroll_run('aaaaaaaa-0000-0000-0000-000000000000', (date_trunc('month', current_date) - interval '1 month')::date, current_date,
     tests.acct('bank_main'), jsonb_build_array(jsonb_build_object('person_id', (select id from t where k = 'ada'), 'gross', 1000, 'paye', 2000)),
     gen_random_uuid()) $$, '%deductions less than gross%', 'Deductions can''t exceed gross pay');
 select public.void_books_record('payroll_run', (select id from t where k = 'run'), 'Wrong month');

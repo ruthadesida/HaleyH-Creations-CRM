@@ -5,6 +5,10 @@
 -- Business B (prefix HB): owner B.
 -- A platform admin who is not a member of either.
 
+-- The test businesses are in Lagos. Work in Lagos time so "today" (current_date) is the business's own day,
+-- even in the hour before midnight UTC when Lagos is already on the next day.
+set local timezone = 'Africa/Lagos';
+
 create schema if not exists tests;
 
 create or replace function tests.login(p_uid uuid)

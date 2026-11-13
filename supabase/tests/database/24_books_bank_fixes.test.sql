@@ -51,7 +51,7 @@ select public.post_bank_line(tests.line('Account fee'), tests.acct('bank_charges
 select lives_ok($$ select public.reconcile_bank((select id from t where k = 'bank'), current_date, -1200) $$, 'Then it reconciles');
 select throws_like($$ select public.reopen_bank_line(tests.line('Account fee')) $$, '%reconciled period%',
   'A line in a reconciled period can''t be reopened');
-select throws_like($$ select public.reconcile_bank((select id from t where k = 'bank'), current_date + 1, -1200) $$, '%up to today%',
+select throws_like($$ select public.reconcile_bank((select id from t where k = 'bank'), (now() at time zone 'Africa/Lagos')::date + 1, -1200) $$, '%up to today%',
   'You can''t reconcile a date that hasn''t come yet');
 
 -- Expense VAT can't be more than the owner's rate allows.
