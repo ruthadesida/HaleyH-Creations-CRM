@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { type Cookie, expect, test } from "@playwright/test";
 import {
@@ -38,8 +39,33 @@ test.beforeAll(async ({ browser }) => {
     p_charge_minor: 800000, p_maker_id: null as unknown as string, p_notes: null as unknown as string,
   });
   if (repairError || !repair) throw new Error(`create_repair failed: ${repairError?.message}`);
+  // Books: an imported year with one imported trial balance.
+  const lastYear = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric" }).format(new Date())) - 1;
+  const { error: booksError } = await owner.client.rpc("setup_books", {
+    p_business_id: business.id, p_first_year_start: `${lastYear}-01-01`, p_first_year_imported: true,
+    p_incorporation_date: `${lastYear}-05-21`, p_vat_registered: true, p_vat_rate: 7.5,
+  });
+  if (booksError) throw new Error(`setup_books failed: ${booksError.message}`);
+  const { data: accts } = await owner.client.from("accounts").select("id, system_key").eq("business_id", business.id);
+  const acct = (k: string) => accts!.find((a) => a.system_key === k)!.id;
+  const { data: journal, error: journalError } = await owner.client.rpc("post_manual_journal", {
+    p_business_id: business.id, p_date: `${lastYear}-12-31`, p_narration: "Draft trial balance", p_kind: "opening_import",
+    p_adjustment_type: null as unknown as string, p_idempotency_key: randomUUID(),
+    p_lines: [{ account_id: acct("bank_main"), debit: 1000000, credit: 0 }, { account_id: acct("materials"), debit: 4000000, credit: 0 },
+      { account_id: acct("sales_clothing"), debit: 0, credit: 5000000 }],
+  });
+  if (journalError || !journal) throw new Error(`post_manual_journal failed: ${journalError?.message}`);
   const w = `/w/${slug}`;
   paths = [
+    { path: `${w}/books`, heading: "Books" },
+    { path: `${w}/books/journals`, heading: "Journals" },
+    { path: `${w}/books/journals/${journal}`, heading: "Draft trial balance" },
+    { path: `${w}/books/journals/new`, heading: "New journal" },
+    { path: `${w}/books/import`, heading: `Import FY${lastYear} figures` },
+    { path: `${w}/books/adjustments`, heading: `FY${lastYear} opening adjustments` },
+    { path: `${w}/books/trial-balance`, heading: `Trial balance: FY${lastYear}` },
+    { path: `${w}/books/accounts`, heading: "Chart of accounts" },
+    { path: `${w}/books/ledger/${acct("bank_main")}`, heading: "1010 · Business bank account" },
     { path: w, heading: "" },
     { path: `${w}/stock`, heading: "Stock" },
     { path: `${w}/stock?kind=raw_material`, heading: "Stock" },

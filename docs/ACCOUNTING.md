@@ -1,6 +1,6 @@
 # Bookkeeping and annual accounts
 
-_Last updated: 2026-11-13 (design agreed with the owner; nothing built yet)_
+_Last updated: 2026-11-13 (Phase A built: ledger core, FY2025 import, opening adjustments, year close. The accountant role is deferred, since both directors are owners)_
 
 The owner decided on 2026-11-13 that the app keeps the books itself, from source documents all the way to annual accounts, under **IFRS for SMEs**. This replaces the earlier rule "don't build a replacement accounting system". Owner choices:
 

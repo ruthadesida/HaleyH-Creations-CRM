@@ -19,6 +19,8 @@ export const FEATURES = {
   payments: true,
   /** Phase 4: reports with CSV exports, owner overview, notifications, search, job sheets, templates, imports. */
   reports: true,
+  /** Bookkeeping Phase A: chart of accounts, journals, imported year with opening adjustments, trial balance, year close. Owners only. */
+  books: true,
   // Later phases:
   tasks: false,
 } as const;

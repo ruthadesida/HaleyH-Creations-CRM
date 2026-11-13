@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_group: string
+          archived_at: string | null
+          business_id: string
+          code: string
+          contra_of: string | null
+          created_at: string
+          id: string
+          name: string
+          system_key: string | null
+          type: string | null
+        }
+        Insert: {
+          account_group: string
+          archived_at?: string | null
+          business_id: string
+          code: string
+          contra_of?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          system_key?: string | null
+          type?: string | null
+        }
+        Update: {
+          account_group?: string
+          archived_at?: string | null
+          business_id?: string
+          code?: string
+          contra_of?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          system_key?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_business_id_contra_of_fkey"
+            columns: ["business_id", "contra_of"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       adjustment_lines: {
         Row: {
           business_id: string
@@ -306,6 +360,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      books_settings: {
+        Row: {
+          business_id: string
+          first_year_start: string
+          incorporation_date: string | null
+          locked_through: string | null
+          next_journal_number: number
+          set_up_at: string
+          set_up_by: string
+          vat_rate: number | null
+          vat_registered: boolean
+        }
+        Insert: {
+          business_id: string
+          first_year_start: string
+          incorporation_date?: string | null
+          locked_through?: string | null
+          next_journal_number?: number
+          set_up_at?: string
+          set_up_by?: string
+          vat_rate?: number | null
+          vat_registered?: boolean
+        }
+        Update: {
+          business_id?: string
+          first_year_start?: string
+          incorporation_date?: string | null
+          locked_through?: string | null
+          next_journal_number?: number
+          set_up_at?: string
+          set_up_by?: string
+          vat_rate?: number | null
+          vat_registered?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -674,6 +772,60 @@ export type Database = {
           },
         ]
       }
+      fiscal_years: {
+        Row: {
+          business_id: string
+          closed_at: string | null
+          closed_by: string | null
+          closing_journal_id: string | null
+          created_at: string
+          end_date: string
+          id: string
+          kind: string
+          start_date: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_journal_id?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          kind: string
+          start_date: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_journal_id?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          kind?: string
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_years_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_years_closing_journal_fk"
+            columns: ["business_id", "closing_journal_id"]
+            isOneToOne: false
+            referencedRelation: "journals"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       goods_receipt_lines: {
         Row: {
           business_id: string
@@ -946,6 +1098,137 @@ export type Database = {
             columns: ["business_id", "stock_item_id"]
             isOneToOne: false
             referencedRelation: "stock_items"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account_id: string
+          business_id: string
+          credit_minor: number
+          debit_minor: number
+          description: string | null
+          id: string
+          journal_id: string
+          line_no: number
+        }
+        Insert: {
+          account_id: string
+          business_id: string
+          credit_minor?: number
+          debit_minor?: number
+          description?: string | null
+          id?: string
+          journal_id: string
+          line_no: number
+        }
+        Update: {
+          account_id?: string
+          business_id?: string
+          credit_minor?: number
+          debit_minor?: number
+          description?: string | null
+          id?: string
+          journal_id?: string
+          line_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_business_id_account_id_fkey"
+            columns: ["business_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_lines_business_id_journal_id_fkey"
+            columns: ["business_id", "journal_id"]
+            isOneToOne: false
+            referencedRelation: "journals"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      journals: {
+        Row: {
+          adjustment_type: string | null
+          business_id: string
+          created_at: string
+          created_by: string
+          effective_date: string
+          fiscal_year_id: string
+          id: string
+          idempotency_key: string
+          kind: string
+          narration: string
+          number: string
+          reversed_by_id: string | null
+          reverses_id: string | null
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          adjustment_type?: string | null
+          business_id: string
+          created_at?: string
+          created_by?: string
+          effective_date: string
+          fiscal_year_id: string
+          id?: string
+          idempotency_key: string
+          kind: string
+          narration: string
+          number: string
+          reversed_by_id?: string | null
+          reverses_id?: string | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          adjustment_type?: string | null
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          effective_date?: string
+          fiscal_year_id?: string
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          narration?: string
+          number?: string
+          reversed_by_id?: string | null
+          reverses_id?: string | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journals_business_id_fiscal_year_id_fkey"
+            columns: ["business_id", "fiscal_year_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_years"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "journals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journals_business_id_reversed_by_id_fkey"
+            columns: ["business_id", "reversed_by_id"]
+            isOneToOne: false
+            referencedRelation: "journals"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "journals_business_id_reverses_id_fkey"
+            columns: ["business_id", "reverses_id"]
+            isOneToOne: false
+            referencedRelation: "journals"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -3664,6 +3947,20 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      account_ledger: {
+        Args: { p_account_id: string; p_from: string; p_to: string }
+        Returns: {
+          balance_minor: number
+          credit_minor: number
+          debit_minor: number
+          description: string
+          effective_date: string
+          journal_id: string
+          kind: string
+          narration: string
+          number: string
+        }[]
+      }
       activate_bom: { Args: { p_bom_id: string }; Returns: undefined }
       allocate_job_materials: { Args: { p_job: string }; Returns: undefined }
       approve_maker_fee: {
@@ -3698,12 +3995,30 @@ export type Database = {
         Args: { p_job: string; p_reason: string }
         Returns: undefined
       }
+      close_fiscal_year: {
+        Args: {
+          p_business_id: string
+          p_idempotency_key: string
+          p_year_id: string
+        }
+        Returns: string
+      }
       close_purchase_order: {
         Args: { p_po_id: string; p_reason: string }
         Returns: string
       }
       confirm_order: { Args: { p_order: string }; Returns: number }
       copy_bom: { Args: { p_bom_id: string }; Returns: string }
+      create_account: {
+        Args: {
+          p_business_id: string
+          p_code: string
+          p_contra_of: string
+          p_group: string
+          p_name: string
+        }
+        Returns: string
+      }
       create_business: {
         Args: {
           p_currency?: string
@@ -3956,6 +4271,18 @@ export type Database = {
           wip_value: number
         }[]
       }
+      post_manual_journal: {
+        Args: {
+          p_adjustment_type: string
+          p_business_id: string
+          p_date: string
+          p_idempotency_key: string
+          p_kind: string
+          p_lines: Json
+          p_narration: string
+        }
+        Returns: string
+      }
       post_opening_batch: {
         Args: { p_batch_id: string; p_idempotency_key: string }
         Returns: string
@@ -4084,6 +4411,15 @@ export type Database = {
         Returns: string
       }
       release_job_materials: { Args: { p_job: string }; Returns: undefined }
+      reopen_fiscal_year: {
+        Args: {
+          p_business_id: string
+          p_idempotency_key: string
+          p_reason: string
+          p_year_id: string
+        }
+        Returns: undefined
+      }
       report_availability: {
         Args: { p_business_id: string }
         Returns: {
@@ -4336,6 +4672,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      reverse_journal: {
+        Args: {
+          p_date: string
+          p_idempotency_key: string
+          p_journal_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
       reverse_opening_batch: {
         Args: {
           p_batch_id: string
@@ -4391,6 +4736,14 @@ export type Database = {
           title: string
         }[]
       }
+      set_account_archived: {
+        Args: { p_account_id: string; p_archived: boolean }
+        Returns: undefined
+      }
+      set_books_lock: {
+        Args: { p_business_id: string; p_locked_through: string }
+        Returns: undefined
+      }
       set_job_costs: {
         Args: { p_job: string; p_labour_cost: number; p_other_cost: number }
         Returns: undefined
@@ -4407,6 +4760,17 @@ export type Database = {
         Args: { p_reason: string; p_repair: string; p_status: string }
         Returns: undefined
       }
+      setup_books: {
+        Args: {
+          p_business_id: string
+          p_first_year_imported: boolean
+          p_first_year_start: string
+          p_incorporation_date: string
+          p_vat_rate: number
+          p_vat_registered: boolean
+        }
+        Returns: undefined
+      }
       stock_valuation: {
         Args: { p_business_id: string }
         Returns: {
@@ -4418,6 +4782,36 @@ export type Database = {
         }[]
       }
       submit_job_for_qc: { Args: { p_job: string }; Returns: undefined }
+      trial_balance: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          account_group: string
+          account_id: string
+          account_type: string
+          adjustments_minor: number
+          archived: boolean
+          closing_minor: number
+          code: string
+          imported_minor: number
+          name: string
+          opening_minor: number
+          other_minor: number
+          system_key: string
+        }[]
+      }
+      update_account: {
+        Args: { p_account_id: string; p_code: string; p_name: string }
+        Returns: undefined
+      }
+      update_books_settings: {
+        Args: {
+          p_business_id: string
+          p_incorporation_date: string
+          p_vat_rate: number
+          p_vat_registered: boolean
+        }
+        Returns: undefined
+      }
       update_member: {
         Args: {
           p_active?: boolean

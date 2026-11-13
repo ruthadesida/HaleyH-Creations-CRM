@@ -112,6 +112,23 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Follow-up tasks | 🙈 | Later (enquiry follow-ups and notifications cover the daily need) |
 | "Open in WhatsApp" | ✅ | Opens WhatsApp only |
 
+## Books (Phase A of `docs/ACCOUNTING.md`)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Set up the books (first year, imported or live; incorporation date; VAT and owner-entered rate) | ✅ | Owners only, under More → Books |
+| Chart of accounts (seeded template; add, rename, recode, archive) | ✅ | System accounts keep their code and can't be archived |
+| Import a trial balance (CSV, previewed, must balance) | ✅ | Imported years only; one journal per import, so a year split at incorporation keeps both parts |
+| Opening adjustments: stock (opening and closing), fixed asset left out (with catch-up depreciation), other journal | ✅ | Listed separately; trial balance shows draft, adjustments and adjusted figures |
+| Manual journals, reversals | ✅ | Never edited or deleted |
+| Month close (lock date), year-end close and reopen | ✅ | Closing moves profit to retained earnings and opens the next year |
+| Trial balance, account ledger | ✅ | Marked "Not audited" |
+| Automatic journals from sales, purchases, stock and production | 🙈 | Phase B |
+| Expenses, bank import and reconciliation | 🙈 | Phase C |
+| VAT summary, payroll, fixed asset register, loans | 🙈 | Phase D (VAT rate is stored now) |
+| Financial statements and annual accounts | 🙈 | Phases E–F |
+| Accountant role | 🙈 | Deferred: both directors are owners; added when an outside accountant needs access |
+
 ## Later phases
 
 | Feature | Phase |

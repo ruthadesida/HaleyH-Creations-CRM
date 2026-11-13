@@ -83,6 +83,19 @@ Phase 2 RPCs: `save_purchase_order`, `approve_purchase_order`, `close_purchase_o
 
 RPCs: `confirm_order`, `reserve_order_stock`, `approve_unpaid_dispatch` (owner), `dispatch_order`, `mark_order_delivered`, `cancel_order`, `receive_customer_return`, `decide_return_line`, `order_profit` (owners). Orders' stage and status columns are no longer directly updatable: they change only through these functions (`app.refresh_order_stage` derives the stage). Confirmed orders' items, discount and delivery fee are fixed. `order_summaries` was recreated to carry the new columns (same figures).
 
+## Books Phase A (migration 0025)
+
+Design: `docs/ACCOUNTING.md`. Owners only (RLS select for owners; no direct writes for anyone).
+
+| Table | Purpose |
+|---|---|
+| `books_settings` | One row per business once the books are set up: first year start, incorporation date, VAT registered and the owner-entered rate, `locked_through` (month close), journal numbering |
+| `accounts` | Chart of accounts: code, name, `account_group` (type derived), `system_key` for accounts the app posts to (renamable, not recodable or archivable), `contra_of` pairs accumulated depreciation with its asset. Seeded by `app.seed_chart` |
+| `fiscal_years` | 12-month years, `kind` imported (figures loaded, then opening adjustments) or live, `status` open/closed, closing journal |
+| `journals`, `journal_lines` | Double entry. Lines have exactly one side, whole kobo. A deferred constraint trigger refuses any journal that doesn't balance or has fewer than two lines. Triggers refuse every update and delete, except recording `reversed_by_id` once. `kind`: manual, opening_import, opening_adjustment (with `adjustment_type` stock/fixed_asset/other), year_close, reversal. Idempotency key per business |
+
+RPCs (all owner-checked): `setup_books`, `update_books_settings`, `create_account`, `update_account`, `set_account_archived`, `post_manual_journal` (manual, opening_import, opening_adjustment; the last two only in an open imported year), `reverse_journal`, `set_books_lock`, `close_fiscal_year` (income and expenses to retained earnings, locks the year, creates the next), `reopen_fiscal_year` (latest closed year; reverses the closing journal), `trial_balance(from, to)` (opening, imported, adjustments, other, closing per account; year-end closing journals inside the range left out), `account_ledger(account, from, to)` (running balance). All journals go through `app.post_journal`, which checks the date (inside a year, not in a closed year, after `locked_through`), the accounts, the sides and the balance, and numbers them JN-00001….
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).
