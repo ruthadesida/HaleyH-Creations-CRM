@@ -363,6 +363,74 @@ export type Database = {
           },
         ]
       }
+      books_payment_accounts: {
+        Row: {
+          account_id: string
+          business_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+        }
+        Insert: {
+          account_id: string
+          business_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+        }
+        Update: {
+          account_id?: string
+          business_id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_payment_accounts_business_id_account_id_fkey"
+            columns: ["business_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "books_payment_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books_posting_problems: {
+        Row: {
+          business_id: string
+          first_seen_at: string
+          last_tried_at: string
+          message: string
+          source_id: string
+          source_type: string
+        }
+        Insert: {
+          business_id: string
+          first_seen_at?: string
+          last_tried_at?: string
+          message: string
+          source_id: string
+          source_type: string
+        }
+        Update: {
+          business_id?: string
+          first_seen_at?: string
+          last_tried_at?: string
+          message?: string
+          source_id?: string
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_posting_problems_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       books_settings: {
         Row: {
           business_id: string
@@ -372,6 +440,7 @@ export type Database = {
           next_journal_number: number
           set_up_at: string
           set_up_by: string
+          vat_charged_from: string | null
           vat_rate: number | null
           vat_registered: boolean
         }
@@ -383,6 +452,7 @@ export type Database = {
           next_journal_number?: number
           set_up_at?: string
           set_up_by?: string
+          vat_charged_from?: string | null
           vat_rate?: number | null
           vat_registered?: boolean
         }
@@ -394,6 +464,7 @@ export type Database = {
           next_journal_number?: number
           set_up_at?: string
           set_up_by?: string
+          vat_charged_from?: string | null
           vat_rate?: number | null
           vat_registered?: boolean
         }
@@ -1163,9 +1234,12 @@ export type Database = {
           kind: string
           narration: string
           number: string
+          ref_id: string | null
+          ref_type: string | null
           reversed_by_id: string | null
           reverses_id: string | null
           source_id: string | null
+          source_part: string | null
           source_type: string | null
         }
         Insert: {
@@ -1180,9 +1254,12 @@ export type Database = {
           kind: string
           narration: string
           number: string
+          ref_id?: string | null
+          ref_type?: string | null
           reversed_by_id?: string | null
           reverses_id?: string | null
           source_id?: string | null
+          source_part?: string | null
           source_type?: string | null
         }
         Update: {
@@ -1197,9 +1274,12 @@ export type Database = {
           kind?: string
           narration?: string
           number?: string
+          ref_id?: string | null
+          ref_type?: string | null
           reversed_by_id?: string | null
           reverses_id?: string | null
           source_id?: string | null
+          source_part?: string | null
           source_type?: string | null
         }
         Relationships: [
@@ -3987,6 +4067,32 @@ export type Database = {
           other_cost: number
         }[]
       }
+      books_checks: {
+        Args: { p_as_of: string; p_business_id: string }
+        Returns: {
+          books_minor: number
+          check_key: string
+          difference_minor: number
+          label: string
+          note: string
+          records_minor: number
+        }[]
+      }
+      books_match_stock: {
+        Args: {
+          p_business_id: string
+          p_date: string
+          p_idempotency_key: string
+        }
+        Returns: string
+      }
+      books_post_existing: {
+        Args: { p_business_id: string }
+        Returns: {
+          posted: number
+          problems: number
+        }[]
+      }
       cancel_order: {
         Args: { p_order: string; p_reason: string }
         Returns: string
@@ -4744,6 +4850,14 @@ export type Database = {
         Args: { p_business_id: string; p_locked_through: string }
         Returns: undefined
       }
+      set_books_payment_account: {
+        Args: {
+          p_account_id: string
+          p_business_id: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+        }
+        Returns: undefined
+      }
       set_job_costs: {
         Args: { p_job: string; p_labour_cost: number; p_other_cost: number }
         Returns: undefined
@@ -4808,6 +4922,7 @@ export type Database = {
         Args: {
           p_business_id: string
           p_incorporation_date: string
+          p_vat_charged_from?: string
           p_vat_rate: number
           p_vat_registered: boolean
         }
