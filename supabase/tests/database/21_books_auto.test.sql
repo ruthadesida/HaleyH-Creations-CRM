@@ -7,9 +7,9 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(30);
 
--- Deferred postings run at commit; tests never commit, so run the posting triggers as each statement finishes.
--- (The journal balance check stays deferred: it runs once all of a journal's lines are in.)
-set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received immediate;
+-- Stock documents, dispatches and returns post at commit, once all their lines are in. Tests never commit, so
+-- :flush runs whatever is waiting, as a commit would (switching to immediate runs pending checks at once).
+\set flush 'set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received immediate; set constraints books_post_stock_document, books_post_dispatch, books_post_return, books_post_return_received deferred;'
 
 grant usage on schema tests to authenticated;
 create or replace function tests.loc(p_name text) returns uuid language sql stable security definer as $$
@@ -46,6 +46,7 @@ select public.post_opening_batch(public.save_opening_batch('aaaaaaaa-0000-0000-0
   jsonb_build_object('line', 2, 'code', 'DRESS-M', 'location_id', tests.loc('Finished goods / showroom'), 'quantity', 5, 'unit', 'pc', 'unit_cost', '600000'),
   jsonb_build_object('line', 3, 'code', 'FAB', 'name', 'Ankara', 'kind', 'raw_material', 'base_unit', 'm',
     'location_id', tests.loc('Raw material store'), 'quantity', 10, 'unit', 'm', 'unit_cost', '40000'))), gen_random_uuid());
+:flush
 select is((select count(*)::int from public.journals where source_type = 'stock_document'), 0,
   'Opening stock isn''t posted again (it''s in the opening figures)');
 
@@ -69,6 +70,7 @@ select is(tests.gl('cash'), 2500000::bigint, '... and cash in cash in hand');
 select tests.login('a0000000-0000-0000-0000-000000000002');
 insert into t select 'd1', public.dispatch_order((select id from t where k = 'o1'), tests.loc('Finished goods / showroom'), current_date,
   null, null, tests.items((select id from t where k = 'o1')), gen_random_uuid());
+:flush
 reset role;
 select is(tests.gl('sales_clothing'), -4186047::bigint, 'Dispatch recognises the sale (clothing), net of VAT');
 select is(tests.gl('vat_output'), -313953::bigint, '... VAT at 7.5% split out of the price');
@@ -82,6 +84,7 @@ select tests.login('a0000000-0000-0000-0000-000000000002');
 insert into t select 'r1', public.receive_customer_return((select id from t where k = 'o1'), 'return', 'Too small', current_date,
   jsonb_build_array(jsonb_build_object('item', (select id from public.order_items where order_id = (select id from t where k = 'o1')), 'qty', 1)),
   gen_random_uuid());
+:flush
 reset role;
 select is(tests.gl('sales_returns'), 1395349::bigint, 'A return reverses the sale for that item, net of VAT');
 select is(tests.gl('customer_deposits'), -1500000::bigint, '... and the customer is owed the money back');

@@ -194,6 +194,10 @@ Design: `docs/ACCOUNTING.md`. Owners only (RLS select for owners; no direct writ
 
 RPCs (all owner-checked): `setup_books`, `update_books_settings`, `create_account`, `update_account`, `set_account_archived`, `post_manual_journal` (manual, opening_import, opening_adjustment; the last two only in an open imported year), `reverse_journal`, `set_books_lock`, `close_fiscal_year` (income and expenses to retained earnings, locks the year, creates the next), `reopen_fiscal_year` (latest closed year; reverses the closing journal), `trial_balance(from, to)` (opening, imported, adjustments, other, closing per account; year-end closing journals inside the range left out), `account_ledger(account, from, to)` (running balance). All journals go through `app.post_journal`, which checks the date (inside a year, not in a closed year, after `locked_through`), the accounts, the sides and the balance, and numbers them JN-00001….
 
+## Books Phase B (migration 0028)
+
+`journals` gain `kind = 'auto'`, `source_part` and a sub-ledger reference (`ref_type` order/repair/supplier/maker/job, `ref_id`). `books_settings.vat_charged_from`. New tables: `books_payment_accounts` (payment method → account) and `books_posting_problems` (records that couldn't be posted). Triggers on stock documents, dispatches and returns (deferred to commit, when their lines exist), payments, repair payments, repairs (collected), supplier bills and payments, maker payments (insert and void) and jobs (fee approval) call `app.books_safe`, which runs the matching `app.books_post_*` handler and records a problem instead of failing the operation. RPCs: `books_post_existing`, `set_books_payment_account`, `books_checks`, `books_match_stock`; `update_books_settings` takes `p_vat_charged_from`; `reverse_journal` refuses automatic journals.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

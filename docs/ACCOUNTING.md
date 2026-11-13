@@ -102,6 +102,22 @@ These documents already exist in the app; each will post the journal shown. (Dr 
 
 The order, payment and stock records are unchanged: they keep their own commercial, payment and fulfilment status. The journal is an extra, linked record.
 
+## How automatic posting works (Phase B, built)
+
+- **When:** from the first financial year kept in the app (for HaleyH: 1 January 2026, once FY2025 is closed). Records dated earlier are covered by the imported figures and aren't posted.
+- **Once:** each record's journal has a key derived from the record (`app.books_key`), so posting again, or pressing **Post existing records**, never doubles anything.
+- **Never blocking:** posting runs inside its own protected step. If it fails (e.g. an account was archived), the sale, payment or stock move is still saved; the problem is listed on the Books page and posted once fixed.
+- **Closed periods:** a record dated in a closed month or year posts on the first open day; its narration says so.
+- **Corrections:** automatic journals can't be reversed by hand. Voiding a payment, bill or maker payment posts its reversal; stock reversals post their mirror.
+- **Customers:** each order and repair has its own position in the books. Money received before the sale is recognised sits in **customer deposits**; the sale at dispatch (or repair collection) uses the deposits first and puts any remainder in **trade receivables**; later payments clear receivables first; returns and refunds move the other way.
+- **Revenue:** at dispatch, price × quantity per line by product category (clothing, shoes, bags, other), less the line's share of the order discount (posted to Discounts given), plus the delivery fee with the first dispatch. Returns reverse the returned lines (the delivery fee stays earned) through Sales returns.
+- **VAT:** only from the owner's **Charging VAT on sales from** date. From then, sale and repair prices are treated as VAT-inclusive at the owner's rate and the VAT part goes to VAT payable. Supplier bills don't record input VAT yet (Phase D).
+- **Stock:** each stock document moves the inventory accounts by its own cost (raw materials and packaging, finished goods, Quarantine by location). The other side: goods received not invoiced (receipts, supplier returns), work in progress (issues, returns, completions), cost of goods sold (dispatch, customer returns), stock write-offs (write-offs, counts). Moves between ordinary locations post nothing. **Opening stock counts are not posted** (the opening figures already hold stock); **Checks** compares the books with the stock records and **Bring the books in line** posts the difference to the stock adjustment account.
+- **Production:** labour and other direct costs on a job join work in progress when it first completes units (Cr maker fees payable / accruals). If the owner approves a maker's fee different from the planned labour, the difference goes to production labour. Maker payments clear maker fees payable.
+- **Suppliers:** a bill credits trade payables and clears goods received not invoiced; a payment clears payables. Any GRNI balance left is shown on Checks.
+- **Where money lands:** cash → Cash in hand, bank transfer and other → main bank account, POS and online → POS and transfer clearing, unless the owner picks other accounts under **Where payments land**.
+- **Known limits:** an order paid before the first live year but dispatched after it shows the whole sale as a receivable (its deposit sits in the imported figures); correct with a manual journal if it happens. Input VAT and bills for services come in Phase C–D.
+
 ## New source documents
 
 | Module | What staff do | Journal |

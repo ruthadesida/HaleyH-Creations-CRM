@@ -123,7 +123,9 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Manual journals, reversals | ✅ | Never edited or deleted |
 | Month close (lock date), year-end close and reopen | ✅ | Closing moves profit to retained earnings and opens the next year |
 | Trial balance, account ledger | ✅ | Marked "Not audited" |
-| Automatic journals from sales, purchases, stock and production | 🙈 | Phase B |
+| Automatic journals from sales, payments, refunds, returns, repairs, purchases, supplier and maker money, stock and production | ✅ | Phase B: from the first live year; never blocks the record; problems listed with a retry; Post existing records is safe to repeat |
+| Checks: stock in the books vs stock records (with one-click match), WIP, goods received not invoiced, unposted records | ✅ | Books → Checks |
+| Where payments land (per payment method) and VAT start date | ✅ | Books overview |
 | Expenses, bank import and reconciliation | 🙈 | Phase C |
 | VAT summary, payroll, fixed asset register, loans | 🙈 | Phase D (VAT rate is stored now) |
 | Financial statements and annual accounts | 🙈 | Phases E–F |
