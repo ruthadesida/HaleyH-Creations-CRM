@@ -12,6 +12,10 @@ async function Tabs({ params }: { params: Promise<{ slug: string }> }) {
     { href: `${base}/journals`, label: "Journals" },
     { href: `${base}/trial-balance`, label: "Trial balance" },
     { href: `${base}/bank`, label: "Bank and cash" },
+    { href: `${base}/tax`, label: "Tax" },
+    { href: `${base}/payroll`, label: "Payroll" },
+    { href: `${base}/assets`, label: "Fixed assets" },
+    { href: `${base}/loans`, label: "Loans and directors" },
     { href: `${base}/checks`, label: "Checks" },
     { href: `${base}/accounts`, label: "Chart of accounts" },
   ];

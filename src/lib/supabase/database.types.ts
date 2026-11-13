@@ -647,6 +647,7 @@ export type Database = {
           incorporation_date: string | null
           locked_through: string | null
           next_journal_number: number
+          next_numbers: Json
           set_up_at: string
           set_up_by: string
           vat_charged_from: string | null
@@ -659,6 +660,7 @@ export type Database = {
           incorporation_date?: string | null
           locked_through?: string | null
           next_journal_number?: number
+          next_numbers?: Json
           set_up_at?: string
           set_up_by?: string
           vat_charged_from?: string | null
@@ -671,6 +673,7 @@ export type Database = {
           incorporation_date?: string | null
           locked_through?: string | null
           next_journal_number?: number
+          next_numbers?: Json
           set_up_at?: string
           set_up_by?: string
           vat_charged_from?: string | null
@@ -963,6 +966,86 @@ export type Database = {
           },
         ]
       }
+      depreciation_lines: {
+        Row: {
+          amount_minor: number
+          asset_id: string
+          business_id: string
+          from_date: string
+          run_id: string
+          to_date: string
+        }
+        Insert: {
+          amount_minor: number
+          asset_id: string
+          business_id: string
+          from_date: string
+          run_id: string
+          to_date: string
+        }
+        Update: {
+          amount_minor?: number
+          asset_id?: string
+          business_id?: string
+          from_date?: string
+          run_id?: string
+          to_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depreciation_lines_business_id_asset_id_fkey"
+            columns: ["business_id", "asset_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_assets"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "depreciation_lines_business_id_run_id_fkey"
+            columns: ["business_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "depreciation_runs"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      depreciation_runs: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          through_date: string
+          total_minor: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          through_date: string
+          total_minor: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          through_date?: string
+          total_minor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depreciation_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enquiries: {
         Row: {
           archived_at: string | null
@@ -1052,6 +1135,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      equity_movements: {
+        Row: {
+          amount_minor: number
+          bank_account_id: string
+          business_id: string
+          created_at: string
+          created_by: string
+          director_key: string | null
+          id: string
+          idempotency_key: string
+          kind: string
+          moved_on: string
+          note: string | null
+          status: string
+          void_reason: string | null
+        }
+        Insert: {
+          amount_minor: number
+          bank_account_id: string
+          business_id: string
+          created_at?: string
+          created_by?: string
+          director_key?: string | null
+          id?: string
+          idempotency_key: string
+          kind: string
+          moved_on: string
+          note?: string | null
+          status?: string
+          void_reason?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          bank_account_id?: string
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          director_key?: string | null
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          moved_on?: string
+          note?: string | null
+          status?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equity_movements_business_id_bank_account_id_fkey"
+            columns: ["business_id", "bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "equity_movements_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1199,6 +1345,94 @@ export type Database = {
             columns: ["business_id", "closing_journal_id"]
             isOneToOne: false
             referencedRelation: "journals"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      fixed_assets: {
+        Row: {
+          accumulated_minor: number
+          acquired_on: string
+          asset_key: string
+          business_id: string
+          cost_minor: number
+          created_at: string
+          created_by: string
+          depreciated_through: string
+          disposed_on: string | null
+          funding_account_id: string | null
+          id: string
+          idempotency_key: string
+          life_years: number
+          name: string
+          number: string
+          proceeds_account_id: string | null
+          proceeds_minor: number | null
+          residual_minor: number
+          status: string
+        }
+        Insert: {
+          accumulated_minor?: number
+          acquired_on: string
+          asset_key: string
+          business_id: string
+          cost_minor: number
+          created_at?: string
+          created_by?: string
+          depreciated_through: string
+          disposed_on?: string | null
+          funding_account_id?: string | null
+          id?: string
+          idempotency_key: string
+          life_years: number
+          name: string
+          number: string
+          proceeds_account_id?: string | null
+          proceeds_minor?: number | null
+          residual_minor?: number
+          status?: string
+        }
+        Update: {
+          accumulated_minor?: number
+          acquired_on?: string
+          asset_key?: string
+          business_id?: string
+          cost_minor?: number
+          created_at?: string
+          created_by?: string
+          depreciated_through?: string
+          disposed_on?: string | null
+          funding_account_id?: string | null
+          id?: string
+          idempotency_key?: string
+          life_years?: number
+          name?: string
+          number?: string
+          proceeds_account_id?: string | null
+          proceeds_minor?: number | null
+          residual_minor?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_assets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_assets_business_id_funding_account_id_fkey"
+            columns: ["business_id", "funding_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "fixed_assets_business_id_proceeds_account_id_fkey"
+            columns: ["business_id", "proceeds_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -1615,6 +1849,132 @@ export type Database = {
             columns: ["business_id", "reverses_id"]
             isOneToOne: false
             referencedRelation: "journals"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      loan_repayments: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          interest_minor: number
+          loan_id: string
+          paid_from_account_id: string
+          paid_on: string
+          principal_minor: number
+          status: string
+          void_reason: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          interest_minor?: number
+          loan_id: string
+          paid_from_account_id: string
+          paid_on: string
+          principal_minor?: number
+          status?: string
+          void_reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          interest_minor?: number
+          loan_id?: string
+          paid_from_account_id?: string
+          paid_on?: string
+          principal_minor?: number
+          status?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_repayments_business_id_loan_id_fkey"
+            columns: ["business_id", "loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "loan_repayments_business_id_paid_from_account_id_fkey"
+            columns: ["business_id", "paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          interest_note: string | null
+          lender: string
+          number: string
+          principal_minor: number
+          received_into_account_id: string | null
+          received_on: string
+          status: string
+          term: string
+          void_reason: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          interest_note?: string | null
+          lender: string
+          number: string
+          principal_minor: number
+          received_into_account_id?: string | null
+          received_on: string
+          status?: string
+          term: string
+          void_reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          interest_note?: string | null
+          lender?: string
+          number?: string
+          principal_minor?: number
+          received_into_account_id?: string | null
+          received_on?: string
+          status?: string
+          term?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_business_id_received_into_account_id_fkey"
+            columns: ["business_id", "received_into_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -2595,6 +2955,155 @@ export type Database = {
             columns: ["business_id", "order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      payroll_lines: {
+        Row: {
+          business_id: string
+          gross_minor: number
+          id: string
+          net_minor: number | null
+          paye_minor: number
+          pension_employee_minor: number
+          pension_employer_minor: number
+          person_id: string
+          run_id: string
+          wht_minor: number
+        }
+        Insert: {
+          business_id: string
+          gross_minor: number
+          id?: string
+          net_minor?: number | null
+          paye_minor?: number
+          pension_employee_minor?: number
+          pension_employer_minor?: number
+          person_id: string
+          run_id: string
+          wht_minor?: number
+        }
+        Update: {
+          business_id?: string
+          gross_minor?: number
+          id?: string
+          net_minor?: number | null
+          paye_minor?: number
+          pension_employee_minor?: number
+          pension_employer_minor?: number
+          person_id?: string
+          run_id?: string
+          wht_minor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_lines_business_id_person_id_fkey"
+            columns: ["business_id", "person_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_people"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_business_id_run_id_fkey"
+            columns: ["business_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
+      payroll_people: {
+        Row: {
+          archived_at: string | null
+          business_id: string
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          role_title: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          name: string
+          role_title?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          role_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_people_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          number: string
+          paid_from_account_id: string
+          pay_date: string
+          period_month: string
+          status: string
+          void_reason: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          number: string
+          paid_from_account_id: string
+          pay_date: string
+          period_month: string
+          status?: string
+          void_reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          number?: string
+          paid_from_account_id?: string
+          pay_date?: string
+          period_month?: string
+          status?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_business_id_paid_from_account_id_fkey"
+            columns: ["business_id", "paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["business_id", "id"]
           },
         ]
@@ -4101,6 +4610,66 @@ export type Database = {
           },
         ]
       }
+      tax_payments: {
+        Row: {
+          amount_minor: number
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          paid_from_account_id: string
+          paid_on: string
+          reference: string | null
+          status: string
+          tax: string
+          void_reason: string | null
+        }
+        Insert: {
+          amount_minor: number
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          paid_from_account_id: string
+          paid_on: string
+          reference?: string | null
+          status?: string
+          tax: string
+          void_reason?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          paid_from_account_id?: string
+          paid_on?: string
+          reference?: string | null
+          status?: string
+          tax?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_payments_business_id_paid_from_account_id_fkey"
+            columns: ["business_id", "paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
+      }
       units: {
         Row: {
           code: string
@@ -4121,6 +4690,75 @@ export type Database = {
           to_base?: number
         }
         Relationships: []
+      }
+      vat_returns: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string
+          input_minor: number
+          net_minor: number
+          output_minor: number
+          paid_from_account_id: string | null
+          paid_on: string | null
+          period_from: string
+          period_to: string
+          reference: string | null
+          status: string
+          void_reason: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key: string
+          input_minor: number
+          net_minor: number
+          output_minor: number
+          paid_from_account_id?: string | null
+          paid_on?: string | null
+          period_from: string
+          period_to: string
+          reference?: string | null
+          status?: string
+          void_reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string
+          input_minor?: number
+          net_minor?: number
+          output_minor?: number
+          paid_from_account_id?: string | null
+          paid_on?: string | null
+          period_from?: string
+          period_to?: string
+          reference?: string | null
+          status?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vat_returns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vat_returns_business_id_paid_from_account_id_fkey"
+            columns: ["business_id", "paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["business_id", "id"]
+          },
+        ]
       }
     }
     Views: {
@@ -4357,6 +4995,35 @@ export type Database = {
         }
         Returns: string
       }
+      add_fixed_asset: {
+        Args: {
+          p_accumulated_minor: number
+          p_acquired_on: string
+          p_asset_key: string
+          p_business_id: string
+          p_cost_minor: number
+          p_depreciated_through: string
+          p_funding_account_id: string
+          p_idempotency_key: string
+          p_life_years: number
+          p_name: string
+          p_residual_minor: number
+        }
+        Returns: string
+      }
+      add_loan: {
+        Args: {
+          p_business_id: string
+          p_idempotency_key: string
+          p_interest_note: string
+          p_lender: string
+          p_principal_minor: number
+          p_received_into_account_id: string
+          p_received_on: string
+          p_term: string
+        }
+        Returns: string
+      }
       allocate_job_materials: { Args: { p_job: string }; Returns: undefined }
       approve_maker_fee: {
         Args: { p_amount: number; p_job: string }
@@ -4590,6 +5257,16 @@ export type Database = {
         }
         Returns: string
       }
+      dispose_fixed_asset: {
+        Args: {
+          p_asset_id: string
+          p_disposed_on: string
+          p_proceeds_account_id: string
+          p_proceeds_minor: number
+          p_reason: string
+        }
+        Returns: undefined
+      }
       expense_options: {
         Args: { p_business_id: string }
         Returns: {
@@ -4768,6 +5445,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      pay_tax: {
+        Args: {
+          p_amount_minor: number
+          p_business_id: string
+          p_idempotency_key: string
+          p_paid_from_account_id: string
+          p_paid_on: string
+          p_reference: string
+          p_tax: string
+        }
+        Returns: string
+      }
       post_bank_line: {
         Args: {
           p_account_id: string
@@ -4792,6 +5481,17 @@ export type Database = {
       }
       post_opening_batch: {
         Args: { p_batch_id: string; p_idempotency_key: string }
+        Returns: string
+      }
+      post_payroll_run: {
+        Args: {
+          p_business_id: string
+          p_idempotency_key: string
+          p_lines: Json
+          p_paid_from_account_id: string
+          p_pay_date: string
+          p_period_month: string
+        }
         Returns: string
       }
       post_transfer: {
@@ -4862,6 +5562,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_equity_movement: {
+        Args: {
+          p_amount_minor: number
+          p_bank_account_id: string
+          p_business_id: string
+          p_director_key: string
+          p_idempotency_key: string
+          p_kind: string
+          p_moved_on: string
+          p_note: string
+        }
+        Returns: string
+      }
       record_expense: {
         Args: {
           p_account_id: string
@@ -4875,6 +5588,17 @@ export type Database = {
           p_receipt_path: string
           p_spent_on: string
           p_vat_minor: number
+        }
+        Returns: string
+      }
+      record_loan_repayment: {
+        Args: {
+          p_idempotency_key: string
+          p_interest_minor: number
+          p_loan_id: string
+          p_paid_from_account_id: string
+          p_paid_on: string
+          p_principal_minor: number
         }
         Returns: string
       }
@@ -4938,6 +5662,18 @@ export type Database = {
           p_paid_on: string
           p_reference: string
           p_supplier_id: string
+        }
+        Returns: string
+      }
+      record_vat_return: {
+        Args: {
+          p_business_id: string
+          p_from: string
+          p_idempotency_key: string
+          p_paid_from_account_id: string
+          p_paid_on: string
+          p_reference: string
+          p_to: string
         }
         Returns: string
       }
@@ -5225,6 +5961,17 @@ export type Database = {
         Args: { p_doc_id: string; p_idempotency_key: string; p_reason: string }
         Returns: string
       }
+      run_depreciation: {
+        Args: {
+          p_business_id: string
+          p_idempotency_key: string
+          p_through: string
+        }
+        Returns: {
+          run_id: string
+          total_minor: number
+        }[]
+      }
       save_bom: {
         Args: {
           p_bom_id: string
@@ -5245,6 +5992,17 @@ export type Database = {
           p_file_name: string
           p_lines: Json
           p_notes: string
+        }
+        Returns: string
+      }
+      save_payroll_person: {
+        Args: {
+          p_archived: boolean
+          p_business_id: string
+          p_id: string
+          p_kind: string
+          p_name: string
+          p_role_title: string
         }
         Returns: string
       }
@@ -5388,6 +6146,29 @@ export type Database = {
           qty_base: number
           stock_item_id: string
         }[]
+      }
+      vat_documents: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          effective_date: string
+          input_minor: number
+          journal_id: string
+          narration: string
+          number: string
+          output_minor: number
+        }[]
+      }
+      vat_summary: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          input_minor: number
+          net_minor: number
+          output_minor: number
+        }[]
+      }
+      void_books_record: {
+        Args: { p_id: string; p_kind: string; p_reason: string }
+        Returns: undefined
       }
       void_expense: {
         Args: { p_expense_id: string; p_reason: string }

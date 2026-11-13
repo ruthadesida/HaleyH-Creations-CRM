@@ -30,3 +30,10 @@ export const loadBooks = cache(async (slug: string) => {
 
 export const yearLabel = (y: { start_date: string; end_date: string }) =>
   y.start_date.slice(0, 4) === y.end_date.slice(0, 4) ? `FY${y.end_date.slice(0, 4)}` : `FY${y.start_date.slice(0, 4)}/${y.end_date.slice(2, 4)}`;
+
+/** Bank, cash and POS accounts set up under Bank and cash: where money is paid from or into. */
+export async function loadBankOptions(businessId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.from("bank_accounts").select("account_id, name").eq("business_id", businessId).is("archived_at", null).order("name");
+  return (data ?? []).map((b) => ({ id: b.account_id, name: b.name }));
+}
