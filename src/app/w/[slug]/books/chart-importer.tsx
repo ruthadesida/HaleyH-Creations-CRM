@@ -41,7 +41,8 @@ export function ChartImporter({ onChange }: { onChange: (payload: string, ready:
         <input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => {
           const f = e.target.files?.[0];
           if (!f) return;
-          if (f.size > 1_000_000) { setError("That file is too big for a chart of accounts."); return; }
+          e.target.value = ""; // choosing the same file again still triggers a reload
+          if (f.size > 1_000_000) { setError("That file is too big for a chart of accounts."); setFileName(""); setRows(null); onChange("", false); return; }
           setFileName(f.name);
           const parsed = parseChartCsv(await f.text());
           setError(parsed.error ?? null);

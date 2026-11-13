@@ -100,7 +100,8 @@ export async function setBooksLock(slug: string, lockedThrough: string): Promise
 const groups = ["current_assets", "non_current_assets", "current_liabilities", "non_current_liabilities", "equity",
   "income", "other_income", "cost_of_sales", "operating_expenses", "finance_costs", "tax"] as const;
 const accountSchema = z.object({
-  code: z.string().trim().regex(/^\d{3,6}$/, "The code is 3 to 6 digits, e.g. 6210."),
+  // Same rule as the database: starts with a digit; sub-codes like 1001-1 allowed (spaces removed).
+  code: z.string().transform((s) => s.replace(/\s+/g, "")).pipe(z.string().regex(/^[0-9][0-9A-Za-z-]{0,15}$/, "The code starts with a digit, e.g. 6210 or 1001-1.")),
   name: z.string().trim().min(1, "Give the account a name.").max(120),
   account_group: z.enum(groups, { message: "Choose where the account belongs." }),
 });

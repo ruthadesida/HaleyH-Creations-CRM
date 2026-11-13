@@ -91,9 +91,10 @@ export function SetupForm({ slug, defaultStart }: { slug: string; defaultStart: 
           <span><span className="font-medium">Import my own chart</span><span className="block text-sm text-muted">From Zoho Books or a spreadsheet. You check every account before anything is saved.</span></span>
         </label>
       </fieldset>
-      {chartSource === "import" && (
+      {/* Kept mounted while hidden, so switching back shows the same chart that would be sent. */}
+      <div hidden={chartSource !== "import"}>
         <ChartImporter onChange={(payload, ready) => { setChart(payload); setChartReady(ready); }} />
-      )}
+      </div>
       <input type="hidden" name="chart" value={chartSource === "import" ? chart : ""} />
       <Button type="submit" size="lg" disabled={pending || (chartSource === "import" && !chartReady)} className="self-start">
         {pending ? "Setting up…" : "Set up the books"}
@@ -391,7 +392,7 @@ export function NewAccountForm({ slug }: { slug: string }) {
       <FormError message={state.message} />
       {state.ok && <p role="status" className="text-success">{state.message}</p>}
       <div className="grid gap-4 sm:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)]">
-        <Field label="Code" htmlFor="na-code" error={state.fieldErrors?.code}><Input id="na-code" name="code" inputMode="numeric" defaultValue={state.values?.code} /></Field>
+        <Field label="Code" htmlFor="na-code" error={state.fieldErrors?.code}><Input id="na-code" name="code" defaultValue={state.values?.code} /></Field>
         <Field label="Name" htmlFor="na-name" error={state.fieldErrors?.name}><Input id="na-name" name="name" maxLength={120} defaultValue={state.values?.name} /></Field>
         <Field label="Belongs in" htmlFor="na-group" error={state.fieldErrors?.account_group}>
           <Select id="na-group" name="account_group" defaultValue={state.values?.account_group ?? "operating_expenses"}>
@@ -436,7 +437,7 @@ export function AccountRow({ slug, account }: { slug: string; account: AccountOp
         if (r.ok) setEditing(false);
       });
     }}>
-      <Input aria-label="Code" name="code" defaultValue={account.code} disabled={!!account.system_key} className="w-24" inputMode="numeric" />
+      <Input aria-label="Code" name="code" defaultValue={account.code} disabled={!!account.system_key} className="w-28" />
       {account.system_key && <input type="hidden" name="code" value={account.code} />}
       <Input aria-label="Name" name="name" defaultValue={account.name} maxLength={120} className="min-w-48 flex-1" />
       <Button type="submit" size="sm" disabled={pending}>Save</Button>
