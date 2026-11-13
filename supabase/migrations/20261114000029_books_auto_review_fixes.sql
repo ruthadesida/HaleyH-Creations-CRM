@@ -33,14 +33,18 @@ returns void language plpgsql security definer set search_path = '' as $$
 declare
   j public.journals;
   v_id uuid;
+  v_lines jsonb;
 begin
   select * into j from public.journals
     where business_id = p_business_id and idempotency_key = app.books_key(p_source_type, p_source_id, 'post') for update;
   if not found or j.reversed_by_id is not null then return; end if;
-  v_id := app.post_journal(p_business_id, app.books_open_date(p_business_id, greatest(p_date, j.effective_date)),
-    left('Reversal of ' || j.number || ': ' || p_reason, 500), 'reversal', null,
+  -- Drop zero lines (e.g. no receivable either side), as automatic posting does.
+  select jsonb_agg(e) into v_lines from jsonb_array_elements(
     jsonb_build_array(app.books_line(p_business_id, p_account::text, -p_change))
-      || app.books_position_lines(p_business_id, app.books_customer_position(p_business_id, p_ref_type, p_ref_id), -p_change),
+      || app.books_position_lines(p_business_id, app.books_customer_position(p_business_id, p_ref_type, p_ref_id), -p_change)) e
+  where (e ->> 'debit')::bigint <> 0 or (e ->> 'credit')::bigint <> 0;
+  v_id := app.post_journal(p_business_id, app.books_open_date(p_business_id, greatest(p_date, j.effective_date)),
+    left('Reversal of ' || j.number || ': ' || p_reason, 500), 'reversal', null, v_lines,
     app.books_key(p_source_type, p_source_id, 'post:void'), j.id, p_source_type, p_source_id, false, 'post:void', p_ref_type, p_ref_id);
   update public.journals set reversed_by_id = v_id where id = j.id and reversed_by_id is null;
 end;
