@@ -29,7 +29,7 @@ async function NewJournal({ params, searchParams }: PageProps<"/w/[slug]/books/j
 export default function Page(props: PageProps<"/w/[slug]/books/journals/new">) {
   return (
     <div className="mx-auto max-w-3xl">
-      <BackLinkFor params={props.params} />
+      <Suspense><BackLinkFor params={props.params} /></Suspense>
       <PageHeader title="New journal" description="For anything no other record covers: accruals, corrections, year-end adjustments. Debits must equal credits." />
       <Suspense fallback={<div className="h-96 animate-pulse rounded-[var(--radius-card)] bg-ink/5" />}>
         <NewJournal {...props} />
