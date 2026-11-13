@@ -22,6 +22,7 @@ Customer contact details and measurements, order values, payment records, staff 
 | Secrets committed to git | `.gitignore`, gitleaks in CI | CI `security` job |
 | Vulnerable dependencies | `npm audit --omit=dev --audit-level=high`, Dependabot, dependency review, CodeQL | CI |
 | Forged invite links | Random 192-bit tokens, only hashes stored, email must match, expiry, revocation | Planned e2e |
+| Tampering with the books | Journals only through owner-checked database functions; a constraint trigger refuses unbalanced journals; triggers refuse edits and deletes of posted journals (corrections are reversals); closed years and the month-close date refuse postings; RLS limits the books to owners | `19_books.test.sql` |
 | Card data exposure | Never collected or stored (manual payment records only) | Design rule |
 
 ## Known gaps / to do
