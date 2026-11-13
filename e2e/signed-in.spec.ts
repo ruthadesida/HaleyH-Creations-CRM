@@ -55,8 +55,27 @@ test.beforeAll(async ({ browser }) => {
       { account_id: acct("sales_clothing"), debit: 0, credit: 5000000 }],
   });
   if (journalError || !journal) throw new Error(`post_manual_journal failed: ${journalError?.message}`);
+  // Phase C: a bank account and an expense.
+  const { data: bankId, error: bankError } = await owner.client.rpc("add_bank_account", {
+    p_business_id: business.id, p_account_id: acct("bank_main"), p_name: "Main bank", p_kind: "bank",
+  });
+  if (bankError || !bankId) throw new Error(`add_bank_account failed: ${bankError?.message}`);
+  const expenseId = randomUUID();
+  const { error: expenseError } = await owner.client.rpc("record_expense", {
+    p_business_id: business.id, p_id: expenseId, p_spent_on: `${lastYear + 1}-01-02` > new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date())
+      ? new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date()) : `${lastYear + 1}-01-02`,
+    p_payee: "Diesel depot", p_description: "Generator diesel", p_account_id: acct("delivery_out"), p_amount_minor: 2500000, p_vat_minor: 0,
+    p_paid_from_account_id: acct("bank_main"), p_receipt_path: null as unknown as string, p_idempotency_key: randomUUID(),
+  });
+  if (expenseError) throw new Error(`record_expense failed: ${expenseError.message}`);
   const w = `/w/${slug}`;
   paths = [
+    { path: `${w}/expenses`, heading: "Expenses" },
+    { path: `${w}/expenses?view=approved`, heading: "Expenses" },
+    { path: `${w}/expenses/new`, heading: "New expense" },
+    { path: `${w}/expenses/${expenseId}`, heading: "Diesel depot" },
+    { path: `${w}/books/bank`, heading: "Bank and cash" },
+    { path: `${w}/books/bank/${bankId}`, heading: "Main bank" },
     { path: `${w}/books`, heading: "Books" },
     { path: `${w}/books/journals`, heading: "Journals" },
     { path: `${w}/books/journals/${journal}`, heading: "Draft trial balance" },

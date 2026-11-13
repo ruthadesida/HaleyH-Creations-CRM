@@ -21,6 +21,8 @@ export const FEATURES = {
   reports: true,
   /** Bookkeeping Phase A: chart of accounts, journals, imported year with opening adjustments, trial balance, year close. Owners only. */
   books: true,
+  /** Books Phase C: expenses with receipts (front office records, owner approves); bank accounts, statement import, matching, reconciliation. */
+  expenses: true,
   // Later phases:
   tasks: false,
 } as const;

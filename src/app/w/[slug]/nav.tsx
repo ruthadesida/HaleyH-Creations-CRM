@@ -3,6 +3,7 @@
 import {
   BarChart3,
   BookOpen,
+  Receipt,
   Boxes,
   ClipboardCheck,
   Factory,
@@ -71,6 +72,7 @@ function items(slug: string, role: Role) {
     FEATURES.purchasing && role === "owner" && { href: `${base}/purchasing`, label: "Purchasing", icon: Truck },
     FEATURES.reports && { href: `${base}/reports`, label: "Reports", icon: BarChart3 },
     FEATURES.payments && { href: `${base}/payments`, label: "Payments", icon: Wallet },
+    FEATURES.expenses && { href: `${base}/expenses`, label: "Expenses", icon: Receipt },
     FEATURES.books && role === "owner" && { href: `${base}/books`, label: "Books", icon: BookOpen },
     FEATURES.tasks && { href: `${base}/tasks`, label: "Follow-ups", icon: ClipboardList },
     FEATURES.settings && role === "owner" && { href: `${base}/settings`, label: "Settings", icon: Settings },
