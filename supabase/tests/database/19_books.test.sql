@@ -23,6 +23,7 @@ select tests.login('a0000000-0000-0000-0000-000000000002'); -- front office
 select throws_ok($$ select public.setup_books('aaaaaaaa-0000-0000-0000-000000000000', '2025-01-01', true, '2025-05-21', true, 7.5) $$,
   '42501', null, 'The front office can''t set up the books');
 
+reset role;
 select tests.login('a0000000-0000-0000-0000-000000000001'); -- owner A
 select lives_ok($$ select public.setup_books('aaaaaaaa-0000-0000-0000-000000000000', '2025-01-01', true, '2025-05-21', true, 7.5) $$,
   'An owner sets up the books with an imported first year');
@@ -81,16 +82,19 @@ select throws_like($$ delete from public.journals where id = (select id from t w
   '%can''t be deleted%', '... or delete a journal');
 
 -- Who can see the books ------------------------------------------------------
+reset role;
 select tests.login('a0000000-0000-0000-0000-000000000002');
 select is((select count(*)::int from public.journals), 0, 'The front office can''t read journals');
 select throws_ok($$ select * from public.trial_balance('aaaaaaaa-0000-0000-0000-000000000000', '2025-01-01', '2025-12-31') $$,
   '42501', null, '... or run the trial balance');
+reset role;
 select tests.login('b0000000-0000-0000-0000-000000000001'); -- owner of business B
 select is((select count(*)::int from public.accounts where business_id = :A), 0, 'Another business''s owner can''t see the chart');
 select throws_ok($$ select public.post_manual_journal('aaaaaaaa-0000-0000-0000-000000000000', '2025-12-31', 'x', 'manual', null, '[]'::jsonb, gen_random_uuid()) $$,
   '42501', null, '... or post into it');
 
 -- Reversal -------------------------------------------------------------------
+reset role;
 select tests.login('a0000000-0000-0000-0000-000000000001');
 insert into t select 'rev', public.reverse_journal((select id from t where k = 'stock'), '2025-12-31', 'Count was wrong', gen_random_uuid());
 select is((select reversed_by_id from public.journals where id = (select id from t where k = 'stock')), (select id from t where k = 'rev'),
