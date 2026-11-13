@@ -468,6 +468,7 @@ begin
   perform app.books_lock(p_business_id);
   select id, d.total_minor into v_id, v_total from public.depreciation_runs d where business_id = p_business_id and idempotency_key = p_idempotency_key;
   if found then return query select v_id, v_total; return; end if;
+  v_total := 0; -- the lookup above leaves it empty when nothing matched
   if p_through is null or p_through > (now() at time zone app.business_tz(p_business_id))::date then
     raise exception 'Choose a date up to today.' using errcode = 'P0001';
   end if;
