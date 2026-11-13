@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { formatDate, todayIn } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { loadBankOptions, loadBooks } from "../data";
-import { AddAssetForm, DepreciationForm, DisposeSheet } from "../d-forms";
+import { AddAssetForm, DepreciationForm, DisposeSheet, VoidSheet } from "../d-forms";
 
 export const metadata: Metadata = { title: "Fixed assets" };
 
@@ -73,6 +73,8 @@ async function Assets({ params }: PageProps<"/w/[slug]/books/assets">) {
                   <span>Cost <Money minor={a.cost_minor} currency={cur} /> · depreciation <Money minor={a.accumulated_minor} currency={cur} /> to {formatDate(a.depreciated_through)}</span>
                   {a.status === "disposed" && <Chip>Sold or scrapped {formatDate(a.disposed_on)}</Chip>}
                   {a.status === "active" && <DisposeSheet slug={slug} id={a.id} banks={banks} today={today} />}
+                  {a.status === "active" && <VoidSheet slug={slug} kind="fixed_asset" id={a.id} label="Added by mistake" />}
+                  {a.status === "removed" && <Chip>Removed</Chip>}
                 </div>
               </li>
             ))}

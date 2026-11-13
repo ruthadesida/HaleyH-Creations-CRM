@@ -157,12 +157,15 @@ export function PayRunForm({ slug, people, banks, today }: {
   slug: string; people: { id: string; name: string; kind: string; title: string | null }[]; banks: Opt[]; today: string;
 }) {
   const router = useRouter();
-  const [rows, setRows] = useState<Row[]>(() => people.map((p) => ({ person_id: p.id, gross: "", paye: "", pension_employee: "", pension_employer: "", wht: "" })));
+  const blank = () => people.map((p) => ({ person_id: p.id, gross: "", paye: "", pension_employee: "", pension_employer: "", wht: "" }));
+  // One row per person, kept by id. The page re-creates this form when the staff list changes (see its key).
+  const [rows, setRows] = useState<Row[]>(blank);
   const { pending, error, run } = useAction();
   const set = (i: number, patch: Partial<Row>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const totals = useMemo(() => {
     const t = { gross: 0, deductions: 0, employer: 0, net: 0, bad: false };
     for (const r of rows) {
+      if (r.gross.trim() === "") continue; // not paid this month: left out, as when posting
       const g = k(r.gross), p = k(r.paye), pe = k(r.pension_employee), pr = k(r.pension_employer), w = k(r.wht);
       if ([g, p, pe, pr, w].some(Number.isNaN)) { t.bad = true; continue; }
       t.gross += g; t.deductions += p + pe + w; t.employer += pr; t.net += g - p - pe - w;
@@ -173,7 +176,8 @@ export function PayRunForm({ slug, people, banks, today }: {
   return (
     <form className="flex flex-col gap-5" noValidate onSubmit={(e) => {
       const s = fd(e);
-      run((key) => postPayRun(slug, { month: s("month"), payDate: s("payDate"), paidFrom: s("paidFrom"), lines: rows, key }), () => router.refresh());
+      // Cleared after posting, so a second tap can't post the same pay again.
+      run((key) => postPayRun(slug, { month: s("month"), payDate: s("payDate"), paidFrom: s("paidFrom"), lines: rows, key }), () => { setRows(blank()); router.refresh(); });
     }}>
       <FormError message={error} />
       <div className="grid gap-4 sm:grid-cols-3">
@@ -221,7 +225,7 @@ export function AddAssetForm({ slug, fundingOptions, today }: { slug: string; fu
       run((key) => addAsset(slug, {
         name: s("name"), assetKey: s("assetKey"), cost: s("cost"), residual: s("residual"), life: s("life"), acquired: s("acquired"),
         funding: inBooks ? "" : s("funding"), accumulated: s("accumulated"), depreciatedThrough: s("through"), key,
-      }), () => form.reset());
+      }), () => { form.reset(); setInBooks(false); });
     }}>
       <FormError message={error} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -345,7 +349,7 @@ export function DirectorMoneyForm({ slug, banks, directors, today }: { slug: str
     <form className="flex flex-col gap-4" noValidate onSubmit={(e) => {
       const s = fd(e);
       const form = e.currentTarget;
-      run((key) => recordDirectorMoney(slug, { kind, director: s("director"), amount: s("amount"), date: s("date"), account: s("account"), note: s("note"), key }), () => form.reset());
+      run((key) => recordDirectorMoney(slug, { kind, director: s("director"), amount: s("amount"), date: s("date"), account: s("account"), note: s("note"), key }), () => { form.reset(); setKind("director_in"); });
     }}>
       <FormError message={error} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -128,7 +128,10 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Where payments land (per payment method) and VAT start date | ✅ | Books overview |
 | Expenses with receipt photos: front office records, owner approves; paid by bank, a director personally, or later; void | ✅ | Phase C; menu → Expenses |
 | Bank, cash and POS accounts; statement CSV import (column guess, preview, no duplicates); match, auto-match, post a line, set aside; reconcile and lock | ✅ | Phase C; Books → Bank and cash. Statements are imported files: not a bank connection |
-| VAT summary, payroll, fixed asset register, loans | 🙈 | Phase D (VAT rate is stored now) |
+| Tax: VAT summary with documents, VAT returns (offset and payment), PAYE/WHT/pension/CIT payments | ✅ | Phase D; Books → Tax. Filing stays manual |
+| Payroll: staff list, monthly pay runs with owner-entered deductions, payslips | ✅ | Books → Payroll; no tax tables |
+| Fixed asset register, depreciation run, disposal | ✅ | Books → Fixed assets |
+| Loans and repayments, director money, share capital | ✅ | Books → Loans and directors |
 | Financial statements and annual accounts | 🙈 | Phases E–F |
 | Accountant role | 🙈 | Deferred: both directors are owners; added when an outside accountant needs access |
 

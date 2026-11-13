@@ -132,6 +132,15 @@ The order, payment and stock records are unchanged: they keep their own commerci
   - **Reconcile:** books − entries not yet on the statement (up to the date) + set-aside lines = statement balance, with no open lines. A reconciled period is locked for that account.
   - Nothing talks to the bank: lines come from the statement files the owner imports.
 
+## Tax, payroll, fixed assets, loans and directors (Phase D, built)
+
+All owners only, under Books. Each record posts its own journal from the first live year (like Phase B) and is voided by a reversal.
+
+- **Tax:** *Owed now* (output and input VAT, PAYE, withholding tax, pension). *VAT for a period* (output on sales and repairs, input on expenses and bank lines, the entries behind them; earlier settlements left out). *Record the return* sets output against input and pays the net from a bank account (Dr VAT payable · Cr VAT receivable · Cr bank); if input is larger, it only offsets and the rest carries forward. Periods can't overlap. *Pay a tax*: PAYE, withholding tax, pension or company income tax (Dr the liability · Cr bank). Filing on FIRS/LIRS portals stays with the owner.
+- **Payroll:** a staff list (employee or contractor) and monthly pay runs. The owner enters gross pay, PAYE, staff and employer pension (employees) or withholding tax (contractors); no tax tables. Posting: Dr salaries (employees' gross), Dr contract pay (contractors' gross), Dr pension (employer) · Cr PAYE payable, Cr pension payable (both parts), Cr withholding tax payable, Cr the bank (net pay). Printable payslips per run.
+- **Fixed assets:** a register (cost, end-of-life value, useful life, date bought). With "paid for from" it posts the purchase (Dr asset · Cr bank, a director's account, payables, share capital or a loan); *already in the books* joins the register with depreciation counted to a date, without posting. *Run depreciation* (straight line by days, never past cost less end-of-life value) posts one journal (Dr depreciation · Cr each accumulated depreciation). *Sold or scrapped* adds depreciation to the date, clears cost and accumulated depreciation, books the proceeds, and puts the gain or loss in other income.
+- **Loans and directors:** loans received (short or long term; one from before the live year joins the list without posting) and repayments split into principal (Dr loan) and interest (Dr interest); can't repay more than is owed. Director money in or out (Dr/Cr bank · Cr/Dr that director's current account) and share capital paid in. Balances shown per director.
+
 ## New source documents
 
 | Module | What staff do | Journal |

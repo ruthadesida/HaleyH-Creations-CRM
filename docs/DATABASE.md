@@ -202,6 +202,10 @@ RPCs (all owner-checked): `setup_books`, `update_books_settings`, `create_accoun
 
 Tables: `expenses` (EX-numbers, status submitted/approved/rejected/voided, paid from a chart account or not yet, receipt path), `bank_accounts` (chart account, kind, remembered CSV layout), `bank_statement_imports`, `bank_statement_lines` (signed amount, fingerprint unique per account, status open/matched/ignored, matched journal line unique), `bank_reconciliations`. Storage bucket `receipts` (private; insert/select only for owners and the front office of the business in the first path folder). RPCs: `expense_options`, `record_expense`, `decide_expense`, `pay_expense`, `void_expense` (posting through `app.books_post_expense` like Phase B), `add_bank_account`, `import_bank_statement`, `bank_line_suggestions`, `match_bank_line`, `bank_auto_match`, `post_bank_line`, `ignore_bank_line`, `reopen_bank_line`, `bank_reconciliation_status`, `reconcile_bank`.
 
+## Books Phase D (migration 0032)
+
+Tables (owners read; writes only through functions): `vat_returns`, `tax_payments`, `payroll_people`, `payroll_runs`, `payroll_lines` (net generated), `fixed_assets`, `depreciation_runs`, `depreciation_lines`, `loans`, `loan_repayments`, `equity_movements`. `books_settings.next_numbers` numbers PR-/FA-/LN- records. RPCs: `vat_summary`, `vat_documents`, `record_vat_return`, `pay_tax`, `save_payroll_person`, `post_payroll_run`, `add_fixed_asset`, `run_depreciation`, `dispose_fixed_asset`, `add_loan`, `record_loan_repayment`, `record_equity_movement`, `void_books_record`. Also re-defines `app.books_post_dispatch`/`app.books_post_return` to take dispatches and returns in document-number order.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

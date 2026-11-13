@@ -32,7 +32,7 @@ async function Payroll({ params }: PageProps<"/w/[slug]/books/payroll">) {
       <section>
         <SectionTitle>New pay run</SectionTitle>
         <Card className="p-5">
-          {staff.length === 0 ? <p className="text-muted">Add people to the staff list first.</p> : <PayRunForm slug={slug} people={staff} banks={banks} today={today} />}
+          {staff.length === 0 ? <p className="text-muted">Add people to the staff list first.</p> : <PayRunForm key={staff.map((p) => p.id).join(",")} slug={slug} people={staff} banks={banks} today={today} />}
         </Card>
       </section>
 
