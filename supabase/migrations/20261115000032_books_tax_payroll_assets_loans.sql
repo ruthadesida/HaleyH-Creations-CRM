@@ -317,10 +317,10 @@ begin
         raise exception 'Check the amounts: gross pay above 0, and deductions less than gross.' using errcode = 'P0001';
     end;
   end loop;
-  select coalesce(sum(pl.gross_minor) filter (where p.kind = 'employee'), 0) as gross_emp,
-         coalesce(sum(pl.gross_minor) filter (where p.kind = 'contractor'), 0) as gross_con,
-         coalesce(sum(pl.paye_minor), 0) as paye, coalesce(sum(pl.pension_employee_minor + pl.pension_employer_minor), 0) as pension,
-         coalesce(sum(pl.pension_employer_minor), 0) as employer, coalesce(sum(pl.wht_minor), 0) as wht, coalesce(sum(pl.net_minor), 0) as net
+  select coalesce(sum(pl.gross_minor) filter (where p.kind = 'employee'), 0)::bigint as gross_emp,
+         coalesce(sum(pl.gross_minor) filter (where p.kind = 'contractor'), 0)::bigint as gross_con,
+         coalesce(sum(pl.paye_minor), 0)::bigint as paye, coalesce(sum(pl.pension_employee_minor + pl.pension_employer_minor), 0)::bigint as pension,
+         coalesce(sum(pl.pension_employer_minor), 0)::bigint as employer, coalesce(sum(pl.wht_minor), 0)::bigint as wht, coalesce(sum(pl.net_minor), 0)::bigint as net
     into t
   from public.payroll_lines pl join public.payroll_people p on p.id = pl.person_id where pl.run_id = v_id;
   perform app.books_auto_post(p_business_id, 'payroll_run', v_id, 'post', p_pay_date,
@@ -783,5 +783,99 @@ begin
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated', f);
   end loop;
+end;
+$$;
+
+--------------------------------------------------------------------------------
+-- Dispatches and returns are taken in document order (DN-…, RT-… numbers), not creation time, when sharing the
+-- order discount and earning the delivery fee: two documents saved in the same moment can't swap places.
+--------------------------------------------------------------------------------
+create or replace function app.books_post_dispatch(p_dispatch uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  dsp public.order_dispatches;
+  o public.orders;
+  v_no text;
+  v_rate numeric;
+  v_lines jsonb := '[]'::jsonb;
+  v_total bigint := 0;
+  v_net_sum bigint := 0;
+  v_net bigint;
+  v_before numeric;
+  v_this numeric;
+  r record;
+begin
+  select * into dsp from public.order_dispatches where id = p_dispatch;
+  if not found then return; end if;
+  perform app.books_lock(dsp.business_id);
+  select * into o from public.orders where id = dsp.order_id;
+  select order_number into v_no from public.orders where id = o.id;
+  v_rate := coalesce(app.books_vat_rate(dsp.business_id, dsp.dispatched_on), 0);
+  select coalesce(sum(i.unit_price_minor * dl.quantity), 0) into v_before
+  from public.order_dispatch_lines dl join public.order_dispatches e on e.id = dl.dispatch_id join public.order_items i on i.id = dl.order_item_id
+  where e.order_id = o.id and (e.number, e.id) < (dsp.number, dsp.id);
+  select coalesce(sum(i.unit_price_minor * dl.quantity), 0) into v_this
+  from public.order_dispatch_lines dl join public.order_items i on i.id = dl.order_item_id where dl.dispatch_id = dsp.id;
+  for r in
+    select x.acct, sum(x.amount)::bigint as amount from (
+      select case p.category when 'clothing' then 'sales_clothing' when 'shoes' then 'sales_shoes' when 'bags' then 'sales_bags' else 'sales_other' end as acct,
+             -(i.unit_price_minor * dl.quantity) as amount
+      from public.order_dispatch_lines dl
+      join public.order_items i on i.id = dl.order_item_id
+      left join public.products p on p.id = i.product_id
+      where dl.dispatch_id = dsp.id
+      union all
+      select 'discounts', app.books_order_discount(o.id, v_before + v_this) - app.books_order_discount(o.id, v_before)
+      union all
+      select 'delivery_income', -o.delivery_fee_minor
+      where not exists (select 1 from public.order_dispatches e where e.order_id = o.id and (e.number, e.id) < (dsp.number, dsp.id))
+    ) x group by x.acct
+  loop
+    if r.amount <> 0 then
+      v_net := app.books_net_of_vat(r.amount, v_rate);
+      v_lines := v_lines || jsonb_build_array(app.books_line(dsp.business_id, r.acct, v_net));
+      v_total := v_total + r.amount;
+      v_net_sum := v_net_sum + v_net;
+    end if;
+  end loop;
+  if v_total = 0 then return; end if;
+  v_lines := v_lines || jsonb_build_array(app.books_line(dsp.business_id, 'vat_output', v_total - v_net_sum))
+    || app.books_position_lines(dsp.business_id, app.books_customer_position(dsp.business_id, 'order', o.id), v_total);
+  perform app.books_auto_post(dsp.business_id, 'order_dispatch', dsp.id, 'revenue', dsp.dispatched_on,
+    'Sales: ' || coalesce(v_no, 'order') || ' dispatched (' || dsp.number || ')', v_lines, 'order', o.id);
+end;
+$$;
+
+create or replace function app.books_post_return(p_return uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  rt public.order_returns;
+  v_no text;
+  v_rate numeric;
+  v_before numeric;
+  v_this numeric;
+  v_gross bigint;
+  v_net bigint;
+  v_sale_date date;
+begin
+  select * into rt from public.order_returns where id = p_return;
+  if not found or rt.received_on is null then return; end if;
+  perform app.books_lock(rt.business_id);
+  select order_number into v_no from public.orders where id = rt.order_id;
+  select coalesce(sum(i.unit_price_minor * rl.quantity), 0) into v_before
+  from public.order_return_lines rl join public.order_returns e on e.id = rl.return_id join public.order_items i on i.id = rl.order_item_id
+  where e.order_id = rt.order_id and e.received_on is not null and (coalesce(e.number, ''), e.id) < (coalesce(rt.number, ''), rt.id);
+  select coalesce(sum(i.unit_price_minor * rl.quantity), 0) into v_this
+  from public.order_return_lines rl join public.order_items i on i.id = rl.order_item_id where rl.return_id = rt.id;
+  v_gross := (v_this - (app.books_order_discount(rt.order_id, v_before + v_this) - app.books_order_discount(rt.order_id, v_before)))::bigint;
+  if v_gross = 0 then return; end if;
+  select max(dispatched_on) into v_sale_date from public.order_dispatches where order_id = rt.order_id and dispatched_on <= rt.received_on;
+  v_rate := coalesce(app.books_vat_rate(rt.business_id, coalesce(v_sale_date, rt.received_on)), 0);
+  v_net := app.books_net_of_vat(v_gross, v_rate);
+  perform app.books_auto_post(rt.business_id, 'order_return', rt.id, 'revenue', rt.received_on,
+    'Sales return: ' || coalesce(v_no, 'order') || ' (' || coalesce(rt.number, 'return') || ')',
+    jsonb_build_array(app.books_line(rt.business_id, 'sales_returns', v_net), app.books_line(rt.business_id, 'vat_output', v_gross - v_net))
+      || app.books_position_lines(rt.business_id, app.books_customer_position(rt.business_id, 'order', rt.order_id), v_gross),
+    'order', rt.order_id);
 end;
 $$;
