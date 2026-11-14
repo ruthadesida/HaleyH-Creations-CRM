@@ -6,6 +6,8 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(14);
 
+grant usage on schema tests to authenticated;
+
 select tests.login('a0000000-0000-0000-0000-000000000001'); -- owner A
 select public.setup_books('aaaaaaaa-0000-0000-0000-000000000000', (date_trunc('month', current_date) - interval '1 year')::date, false, null, false, null);
 reset role;
