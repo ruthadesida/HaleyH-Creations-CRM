@@ -12,7 +12,7 @@ import { loadBooks, yearLabel } from "../../data";
 import { PrintButton } from "../../print-button";
 import { Amount, StatementTable } from "../../statement-table";
 import { longDate } from "../../statements/load";
-import { loadAnnualAccounts, statusLine } from "../load";
+import { approvalStands, loadAnnualAccounts, statusLine } from "../load";
 
 export const metadata: Metadata = { title: "Annual accounts pack" };
 
@@ -103,8 +103,8 @@ async function Pack({ params, searchParams }: PageProps<"/w/[slug]/books/annual-
           </Section>
 
           <Section title="Directors' approval">
-            {s?.approved_on && s?.approved_by ? (
-              <p>The directors approved these financial statements on {longDate(s.approved_on)}. Signed on behalf of the board by {s.approved_by}.</p>
+            {approvalStands(s, year) ? (
+              <p>The directors approved these financial statements on {longDate(s!.approved_on!)}. Signed on behalf of the board by {s!.approved_by}.</p>
             ) : (
               <p className="text-muted">Not yet approved by the directors.</p>
             )}
@@ -144,7 +144,7 @@ async function Pack({ params, searchParams }: PageProps<"/w/[slug]/books/annual-
             )}
             <div className="mb-8">
               <h3 className="mb-2 font-medium">{num()}. Events after the year end</h3>
-              {s?.events_after ? <Paragraphs text={s.events_after} /> : <p className="text-muted">None reported by the directors.</p>}
+              {s?.events_after ? <Paragraphs text={s.events_after} /> : <p className="text-muted">Not written yet.</p>}
             </div>
             {s?.other_notes && <div className="mb-8"><h3 className="mb-2 font-medium">{num()}. Other notes</h3><Paragraphs text={s.other_notes} /></div>}
           </Section>

@@ -11,7 +11,7 @@ import { loadBooks, yearLabel } from "../data";
 import { longDate } from "../statements/load";
 import { YearPicker } from "../year-picker";
 import { AccountsForm, SignOffForm, WithdrawSignOffButton } from "./forms";
-import { signOffStands, statusLine } from "./load";
+import { approvalStands, signOffStands, statusLine } from "./load";
 
 export const metadata: Metadata = { title: "Annual accounts" };
 
@@ -36,6 +36,8 @@ async function AnnualAccounts({ params, searchParams }: PageProps<"/w/[slug]/boo
   const { data: saved } = await supabase.from("annual_accounts").select("*").eq("business_id", business.id).eq("fiscal_year_id", year.id).maybeSingle();
   const signed = signOffStands(saved, year);
   const lapsed = !!saved?.signed_off_at && !signed;
+  const approved = approvalStands(saved, year);
+  const approvalLapsed = !!saved?.approved_on && !approved && year.status === "closed";
   const closed = year.status === "closed";
   const label = yearLabel(year);
   const v = (x: string | null | undefined) => x ?? "";
@@ -69,7 +71,7 @@ async function AnnualAccounts({ params, searchParams }: PageProps<"/w/[slug]/boo
       <section aria-labelledby="write" className="mb-8">
         <h2 id="write" className="sr-only">What you write</h2>
         {signed && <p className="mb-4 rounded-[var(--radius-card)] bg-ink/5 p-3 text-sm">Signed-off accounts can&rsquo;t be changed. Withdraw the sign-off below to change them.</p>}
-        <AccountsForm key={saved?.updated_at ?? "new"} slug={slug} yearId={year.id} values={values} locked={signed} />
+        <AccountsForm key={saved?.updated_at ?? "new"} slug={slug} yearId={year.id} values={values} locked={signed} approvalOpen={closed} />
       </section>
 
       <Card className="flex flex-col gap-4 p-5">
@@ -82,8 +84,8 @@ async function AnnualAccounts({ params, searchParams }: PageProps<"/w/[slug]/boo
           </>
         ) : !closed ? (
           <p className="text-muted">Available once the year is closed.</p>
-        ) : !saved?.approved_on || !saved?.approved_by ? (
-          <p className="text-muted">Enter and save the directors&rsquo; approval above first.</p>
+        ) : !approved ? (
+          <p className="text-muted">{approvalLapsed ? "The directors approved an earlier close of this year. Enter their approval again (date and who signed) and save." : "Enter and save the directors’ approval above first."}</p>
         ) : (
           <>
             <p className="text-sm text-muted">Record the accountant who reviewed these accounts. This is a review, not an audit, and the accounts will say so. After sign-off the accounts can&rsquo;t be changed unless the sign-off is withdrawn.</p>

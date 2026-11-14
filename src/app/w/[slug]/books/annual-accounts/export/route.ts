@@ -3,7 +3,7 @@ import { getUser } from "@/lib/dal";
 import { todayIn } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { longDate } from "../../statements/load";
-import { loadAnnualAccounts, statusLine } from "../load";
+import { approvalStands, loadAnnualAccounts, statusLine } from "../load";
 
 const MONEY = "#,##0.00;(#,##0.00);\"-\"";
 // Text that starts like a formula is written as a plain string cell, so a spreadsheet never evaluates it.
@@ -42,8 +42,8 @@ export async function GET(request: Request, { params }: RouteContext<"/w/[slug]/
       [text(company, true)], [text(`Annual accounts ${a.period}`, true)], [text(status)], [],
       [text("Company registration"), text(s?.rc_number)], [text("Registered office"), text(s?.registered_office)],
       [text("Principal activity"), text(s?.principal_activity)], [text("Directors"), text(s?.directors)], [],
-      [text("Directors' approval"), text(s?.approved_on && s?.approved_by ? `Approved on ${longDate(s.approved_on)}; signed on behalf of the board by ${s.approved_by}.` : "Not yet approved by the directors.")],
-      [text("Prepared under"), text("IFRS for SMEs Accounting Standard")],
+      [text("Directors' approval"), text(approvalStands(s, year) ? `Approved on ${longDate(s!.approved_on!)}; signed on behalf of the board by ${s!.approved_by}.` : "Not yet approved by the directors.")],
+      [text("Basis"), text("Prepared from the records in this app under the IFRS for SMEs Accounting Standard")],
       ...(a.importedNote ? [[text("Note"), text(a.importedNote)]] : []),
     ],
   }];
@@ -81,7 +81,9 @@ export async function GET(request: Request, { params }: RouteContext<"/w/[slug]/
     if (note.key === "directors" && s?.related_parties) notes.push([text(s.related_parties)]);
     notes.push([]);
   }
-  para("Events after the year end", s?.events_after || "None reported by the directors.");
+  if (s?.related_parties && !a.notes.some((x) => x.key === "directors")) para("Related parties", s.related_parties);
+  if (s?.share_capital_note && !a.notes.some((x) => x.key === "share_capital")) para("Share capital", s.share_capital_note);
+  para("Events after the year end", s?.events_after);
   if (s?.other_notes) para("Other notes", s.other_notes);
   const widest = Math.max(2, ...a.notes.map((x) => x.columns.length));
   sheets.push({ sheet: "Notes", columns: [{ width: 56 }, ...Array.from({ length: widest }, () => ({ width: 18 }))], data: notes });

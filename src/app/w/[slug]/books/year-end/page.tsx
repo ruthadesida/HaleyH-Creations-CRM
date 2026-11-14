@@ -69,7 +69,9 @@ async function YearEnd({ params, searchParams }: PageProps<"/w/[slug]/books/year
       supabase.from("bank_reconciliations").select("bank_account_id, through_date").eq("business_id", business.id),
       supabase.from("bank_statement_lines").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "open").lte("line_date", end),
       supabase.from("expenses").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "submitted").lte("spent_on", end),
-      supabase.from("fixed_assets").select("cost_minor, residual_minor, accumulated_minor, depreciated_through").eq("business_id", business.id).eq("status", "active").lte("acquired_on", end),
+      // In use at the year end: still active, or disposed of only after it.
+      supabase.from("fixed_assets").select("cost_minor, residual_minor, accumulated_minor, depreciated_through").eq("business_id", business.id)
+        .or(`status.eq.active,and(status.eq.disposed,disposed_on.gt.${end})`).lte("acquired_on", end),
       supabase.from("payroll_people").select("id", { count: "exact", head: true }).eq("business_id", business.id),
       supabase.from("payroll_runs").select("period_month").eq("business_id", business.id).eq("status", "posted").gte("period_month", start).lte("period_month", end),
       supabase.from("books_posting_problems").select("source_id", { count: "exact", head: true }).eq("business_id", business.id),

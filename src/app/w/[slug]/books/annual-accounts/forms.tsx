@@ -41,14 +41,15 @@ const SECTIONS: { title: string; fields: { name: keyof Values; label: string; hi
 ];
 
 /** Everything the owner writes for the year's accounts. Disabled once an accountant has signed them off. */
-export function AccountsForm({ slug, yearId, values, locked }: { slug: string; yearId: string; values: Values; locked: boolean }) {
+export function AccountsForm({ slug, yearId, values, locked, approvalOpen }: { slug: string; yearId: string; values: Values; locked: boolean; approvalOpen: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
     <form className="flex flex-col gap-8" noValidate onSubmit={(e) => {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
-      const fields = Object.fromEntries(SECTIONS.flatMap((s) => s.fields.map((f) => [f.name, String(fd.get(f.name) ?? "")]))) as AnnualAccountsFields;
+      // Disabled fields (the approval while the year is open) aren't in the form data, so they're left as they are.
+      const fields = Object.fromEntries(SECTIONS.flatMap((s) => s.fields.filter((f) => fd.has(f.name)).map((f) => [f.name, String(fd.get(f.name))]))) as AnnualAccountsFields;
       start(async () => {
         const r = await saveAnnualAccounts(slug, yearId, fields);
         setError(r.ok ? null : r.message);
@@ -56,8 +57,9 @@ export function AccountsForm({ slug, yearId, values, locked }: { slug: string; y
       });
     }}>
       {SECTIONS.map((s) => (
-        <fieldset key={s.title} disabled={locked} className="flex flex-col gap-4">
+        <fieldset key={s.title} disabled={locked || (s.title === "Directors' approval" && !approvalOpen)} className="flex flex-col gap-4">
           <legend className="mb-2 font-display text-xl font-medium">{s.title}</legend>
+          {s.title === "Directors' approval" && !approvalOpen && <p className="text-sm text-muted">The directors approve the accounts once the year is closed.</p>}
           {s.fields.map((f) => (
             <Field key={f.name} label={f.label} htmlFor={`aa-${f.name}`} hint={f.hint} optional={f.name !== "company_name"}>
               {f.rows

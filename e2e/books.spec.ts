@@ -94,7 +94,8 @@ test("an owner brings in last year's draft, adjusts it and closes the year", asy
 
     await page.getByRole("link", { name: "View and print the accounts" }).click();
     await expect(page.getByRole("heading", { name: "Statement of financial position" })).toBeVisible();
-    await expect(page.getByText(/reviewed by A. Reviewer (ICAN member).*have not been audited/).first()).toBeVisible();
+    await expect(page.getByText("reviewed by A. Reviewer (ICAN member)", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("These accounts have not been audited.", { exact: false }).first()).toBeVisible();
     // The balance sheet at the year end counts the close: the year's profit is in retained earnings.
     await expect(page.getByRole("row", { name: /^Retained earnings/ }).first()).toContainText("₦12,495.89");
   });

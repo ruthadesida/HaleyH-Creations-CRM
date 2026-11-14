@@ -12,7 +12,6 @@ export type NoteTable = { key: string; title: string; columns: string[]; rows: N
 
 const sum = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
 const bal = (r: TbRow | undefined) => (r ? Number(r.closed_minor ?? r.closing_minor) : 0);
-const CASH_KEYS = new Set(["cash", "bank_main", "clearing"]);
 const DIRECTOR_KEYS = ["director_1", "director_2", "due_from_directors"];
 const LOAN_KEYS = new Set(["loans_short", "loans_long"]);
 
@@ -42,15 +41,18 @@ export function ppeNote(cur: TbRow[], moves: Movement[], accounts: NoteAccount[]
   const contraIds = new Set(accounts.filter((a) => a.contra_of).map((a) => a.id));
   const byId = new Map(cur.map((r) => [r.account_id, r]));
   const classes = cur
-    .filter((r) => r.account_group === "non_current_assets" && !contraIds.has(r.account_id) && !(r.system_key ?? "").endsWith("_dep"))
+    // Property, plant and equipment: the app's ppe_ accounts, or any non-current asset paired with a depreciation account.
+    .filter((r) => r.account_group === "non_current_assets" && !contraIds.has(r.account_id) && !(r.system_key ?? "").endsWith("_dep")
+      && ((r.system_key ?? "").startsWith("ppe_") || contraOf.has(r.account_id)))
     .map((r) => {
       const depId = contraOf.get(r.account_id) ?? cur.find((d) => d.system_key && r.system_key && d.system_key === `${r.system_key}_dep`)?.account_id;
       return { asset: r, cost: m.get(r.account_id), dep: depId ? m.get(depId) : undefined, depRow: depId ? byId.get(depId) : undefined };
     })
-    .filter((c) => c.cost || c.dep);
+    .filter((c) => [c.cost, c.dep].some((x) => x && (Number(x.opening_minor) || Number(x.debit_minor) || Number(x.credit_minor))));
   // Depreciation accounts with no matching cost account (e.g. an imported chart) still need to show.
   const orphanDep = cur.filter((r) => r.account_group === "non_current_assets" && (contraIds.has(r.account_id) || (r.system_key ?? "").endsWith("_dep"))
-    && !classes.some((c) => c.depRow?.account_id === r.account_id) && m.get(r.account_id));
+    && !classes.some((c) => c.depRow?.account_id === r.account_id)
+    && [m.get(r.account_id)].some((x) => x && (Number(x.opening_minor) || Number(x.debit_minor) || Number(x.credit_minor))));
   if (!classes.length && !orphanDep.length) return null;
   const cols = [...classes.map((c) => ({ name: c.asset.name, cost: c.cost, dep: c.dep })), ...orphanDep.map((r) => ({ name: r.name, cost: undefined, dep: m.get(r.account_id) }))];
   const v = (f: (c: (typeof cols)[number]) => number) => { const vals = cols.map((c) => f(c) + 0); return [...vals, sum(vals) + 0]; };
@@ -91,7 +93,8 @@ export function figureNotes(input: {
   const { cur, prev, moves, accounts, cashAccountIds, curLabel, prevLabel } = input;
   const cols = [curLabel, ...(prevLabel && prev ? [prevLabel] : [])];
   const key = (r: TbRow) => r.system_key ?? "";
-  const isCash = (r: TbRow) => cashAccountIds.has(r.account_id) || CASH_KEYS.has(key(r));
+  // The same cash as the cash flow statement, so the note agrees with it.
+  const isCash = (r: TbRow) => cashAccountIds.has(r.account_id);
   const isInv = (r: TbRow) => key(r).startsWith("inv_");
   const pl = (r: TbRow) => -(Number(r.closing_minor) - Number(r.opening_minor)); // income positive
   const twoYearPl = (pick: (r: TbRow) => boolean, sign: 1 | -1) => {
@@ -117,7 +120,7 @@ export function figureNotes(input: {
     withTotal("payables", "Trade and other payables", cols, twoYear(cur, prev, (r) => r.account_group === "current_liabilities" && !LOAN_KEYS.has(key(r)) && !DIRECTOR_KEYS.includes(key(r)), -1), "Total payables"),
     withTotal("borrowings", "Borrowings", cols, twoYear(cur, prev, (r) => LOAN_KEYS.has(key(r)) || r.account_group === "non_current_liabilities", -1), "Total borrowings"),
     directorsNote(cur, moves),
-    withTotal("share_capital", "Share capital", cols, twoYear(cur, prev, (r) => ["share_capital", "share_capital_unpaid", "bn_capital"].includes(key(r)), -1), "Total"),
+    withTotal("share_capital", "Share capital", cols, twoYear(cur, prev, (r) => ["share_capital", "bn_capital"].includes(key(r)), -1), "Total"),
   ];
   return notes.filter((x): x is NoteTable => x !== null);
 }

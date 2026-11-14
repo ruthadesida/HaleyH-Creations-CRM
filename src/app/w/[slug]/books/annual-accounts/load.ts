@@ -16,6 +16,12 @@ export function signOffStands(row: AnnualAccountsRow | null, year: Year) {
     && new Date(year.closed_at).getTime() === new Date(row.signed_off_year_closed_at).getTime();
 }
 
+/** Whether the directors' approval still stands (given for the year's current close). */
+export function approvalStands(row: AnnualAccountsRow | null, year: Year) {
+  return !!row?.approved_on && !!row.approved_by && year.status === "closed" && !!year.closed_at && !!row.approved_year_closed_at
+    && new Date(year.closed_at).getTime() === new Date(row.approved_year_closed_at).getTime();
+}
+
 /** The status line printed on the accounts, honest about review and audit. */
 export function statusLine(row: AnnualAccountsRow | null, year: Year) {
   if (year.status !== "closed") return "Draft: the year isn't closed yet. Prepared from the records in this app. Not audited.";
@@ -83,7 +89,7 @@ export async function loadAnnualAccounts(business: { id: string }, years: Year[]
     accounts: accounts.data ?? [], cashAccountIds: cash, curLabel, prevLabel,
   });
   const importedNote = [year, prior].filter((y): y is Year => !!y && y.kind === "imported").map((y) =>
-    `${label(y)} was brought into the app as a trial balance with opening adjustments, so its figures come from that trial balance rather than from individual records, and its fixed asset additions include assets held at the start of that year.`)[0] ?? null;
+    `${label(y)} was brought into the app as a trial balance with opening adjustments, so its figures come from that trial balance rather than from individual records. In the notes, the imported balances are shown as the position at the start of that year, not as movements during it.`)[0] ?? null;
 
   return {
     error, statements, notes, saved: saved.data ?? null, curLabel, prevLabel, prior, importedNote,

@@ -197,6 +197,7 @@ export type Database = {
         Row: {
           approved_by: string | null
           approved_on: string | null
+          approved_year_closed_at: string | null
           business_id: string
           company_name: string | null
           directors: string | null
@@ -224,6 +225,7 @@ export type Database = {
         Insert: {
           approved_by?: string | null
           approved_on?: string | null
+          approved_year_closed_at?: string | null
           business_id: string
           company_name?: string | null
           directors?: string | null
@@ -251,6 +253,7 @@ export type Database = {
         Update: {
           approved_by?: string | null
           approved_on?: string | null
+          approved_year_closed_at?: string | null
           business_id?: string
           company_name?: string | null
           directors?: string | null
