@@ -43,10 +43,10 @@ select throws_like($$ select public.save_annual_accounts('aaaaaaaa-0000-0000-000
 select throws_like($$ select public.save_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
     jsonb_build_object('approved_on', (select d from t where k = 'start') + 100)) $$, '%after the year end%',
   'The directors can''t approve the accounts before the year has ended');
-select throws_like($ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
-    'A. Accountant', 'ICAN', current_date, null) $, '%Close the year%', 'Accounts for an open year can''t be signed off');
-select throws_like($ select public.save_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
-    jsonb_build_object('approved_on', current_date, 'approved_by', 'Director One')) $, '%once the year is closed%',
+select throws_like($$ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
+    'A. Accountant', 'ICAN', current_date, null) $$, '%Close the year%', 'Accounts for an open year can''t be signed off');
+select throws_like($$ select public.save_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
+    jsonb_build_object('approved_on', current_date, 'approved_by', 'Director One')) $$, '%once the year is closed%',
   'The directors can''t approve the accounts while the year is open');
 
 select public.close_fiscal_year('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'), gen_random_uuid());
@@ -54,10 +54,10 @@ select throws_like($$ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000
     'A. Accountant', 'ICAN', current_date, null) $$, '%directors'' approval%', 'The directors approve before an accountant signs off');
 select public.save_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
   jsonb_build_object('approved_on', current_date, 'approved_by', 'Director One, Director Two'));
-select throws_like($ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
-    'A. Accountant', 'ICAN member', current_date - 1, null) $, '%before the directors approved%', 'The review can''t be dated before the approval');
-select lives_ok($ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
-    'A. Accountant', 'ICAN member', current_date, 'Reviewed, not audited') $, 'Then the accountant''s review is recorded');
+select throws_like($$ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
+    'A. Accountant', 'ICAN member', current_date - 1, null) $$, '%before the directors approved%', 'The review can''t be dated before the approval');
+select lives_ok($$ select public.sign_off_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
+    'A. Accountant', 'ICAN member', current_date, 'Reviewed, not audited') $$, 'Then the accountant''s review is recorded');
 select throws_like($$ select public.save_annual_accounts('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'),
     '{"policies": "Changed"}'::jsonb) $$, '%signed off%', 'Signed-off accounts can''t be changed');
 select public.withdraw_annual_accounts_sign_off('aaaaaaaa-0000-0000-0000-000000000000', (select id from t where k = 'year'));
