@@ -5024,6 +5024,21 @@ export type Database = {
         }
         Returns: string
       }
+      aged_balances: {
+        Args: { p_as_at: string; p_business_id: string; p_kind: string }
+        Returns: {
+          current_minor: number
+          d31_60_minor: number
+          d61_90_minor: number
+          oldest_date: string
+          over_90_minor: number
+          party: string
+          ref_id: string
+          ref_type: string
+          reference: string
+          total_minor: number
+        }[]
+      }
       allocate_job_materials: { Args: { p_job: string }; Returns: undefined }
       approve_maker_fee: {
         Args: { p_amount: number; p_job: string }

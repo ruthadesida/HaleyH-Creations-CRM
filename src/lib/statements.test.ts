@@ -25,7 +25,7 @@ function books() {
     row("other_income", 0, -50_000, { name: "Interest received" }),
     row("cost_of_sales", 0, 900_000, { name: "Cost of goods sold" }),
     row("operating_expenses", 0, 400_000, { name: "Rent" }),
-    row("operating_expenses", 0, 50_000, { name: "Depreciation" }),
+    row("operating_expenses", 0, 50_000, { system_key: "depreciation", name: "Depreciation" }),
     row("finance_costs", 0, 20_000, { name: "Loan interest" }),
     row("tax", 0, 30_000, { name: "Income tax" }),
   ];
@@ -92,12 +92,59 @@ describe("statements from a trial balance", () => {
     expect(byName("Decrease in finished goods")).toBe(50_000);
     expect(byName("Increase in trade payables")).toBe(50_000);
     expect(cf.operatingTotal).toBe(700_000);
-    expect(cf.investing).toEqual([{ key: expect.any(String), label: "Bought: Equipment", amount: -300_000 }]);
+    expect(cf.investing).toEqual([{ key: "asset_purchases", label: "Fixed assets bought", amount: -300_000 }]);
     expect(cf.financing).toEqual([{ key: expect.any(String), label: "Bank loan", amount: 100_000 }]);
     expect(cf.openingCash).toBe(500_000);
     expect(cf.closingCash).toBe(1_000_000);
     expect(cf.netChange).toBe(500_000);
     expect(cf.reconciles).toBe(true);
+  });
+
+  it("doesn't count a bank charges expense as cash", () => {
+    const { rows, cash } = books();
+    rows.push(row("operating_expenses", 0, 1_000, { system_key: "bank_charges", name: "Bank charges" }));
+    rows[0].closing_minor -= 1_000;
+    expect(cashFlow(rows, cash).reconciles).toBe(true);
+  });
+
+  it("shows a fixed asset sale at its proceeds under investing", () => {
+    // Cost 1,000,000, accumulated depreciation 600,000 (100,000 of it charged this period), sold for 300,000 (loss 100,000).
+    n = 100;
+    const bank = row("current_assets", 0, 300_000, { system_key: "bank_main" });
+    const rows = [
+      bank,
+      row("non_current_assets", 1_000_000, 0, { system_key: "ppe_machinery" }),
+      row("non_current_assets", -500_000, 0, { system_key: "ppe_machinery_dep" }),
+      row("operating_expenses", 0, 100_000, { system_key: "depreciation" }),
+      row("other_income", 0, 100_000, { system_key: "other_income" }),
+      row("equity", -500_000, -500_000, { system_key: "share_capital" }),
+    ];
+    expect(rows.reduce((s, r) => s + r.closing_minor, 0)).toBe(0);
+    const cf = cashFlow(rows, new Set([bank.account_id]), { proceeds: 300_000, gain: -100_000 });
+    expect(cf.operating).toEqual([
+      { key: "depreciation", label: "Depreciation (not a cash cost)", amount: 100_000 },
+      { key: "disposal_gain", label: "Gain or loss on fixed assets sold (shown under investing)", amount: 100_000 },
+    ]);
+    expect(cf.operatingTotal).toBe(0);
+    expect(cf.investing).toEqual([{ key: "asset_sales", label: "Fixed assets sold", amount: 300_000 }]);
+    expect(cf.reconciles).toBe(true);
+  });
+
+  it("counts a year-end close in the balance sheet and changes in equity", () => {
+    const { rows } = books();
+    // The year closed at the end date: profit 650,000 moved to retained earnings (left out of the period columns).
+    const closed = rows.map((r) => ({
+      ...r,
+      closed_minor: ["income", "other_income", "cost_of_sales", "operating_expenses", "finance_costs", "tax"].includes(r.account_group) ? 0
+        : r.system_key === "retained_earnings" ? r.closing_minor - 650_000 : r.closing_minor,
+    }));
+    const fp = financialPosition(closed);
+    expect(fp.equity.lines.find((l) => l.key === "profit")).toBeUndefined();
+    expect(fp.balanced).toBe(true);
+    const eq = changesInEquity(closed);
+    expect(eq.totals.closing).toBe(1_850_000);
+    expect(eq.rows.find((r) => r.key === "profit")).toMatchObject({ profit: 650_000, other: -650_000, closing: 0 });
+    expect(eq.rows.find((r) => r.label === "Retained earnings")).toMatchObject({ other: 650_000, closing: 850_000 });
   });
 
   it("labels falling liabilities as a decrease", () => {

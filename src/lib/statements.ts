@@ -13,6 +13,8 @@
 export type TbRow = {
   account_id: string; code: string; name: string; account_group: string; system_key: string | null;
   opening_minor: number; closing_minor: number;
+  /** Balance at the end date including year-close journals (trial_balance leaves those out of the period). */
+  closed_minor?: number;
 };
 
 export type Line = { key: string; label: string; amount: number; accounts?: { code: string; name: string; amount: number }[] };
@@ -58,6 +60,9 @@ export function profitOrLoss(rows: TbRow[]): ProfitOrLoss {
   };
 }
 
+/** The balance at the end date, counting any year-end close. */
+const closedOf = (r: TbRow) => Number(r.closed_minor ?? r.closing_minor);
+
 const PL_GROUPS = ["income", "other_income", "cost_of_sales", "operating_expenses", "finance_costs", "tax"];
 
 export type FinancialPosition = {
@@ -71,7 +76,7 @@ export type FinancialPosition = {
  * the start of that financial year). Income and expenses not yet closed are shown as one equity line.
  */
 export function financialPosition(rows: TbRow[]): FinancialPosition {
-  const closing = (r: TbRow) => Number(r.closing_minor);
+  const closing = closedOf;
   const section = (title: string, groups: string[], sign: 1 | -1, totalLabel: string): Section => {
     const lines = byGroup(rows, groups).map((r) => ({ key: r.account_id, label: r.name, amount: sign * closing(r) })).filter((l) => l.amount !== 0);
     return { title, lines, total: sum(lines.map((l) => l.amount)), totalLabel };
@@ -81,7 +86,7 @@ export function financialPosition(rows: TbRow[]): FinancialPosition {
   const currentLiabilities = section("Current liabilities", ["current_liabilities"], -1, "Total current liabilities");
   const nonCurrentLiabilities = section("Non-current liabilities", ["non_current_liabilities"], -1, "Total non-current liabilities");
   const equity = section("Equity", ["equity"], -1, "Total equity");
-  const unclosed = -sum(byGroup(rows, PL_GROUPS).map(closing));
+  const unclosed = 0 - sum(byGroup(rows, PL_GROUPS).map(closing));
   if (unclosed !== 0) {
     equity.lines.push({ key: "profit", label: "Profit for the period not yet closed into retained earnings", amount: unclosed });
     equity.total += unclosed;
@@ -104,32 +109,44 @@ export type CashFlow = {
 
 const FINANCING_KEYS = new Set(["loans_short", "loans_long", "director_1", "director_2", "due_from_directors", "share_capital", "share_capital_unpaid", "dividends", "bn_capital", "opening_equity"]);
 
+/** Fixed assets sold or scrapped in the period: total proceeds and total gain (negative = loss). */
+export type Disposals = { proceeds: number; gain: number };
+
 /**
  * Cash flows (indirect method) for the period. `cashAccountIds` are the bank, cash and POS accounts.
- * Signs: positive = cash in.
+ * Signs: positive = cash in. Every account is placed somewhere, so the net change always equals the change in cash.
+ *
+ * Fixed assets: depreciation (the depreciation expense) is added back and any disposal gain taken out of operating;
+ * investing is the rest of the movement on all non-current asset accounts (cost and accumulated depreciation),
+ * split into proceeds of sales and purchases.
  */
-export function cashFlow(rows: TbRow[], cashAccountIds: Set<string>): CashFlow {
+export function cashFlow(rows: TbRow[], cashAccountIds: Set<string>, disposals: Disposals = { proceeds: 0, gain: 0 }): CashFlow {
   const pl = profitOrLoss(rows);
   const operating: Line[] = [];
   const investing: Line[] = [];
   const financing: Line[] = [];
   const add = (list: Line[], key: string, label: string, amount: number) => { if (amount !== 0) list.push({ key, label, amount }); };
-  let depreciation = 0;
+  const depreciation = sum(rows.filter((r) => r.system_key === "depreciation" && PL_GROUPS.includes(r.account_group)).map(movement));
+  let fixedAssets = 0;
   for (const r of rows) {
     if (cashAccountIds.has(r.account_id) || PL_GROUPS.includes(r.account_group)) continue;
     const effect = -movement(r); // an asset going up uses cash; a liability or equity going up provides it
     const key = r.system_key ?? "";
-    if (r.account_group === "non_current_assets" && key.endsWith("_dep")) depreciation += effect;
-    else if (r.account_group === "non_current_assets") add(investing, r.account_id, `${effect < 0 ? "Bought" : "Sold"}: ${r.name}`, effect);
-    else if (FINANCING_KEYS.has(key) || r.account_group === "non_current_liabilities" || (r.account_group === "equity" && key !== "retained_earnings")) {
-      add(financing, r.account_id, r.name, effect);
-    } else if (r.account_group === "equity") add(financing, r.account_id, `${r.name} (other movements)`, effect);
-    else {
+    if (r.account_group === "non_current_assets") fixedAssets += effect;
+    else if (FINANCING_KEYS.has(key) || r.account_group === "non_current_liabilities" || r.account_group === "equity") {
+      add(financing, r.account_id, key === "retained_earnings" ? `${r.name} (other movements)` : r.name, effect);
+    } else {
       const rising = r.account_group.includes("liabilities") ? effect > 0 : effect < 0;
       add(operating, r.account_id, `${rising ? "Increase" : "Decrease"} in ${r.name.toLowerCase()}`, effect);
     }
   }
-  if (depreciation !== 0) operating.unshift({ key: "depreciation", label: "Depreciation (not a cash cost)", amount: depreciation });
+  operating.unshift(...[
+    { key: "depreciation", label: "Depreciation (not a cash cost)", amount: depreciation },
+    { key: "disposal_gain", label: "Gain or loss on fixed assets sold (shown under investing)", amount: -disposals.gain },
+  ].filter((l) => l.amount !== 0));
+  const investingNet = fixedAssets - depreciation + disposals.gain;
+  add(investing, "asset_sales", "Fixed assets sold", disposals.proceeds);
+  add(investing, "asset_purchases", investingNet - disposals.proceeds <= 0 ? "Fixed assets bought" : "Other fixed asset movements", investingNet - disposals.proceeds);
   const operatingTotal = pl.profit + sum(operating.map((l) => l.amount));
   const investingTotal = sum(investing.map((l) => l.amount));
   const financingTotal = sum(financing.map((l) => l.amount));
@@ -140,17 +157,25 @@ export function cashFlow(rows: TbRow[], cashAccountIds: Set<string>): CashFlow {
   return { profit: pl.profit, operating, operatingTotal, investing, investingTotal, financing, financingTotal, netChange, openingCash, closingCash, reconciles: netChange === closingCash - openingCash };
 }
 
-export type EquityChange = { rows: { label: string; opening: number; profit: number; other: number; closing: number }[]; totals: { opening: number; profit: number; other: number; closing: number } };
+export type EquityRow = { key: string; label: string; opening: number; profit: number; other: number; closing: number };
+export type EquityChange = { rows: EquityRow[]; totals: { opening: number; profit: number; other: number; closing: number } };
 
-/** Changes in equity over the period (equity accounts plus profit not yet closed). */
+/**
+ * Changes in equity over the period (equity accounts plus profit not yet closed). Closing balances count any
+ * year-end close in the period, which shows as profit moving out of "not yet closed" and into retained earnings.
+ */
 export function changesInEquity(rows: TbRow[]): EquityChange {
-  const out = byGroup(rows, ["equity"]).map((r) => ({ label: r.name, opening: -Number(r.opening_minor), profit: 0, other: -movement(r), closing: -Number(r.closing_minor) }))
-    .filter((r) => r.opening !== 0 || r.other !== 0 || r.closing !== 0);
+  const out: EquityRow[] = byGroup(rows, ["equity"]).map((r) => {
+    const opening = -Number(r.opening_minor);
+    const closing = -closedOf(r);
+    return { key: r.account_id, label: r.name, opening, profit: 0, other: closing - opening, closing };
+  }).filter((r) => r.opening !== 0 || r.other !== 0 || r.closing !== 0);
   const plRows = byGroup(rows, PL_GROUPS);
-  const openingProfit = -sum(plRows.map((r) => Number(r.opening_minor)));
-  const profit = -sum(plRows.map(movement));
-  if (openingProfit !== 0 || profit !== 0) {
-    out.push({ label: "Profit not yet closed into retained earnings", opening: openingProfit, profit, other: 0, closing: openingProfit + profit });
+  const openingProfit = 0 - sum(plRows.map((r) => Number(r.opening_minor)));
+  const profit = 0 - sum(plRows.map(movement));
+  const closingProfit = 0 - sum(plRows.map(closedOf));
+  if (openingProfit !== 0 || profit !== 0 || closingProfit !== 0) {
+    out.push({ key: "profit", label: "Profit not yet closed into retained earnings", opening: openingProfit, profit, other: closingProfit - openingProfit - profit, closing: closingProfit });
   }
   const t = (k: "opening" | "profit" | "other" | "closing") => sum(out.map((r) => r[k]));
   return { rows: out, totals: { opening: t("opening"), profit: t("profit"), other: t("other"), closing: t("closing") } };

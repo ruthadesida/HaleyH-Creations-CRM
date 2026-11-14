@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 \ir ../shared/fixtures.psql
 
-select plan(12);
+select plan(15);
 
 grant usage on schema tests to authenticated;
 create temp table t (k text primary key, id uuid);
@@ -18,7 +18,8 @@ insert into public.orders (id, business_id, customer_id) values
   ('dddddddd-0000-0000-0000-0000000000a2', 'aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a'),
   ('dddddddd-0000-0000-0000-0000000000a3', 'aaaaaaaa-0000-0000-0000-000000000000', 'cccccccc-0000-0000-0000-00000000000a');
 insert into public.suppliers (id, business_id, name) values
-  ('ffffffff-0000-0000-0000-0000000000a1', 'aaaaaaaa-0000-0000-0000-000000000000', 'Fabric House');
+  ('ffffffff-0000-0000-0000-0000000000a1', 'aaaaaaaa-0000-0000-0000-000000000000', 'Fabric House'),
+  ('ffffffff-0000-0000-0000-0000000000a2', 'aaaaaaaa-0000-0000-0000-000000000000', 'Thread Co');
 
 -- A journal against an order or supplier, posted the way the app's own posting functions do.
 create function tests.post(p_days_ago int, p_dr text, p_cr text, p_amount bigint, p_ref_type text, p_ref uuid) returns uuid
@@ -43,6 +44,10 @@ select tests.post(100, 'receivables', 'retained_earnings', 25000, null, null);
 select tests.post(95, 'grni', 'payables', 70000, 'supplier', 'ffffffff-0000-0000-0000-0000000000a1');
 select tests.post(35, 'grni', 'payables', 30000, 'supplier', 'ffffffff-0000-0000-0000-0000000000a1');
 select tests.post(20, 'payables', 'bank_main', 70000, 'supplier', 'ffffffff-0000-0000-0000-0000000000a1');
+-- Another supplier paid 40,000 ahead of the bill, five days ago.
+select tests.post(5, 'payables', 'bank_main', 40000, 'supplier', 'ffffffff-0000-0000-0000-0000000000a2');
+-- An opening deposit held with no order: it isn't netted against the unlinked 25,000 owed.
+select tests.post(100, 'bank_main', 'customer_deposits', 15000, null, null);
 
 select tests.login('a0000000-0000-0000-0000-000000000001');
 select public.reverse_journal((select id from t where k = 'o3'), current_date - 5, 'Cancelled', gen_random_uuid());
@@ -67,12 +72,22 @@ select is((select sum(total_minor)::bigint from public.aged_balances('aaaaaaaa-0
     where system_key = 'receivables'),
   'The aged receivables add up to the receivables balance in the ledger');
 select is((select (total_minor, current_minor, d31_60_minor, over_90_minor)::text
-    from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date)),
+    from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date) where ref_id = 'ffffffff-0000-0000-0000-0000000000a1'),
   '(30000,0,30000,0)', 'Supplier payments clear the oldest bill first');
-select is((select party from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date)), 'Fabric House',
+select is((select party from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date) where ref_id = 'ffffffff-0000-0000-0000-0000000000a1'), 'Fabric House',
   'Payable rows name the supplier');
-select is((select total_minor from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date - 30)),
+select is((select total_minor from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date - 30) where ref_id = 'ffffffff-0000-0000-0000-0000000000a1'),
   100000::bigint, 'As at an earlier date, before the payment, both bills are owed');
+
+select is((select (total_minor, current_minor + d31_60_minor + d61_90_minor + over_90_minor)::text
+    from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date) where ref_id = 'ffffffff-0000-0000-0000-0000000000a2'),
+  '(-40000,0)', 'A supplier paid ahead of the bill is listed as a credit, not dropped');
+select is((select sum(total_minor)::bigint from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'payables', current_date)),
+  (select -closing_minor from public.trial_balance('aaaaaaaa-0000-0000-0000-000000000000', (date_trunc('month', current_date) - interval '1 year')::date, current_date)
+    where system_key = 'payables'),
+  'The aged payables add up to the payables balance in the ledger');
+select is((select count(*)::int from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'receivables', current_date) where total_minor < 0), 0,
+  'A deposit held with no order isn''t listed as a credit against receivables');
 
 select throws_like($$ select * from public.aged_balances('aaaaaaaa-0000-0000-0000-000000000000', 'stock', current_date) $$,
   '%receivables or payables%', 'Only receivables or payables can be aged');

@@ -132,7 +132,10 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Payroll: staff list, monthly pay runs with owner-entered deductions, payslips | ✅ | Books → Payroll; no tax tables |
 | Fixed asset register, depreciation run, disposal | ✅ | Books → Fixed assets |
 | Loans and repayments, director money, share capital | ✅ | Books → Loans and directors |
-| Financial statements and annual accounts | 🙈 | Phases E–F |
+| Financial statements: profit or loss, balance sheet, cash flow, changes in equity, with comparisons; print and CSV | ✅ | Phase E; Books → Statements. "Not audited" |
+| Aged receivables (per order/repair) and payables (per supplier) | ✅ | Books → Aged balances |
+| Month-end checklist and Close the month | ✅ | Books → Month end. Stock count is the owner's own check |
+| Year-end checklist, notes and annual accounts pack | 🙈 | Phase F |
 | Accountant role | 🙈 | Deferred: both directors are owners; added when an outside accountant needs access |
 
 ## Later phases

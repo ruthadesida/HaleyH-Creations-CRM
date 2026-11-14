@@ -206,6 +206,10 @@ Tables: `expenses` (EX-numbers, status submitted/approved/rejected/voided, paid 
 
 Tables (owners read; writes only through functions): `vat_returns`, `tax_payments`, `payroll_people`, `payroll_runs`, `payroll_lines` (net generated), `fixed_assets`, `depreciation_runs`, `depreciation_lines`, `loans`, `loan_repayments`, `equity_movements`. `books_settings.next_numbers` numbers PR-/FA-/LN- records. RPCs: `vat_summary`, `vat_documents`, `record_vat_return`, `pay_tax`, `save_payroll_person`, `post_payroll_run`, `add_fixed_asset`, `run_depreciation`, `dispose_fixed_asset`, `add_loan`, `record_loan_repayment`, `record_equity_movement`, `void_books_record`. Also re-defines `app.books_post_dispatch`/`app.books_post_return` to take dispatches and returns in document-number order.
 
+## Books Phase E (migrations 0034–0035)
+
+`aged_balances(business, kind, as_at)` (owners only): `receivables` per order/repair from the receivables and customer deposits accounts, `payables` per supplier from the payables account, aged 0–30/31–60/61–90/over 90 days with payments set against the oldest charges first (journals reversed on or before the date drop out; unlinked entries are one row on the receivables account only; credit balances such as a supplier paid ahead are listed, except orders paid in advance). The statements themselves are computed in `src/lib/statements.ts` from `trial_balance`; no new tables.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).
