@@ -135,7 +135,8 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Financial statements: profit or loss, balance sheet, cash flow, changes in equity, with comparisons; print and CSV | ✅ | Phase E; Books → Statements. "Not audited" |
 | Aged receivables (per order/repair) and payables (per supplier) | ✅ | Books → Aged balances |
 | Month-end checklist and Close the month | ✅ | Books → Month end. Stock count is the owner's own check |
-| Year-end checklist, notes and annual accounts pack | 🙈 | Phase F |
+| Year-end checklist and Close the year | ✅ | Phase F; Books → Year end |
+| Annual accounts: written notes, directors' approval, pack (print/PDF and Excel) with figure notes, accountant's review sign-off | ✅ | Books → Annual accounts. Reviewed, never "audited" |
 | Accountant role | 🙈 | Deferred: both directors are owners; added when an outside accountant needs access |
 
 ## Later phases

@@ -210,6 +210,10 @@ Tables (owners read; writes only through functions): `vat_returns`, `tax_payment
 
 `aged_balances(business, kind, as_at)` (owners only): `receivables` per order/repair from the receivables and customer deposits accounts, `payables` per supplier from the payables account, aged 0–30/31–60/61–90/over 90 days with payments set against the oldest charges first (journals reversed on or before the date drop out; unlinked entries are one row on the receivables account only; credit balances such as a supplier paid ahead are listed, except orders paid in advance). The statements themselves are computed in `src/lib/statements.ts` from `trial_balance`; no new tables.
 
+## Books Phase F (migration 0036)
+
+`annual_accounts` (one row per financial year; owners read; audited): company details, written notes, directors' approval, sign-off (name, qualification, date, note, `signed_off_year_closed_at`). RPCs: `save_annual_accounts(business, year, fields jsonb)` (known keys only; refused while a sign-off stands; clears a lapsed one), `sign_off_annual_accounts` (closed year, approval entered, dates after the year end and not in the future), `withdraw_annual_accounts_sign_off`, `account_movements(business, from, to)` (opening, debits, credits, closing per account; year-close journals left out of the period). A sign-off stands only while the year is closed with the same `closed_at`.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

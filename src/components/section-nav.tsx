@@ -33,7 +33,7 @@ export function SectionNav({ tabs, label }: { tabs: SectionTab[]; label: string 
     }
   }, [path]);
   return (
-    <nav ref={nav} aria-label={label} className="-mx-4 mb-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+    <nav ref={nav} aria-label={label} className="-mx-4 mb-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 print:hidden">
       <ul className="flex gap-1.5">
         {tabs.map((t) => {
           const active = t.href === current;

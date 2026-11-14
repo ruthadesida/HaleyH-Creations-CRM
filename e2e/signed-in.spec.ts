@@ -46,6 +46,7 @@ test.beforeAll(async ({ browser }) => {
     p_incorporation_date: `${lastYear}-05-21`, p_vat_registered: true, p_vat_rate: 7.5,
   });
   if (booksError) throw new Error(`setup_books failed: ${booksError.message}`);
+  const { data: firstYear } = await owner.client.from("fiscal_years").select("id").eq("business_id", business.id).eq("start_date", `${lastYear}-01-01`).single();
   const { data: accts } = await owner.client.from("accounts").select("id, system_key").eq("business_id", business.id);
   const acct = (k: string) => accts!.find((a) => a.system_key === k)!.id;
   const { data: journal, error: journalError } = await owner.client.rpc("post_manual_journal", {
@@ -96,6 +97,9 @@ test.beforeAll(async ({ browser }) => {
     { path: `${w}/books/aged`, heading: "Aged balances" },
     { path: `${w}/books/aged?kind=payables`, heading: "Aged balances" },
     { path: `${w}/books/month-end`, heading: "" },
+    { path: `${w}/books/year-end`, heading: `Year end: FY${lastYear}` },
+    { path: `${w}/books/annual-accounts`, heading: `Annual accounts: FY${lastYear}` },
+    { path: `${w}/books/annual-accounts/pack?year=${firstYear!.id}`, heading: "" },
     { path: `${w}/books/ledger/${acct("bank_main")}`, heading: "1010 · Business bank account" },
     { path: w, heading: "" },
     { path: `${w}/stock`, heading: "Stock" },

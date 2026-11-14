@@ -193,6 +193,105 @@ export type Database = {
           },
         ]
       }
+      annual_accounts: {
+        Row: {
+          approved_by: string | null
+          approved_on: string | null
+          business_id: string
+          company_name: string | null
+          directors: string | null
+          events_after: string | null
+          fiscal_year_id: string
+          going_concern: string | null
+          id: string
+          other_notes: string | null
+          policies: string | null
+          principal_activity: string | null
+          rc_number: string | null
+          registered_office: string | null
+          related_parties: string | null
+          share_capital_note: string | null
+          signed_off_at: string | null
+          signed_off_by: string | null
+          signed_off_name: string | null
+          signed_off_note: string | null
+          signed_off_on: string | null
+          signed_off_qualification: string | null
+          signed_off_year_closed_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          approved_on?: string | null
+          business_id: string
+          company_name?: string | null
+          directors?: string | null
+          events_after?: string | null
+          fiscal_year_id: string
+          going_concern?: string | null
+          id?: string
+          other_notes?: string | null
+          policies?: string | null
+          principal_activity?: string | null
+          rc_number?: string | null
+          registered_office?: string | null
+          related_parties?: string | null
+          share_capital_note?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          signed_off_name?: string | null
+          signed_off_note?: string | null
+          signed_off_on?: string | null
+          signed_off_qualification?: string | null
+          signed_off_year_closed_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          approved_on?: string | null
+          business_id?: string
+          company_name?: string | null
+          directors?: string | null
+          events_after?: string | null
+          fiscal_year_id?: string
+          going_concern?: string | null
+          id?: string
+          other_notes?: string | null
+          policies?: string | null
+          principal_activity?: string | null
+          rc_number?: string | null
+          registered_office?: string | null
+          related_parties?: string | null
+          share_capital_note?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          signed_off_name?: string | null
+          signed_off_note?: string | null
+          signed_off_on?: string | null
+          signed_off_qualification?: string | null
+          signed_off_year_closed_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_accounts_business_id_fiscal_year_id_fkey"
+            columns: ["business_id", "fiscal_year_id"]
+            isOneToOne: true
+            referencedRelation: "fiscal_years"
+            referencedColumns: ["business_id", "id"]
+          },
+          {
+            foreignKeyName: "annual_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -4985,6 +5084,16 @@ export type Database = {
           number: string
         }[]
       }
+      account_movements: {
+        Args: { p_business_id: string; p_from: string; p_to: string }
+        Returns: {
+          account_id: string
+          closing_minor: number
+          credit_minor: number
+          debit_minor: number
+          opening_minor: number
+        }[]
+      }
       activate_bom: { Args: { p_bom_id: string }; Returns: undefined }
       add_bank_account: {
         Args: {
@@ -5987,6 +6096,10 @@ export type Database = {
           total_minor: number
         }[]
       }
+      save_annual_accounts: {
+        Args: { p_business_id: string; p_fields: Json; p_year_id: string }
+        Returns: undefined
+      }
       save_bom: {
         Args: {
           p_bom_id: string
@@ -6082,6 +6195,17 @@ export type Database = {
           p_incorporation_date: string
           p_vat_rate: number
           p_vat_registered: boolean
+        }
+        Returns: undefined
+      }
+      sign_off_annual_accounts: {
+        Args: {
+          p_business_id: string
+          p_name: string
+          p_note: string
+          p_qualification: string
+          p_signed_on: string
+          p_year_id: string
         }
         Returns: undefined
       }
@@ -6195,6 +6319,10 @@ export type Database = {
       }
       void_supplier_record: {
         Args: { p_id: string; p_kind: string; p_reason: string }
+        Returns: undefined
+      }
+      withdraw_annual_accounts_sign_off: {
+        Args: { p_business_id: string; p_year_id: string }
         Returns: undefined
       }
     }

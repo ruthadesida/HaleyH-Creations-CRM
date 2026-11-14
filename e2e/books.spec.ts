@@ -5,7 +5,8 @@ import { SKIP_REASON, createBusiness, createUser, hasLocalSupabase, signIn } fro
  * Books Phase A through the real screens: set up with an imported first year → import a draft
  * trial balance (CSV) → opening adjustments for closing stock and a fixed asset left out → the
  * trial balance balances and shows the adjustments apart → close the year → profit carries into
- * retained earnings for the next year.
+ * retained earnings for the next year → write the annual accounts, record the directors' approval and an
+ * accountant's sign-off → the pack shows the review and the closed year's profit in retained earnings.
  */
 test.skip(!hasLocalSupabase, SKIP_REASON);
 
@@ -74,5 +75,27 @@ test("an owner brings in last year's draft, adjusts it and closes the year", asy
     await expect(page.getByRole("heading", { name: `Trial balance: FY${lastYear + 1}` })).toBeVisible();
     // 50,000 sales + 8,000 closing stock − 30,000 materials − 15,000 rent − 504.11 depreciation (184 days of 4 years on ₦4,000)
     await expect(page.getByRole("row", { name: /Retained earnings/ })).toContainText("₦12,495.89");
+  });
+
+  await test.step("prepare the annual accounts and record the accountant's sign-off", async () => {
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date());
+    await page.goto(`${w}/annual-accounts`);
+    await expect(page.getByRole("heading", { name: `Annual accounts: FY${lastYear}` })).toBeVisible();
+    await page.getByLabel("RC number").fill("RC 0000001");
+    await page.getByLabel("Date the directors approved the accounts").fill(today);
+    await page.getByLabel("Signed on behalf of the board by").fill("Ruth Books");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("Saved.")).toBeVisible();
+    await page.getByLabel("Accountant's name").fill("A. Reviewer");
+    await page.getByLabel("Qualification").fill("ICAN member");
+    await page.getByRole("button", { name: "Record the sign-off" }).click();
+    await expect(page.getByText("Sign-off recorded.")).toBeVisible();
+    await expect(page.getByLabel("RC number")).toBeDisabled();
+
+    await page.getByRole("link", { name: "View and print the accounts" }).click();
+    await expect(page.getByRole("heading", { name: "Statement of financial position" })).toBeVisible();
+    await expect(page.getByText(/reviewed by A. Reviewer (ICAN member).*have not been audited/).first()).toBeVisible();
+    // The balance sheet at the year end counts the close: the year's profit is in retained earnings.
+    await expect(page.getByRole("row", { name: /^Retained earnings/ }).first()).toContainText("₦12,495.89");
   });
 });
