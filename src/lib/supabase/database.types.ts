@@ -853,6 +853,8 @@ export type Database = {
           id: string
           is_demo: boolean
           logo_path: string | null
+          payment_details: string | null
+          tax_id: string | null
           name: string
           next_batch_number: number
           next_dispatch_number: number
@@ -882,6 +884,8 @@ export type Database = {
           id?: string
           is_demo?: boolean
           logo_path?: string | null
+          payment_details?: string | null
+          tax_id?: string | null
           name: string
           next_batch_number?: number
           next_dispatch_number?: number
@@ -911,6 +915,8 @@ export type Database = {
           id?: string
           is_demo?: boolean
           logo_path?: string | null
+          payment_details?: string | null
+          tax_id?: string | null
           name?: string
           next_batch_number?: number
           next_dispatch_number?: number
@@ -5072,6 +5078,10 @@ export type Database = {
       }
     }
     Functions: {
+      invoice_vat_rate: {
+        Args: { p_business_id: string; p_date: string }
+        Returns: number
+      }
       accept_invitation: { Args: { p_token: string }; Returns: string }
       account_ledger: {
         Args: { p_account_id: string; p_from: string; p_to: string }

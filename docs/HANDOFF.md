@@ -2,9 +2,11 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-15 (Books Phase F: year end and annual accounts)_
+_Last updated: 2026-11-18 (invoice logo, payment details and VAT line)_
 
 ## Where things stand
+
+- **2026-11-18 Invoice details (migration 0038):** Settings → **Invoices**: upload the logo (private `branding` bucket), "How customers pay" and the TIN. The invoice shows the logo (text name until one is uploaded), the TIN, "Includes VAT at X%" (rate from the books on the dispatch date, or the order date before dispatch) and the payment details while a balance is due, with the order number as the reference. **Owner's next step:** in Settings → Invoices, upload the logo and type the account details (they are entered in the app only, never in the repo). A transparent-background copy of the logo was made for printing.
 
 - **2026-11-15 Books Phase F (migrations 0036–0037):** Books → **Year end** (checklist per year, live or imported, then Close the year) and **Annual accounts** (written notes and directors' approval in `annual_accounts`; pack with the four statements, comparatives and figure notes from `src/lib/annual-notes.ts`; print/PDF and Excel via `write-excel-file`; accountant's review sign-off that locks the accounts and lapses on reopen). All bookkeeping phases A–F are built. **Owner's next steps** (unchanged): import the FY2025 trial balance, post the adjustments, add the FY2025 assets to the register, close FY2025, then write the FY2025 annual accounts and record the sign-off.
 

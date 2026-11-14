@@ -82,7 +82,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Delivery confirmation | ✅ | |
 | Cancellation releases reservations; unstarted jobs cancelled, started jobs finish for stock | ✅ | Spec 2 test J |
 | Customer returns and exchanges → Quarantine → inspection (restock or scrap) | ✅ | Spec 2 test K (refunds never restock) |
-| Invoice / quotation (print or save as PDF) | ✅ | |
+| Invoice / quotation (print or save as PDF) | ✅ | Logo, TIN and "How to pay" from Settings → Invoices (owner-entered; hidden when blank). "Includes VAT at X%" when the books charge VAT on the invoice date |
 | Estimated gross profit per order (owners) | ✅ | Labelled estimated; flagged when costs are missing |
 | Order edits after confirmation | ⬜ | Cancel and re-create for now |
 | Exchange linked to its replacement order (both orders show the link) | ✅ | Front office or owner; same customer only |

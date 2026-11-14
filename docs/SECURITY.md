@@ -25,6 +25,10 @@ Customer contact details and measurements, order values, payment records, staff 
 | Tampering with the books | Journals only through owner-checked database functions; a constraint trigger refuses unbalanced journals; triggers refuse edits and deletes of posted journals (corrections are reversals); closed years and the month-close date refuse postings; RLS limits the books to owners | `19_books.test.sql` |
 | Card data exposure | Never collected or stored (manual payment records only) | Design rule |
 
+## Business logos (2026-11-18)
+
+Private `branding` bucket, folder per business: owners upload and remove, members read (RLS on `storage.objects`). PNG, JPEG and WebP only, checked by the bucket and by the file's own bytes in `uploadLogo`; no SVG (it can carry script). `businesses.logo_path` must point into the business's own folder (check constraint). `/w/[slug]/logo` serves it through the viewer's session with `nosniff` and a sandboxing CSP. The invoice payment details and TIN are readable by every member of the business, production included: they are printed for customers, so they are not treated as payment records.
+
 ## Known gaps / to do
 
 - CSP still allows `'unsafe-inline'` scripts. Move authenticated routes to nonce-based CSP via `proxy.ts` once auth is built, and add the Supabase origin to `connect-src`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, parseMoneyInput, paymentStatus, toMoneyInput } from "./money";
+import { formatMoney, parseMoneyInput, paymentStatus, toMoneyInput, vatIncluded } from "./money";
 
 describe("paymentStatus (mirrors app.payment_status in SQL)", () => {
   it.each([
@@ -51,5 +51,16 @@ describe("parseMoneyInput", () => {
     for (const minor of [0, 1, 99, 100, 4500050, 123456789]) {
       expect(parseMoneyInput(toMoneyInput(minor))).toBe(minor);
     }
+  });
+});
+
+describe("vatIncluded", () => {
+  it("splits VAT out of a VAT-inclusive total", () => {
+    expect(vatIncluded(107_500_00, 7.5)).toBe(7_500_00);
+    expect(vatIncluded(10_000, 7.5)).toBe(698); // net 9302.33… → 9302
+  });
+  it("is zero when no VAT is charged", () => {
+    expect(vatIncluded(10_000, 0)).toBe(0);
+    expect(vatIncluded(0, 7.5)).toBe(0);
   });
 });

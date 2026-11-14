@@ -102,3 +102,4 @@ Newest first. Each entry: what was decided, and why.
 - **HSTS without `preload`/`includeSubDomains`** until the production domain is final (reviewer finding).
 - **GitHub Actions pinned to commit SHAs; gitleaks v3.** v2 stopped working when GitHub removed Node 20 runners (Sept 2026).
 - **E2E on port 3100 against a production build**, so tests never hit a dev server left running on 3000.
+- **2026-11-18 Invoice logo and payment details are business settings, not code.** The repo is public and multi-business, so each business uploads its own logo (private storage, no SVG) and types its own account details in Settings. The invoice VAT line uses the rate from the books on the first dispatch date (order date before dispatch), matching how revenue posts; the app still never assumes a rate.

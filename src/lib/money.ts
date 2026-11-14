@@ -54,3 +54,13 @@ export function toMoneyInput(minor: number): string {
   const fraction = minor % 100;
   return fraction === 0 ? String(whole) : `${whole}.${String(fraction).padStart(2, "0")}`;
 }
+
+/**
+ * The VAT inside a VAT-inclusive amount at the owner's rate (percent), in whole kobo. Same rounding as the
+ * books (app.books_net_of_vat): net = round(amount × 100 / (100 + rate)); VAT is the rest.
+ */
+export function vatIncluded(amountMinor: number, ratePercent: number): number {
+  if (!ratePercent || ratePercent <= 0 || amountMinor <= 0) return 0;
+  const bp = Math.round(ratePercent * 100); // whole basis points, so the sum stays in exact integers
+  return amountMinor - Math.round((amountMinor * 10_000) / (10_000 + bp));
+}

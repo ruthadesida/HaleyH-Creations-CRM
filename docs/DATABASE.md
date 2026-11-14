@@ -214,6 +214,10 @@ Tables (owners read; writes only through functions): `vat_returns`, `tax_payment
 
 `annual_accounts` (one row per financial year; owners read; audited): company details, written notes, directors' approval, sign-off (name, qualification, date, note, `signed_off_year_closed_at`). RPCs: `save_annual_accounts(business, year, fields jsonb)` (known keys only; refused while a sign-off stands; clears a lapsed one), `sign_off_annual_accounts` (closed year, approval entered, dates after the year end and not in the future), `withdraw_annual_accounts_sign_off`, `account_movements(business, from, to)` (opening, debits, credits, closing per account; year-close journals left out of the period). A sign-off, and the directors' approval (`approved_year_closed_at`), stand only while the year is closed with the same `closed_at`; approval can't be entered for an open year. `account_movements` treats imported figures and opening adjustments as the starting position and drops journals reversed within the period. (Known limit: a close, reopen and re-close inside one database transaction would share `closed_at`; the app never does that.)
 
+## Invoice details (migration 0038)
+
+`businesses.payment_details` (how customers pay, up to 500 characters) and `businesses.tax_id`, owner-updatable like the other business settings; `logo_path` must point into the business's own folder (check constraint). Logos live in the private `branding` bucket (PNG, JPEG, WebP; 2 MB; no SVG): owners upload and remove, members read, under `<business id>/…`; served by `/w/[slug]/logo`. `invoice_vat_rate(business, date)` (office roles) returns only the VAT rate the owner set in the books for that date (0 when not charging), because `books_settings` is owners-only. The invoice shows the VAT included in the total at the rate on the first dispatch date (the order date before dispatch), as the books post it; the books round per sales line and per dispatch, so the ledger can differ from the invoice by a kobo or two.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

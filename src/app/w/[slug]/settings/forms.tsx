@@ -1,14 +1,14 @@
 "use client";
 
-import { Check, Copy, MessageCircle } from "lucide-react";
+import { Check, Copy, ImageUp, MessageCircle } from "lucide-react";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm";
 import { Button, buttonStyles } from "@/components/ui/button";
-import { Field, FormError, Input, Select } from "@/components/ui/field";
+import { Field, FormError, Input, Select, Textarea } from "@/components/ui/field";
 import type { ActionState } from "@/lib/action-state";
 import { ASSIGNABLE_ROLES, OWNER_TITLES, ROLE_LABEL } from "@/lib/labels";
-import type { InviteState } from "./actions";
+import { removeLogo, uploadLogo, type InviteState } from "./actions";
 
 function useSavedToast(state: ActionState) {
   useEffect(() => {
@@ -216,5 +216,73 @@ export function MemberRow({ member, update }: {
         </div>
       )}
     </li>
+  );
+}
+
+export function InvoiceDetailsForm({ action, defaults }: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  defaults: { payment_details: string; tax_id: string };
+}) {
+  const [state, formAction, pending] = useActionState(action, {});
+  useSavedToast(state);
+  const v = (k: keyof typeof defaults) => state.values?.[k] ?? defaults[k];
+  const described = (k: keyof typeof defaults) => state.fieldErrors?.[k]
+    ? { "aria-invalid": true as const, "aria-describedby": `${k}-error` } : { "aria-describedby": `${k}-hint` };
+  return (
+    <form action={formAction} className="flex flex-col gap-5" noValidate>
+      <FormError message={state.ok ? null : state.message} />
+      <Field label="How customers pay" htmlFor="payment_details" optional error={state.fieldErrors?.payment_details}
+        hint="Printed on invoices with a balance to pay. For example: account name, bank and account number.">
+        <Textarea id="payment_details" name="payment_details" rows={3} maxLength={500} defaultValue={v("payment_details")} {...described("payment_details")} />
+      </Field>
+      <Field label="Tax ID (TIN)" htmlFor="tax_id" optional error={state.fieldErrors?.tax_id}
+        hint="Shown under the business name on invoices.">
+        <Input id="tax_id" name="tax_id" maxLength={40} autoComplete="off" defaultValue={v("tax_id")} {...described("tax_id")} />
+      </Field>
+      <Button type="submit" disabled={pending} className="self-start">{pending ? "Saving…" : "Save invoice details"}</Button>
+    </form>
+  );
+}
+
+export function LogoForm({ slug, logoUrl, businessName }: { slug: string; logoUrl: string | null; businessName: string }) {
+  const [pending, start] = useTransition();
+  const [ask, confirmDialog] = useConfirm();
+  return (
+    <div className="flex flex-col gap-4">
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- private file served by our own route
+        <img src={logoUrl} alt={`${businessName} logo`} className="max-h-28 max-w-full self-start rounded-[var(--radius-card)] border border-line object-contain" />
+      ) : (
+        <p className="text-sm text-muted">No logo yet, so invoices show the business name in text.</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <label className={buttonStyles({ variant: "secondary", className: "cursor-pointer has-[:disabled]:opacity-60 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink" })}>
+          <ImageUp aria-hidden className="size-5" />
+          <span>{pending ? "Uploading…" : logoUrl ? "Replace the logo" : "Upload the logo"}</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={pending} onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            const fd = new FormData();
+            fd.set("file", f);
+            start(async () => {
+              const r = await uploadLogo(slug, fd);
+              (r.ok ? toast.success : toast.error)(r.message);
+            });
+          }} />
+        </label>
+        {logoUrl && (
+          <Button type="button" variant="ghost" disabled={pending} onClick={async () => {
+            if (!(await ask("Remove the logo? Invoices will show the business name in text."))) return;
+            start(async () => {
+              const r = await removeLogo(slug);
+              (r.ok ? toast.success : toast.error)(r.message);
+            });
+          }}>Remove</Button>
+        )}
+      </div>
+      <p className="text-sm text-muted">PNG, JPEG or WebP, up to 2 MB. A logo on a transparent or light background prints best.</p>
+      {confirmDialog}
+    </div>
   );
 }

@@ -119,3 +119,69 @@ export async function saveTemplate(slug: string, id: string, title: string, body
   refresh();
   return { ok: true, message: "Template saved." };
 }
+
+const invoiceSchema = z.object({
+  payment_details: z.string().trim().max(500, "Keep it under 500 characters."),
+  tax_id: z.string().trim().max(40, "Keep it under 40 characters."),
+});
+
+/** What every invoice shows: how to pay, and the business's tax ID. Entered by an owner; blank hides it. */
+export async function updateInvoiceDetails(slug: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { business } = await authorize(slug, can.own);
+  const parsed = invoiceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values: formValues(formData) };
+  const supabase = await createClient();
+  const { error } = await supabase.from("businesses")
+    .update({ payment_details: parsed.data.payment_details || null, tax_id: parsed.data.tax_id || null }).eq("id", business.id);
+  if (error) return { message: friendlyDbError(error), values: formValues(formData) };
+  refresh();
+  return { ok: true, message: "Invoice details saved." };
+}
+
+const LOGO_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+const MAX_LOGO = 2 * 1024 * 1024;
+
+/** The image type the file's first bytes show, whatever the browser called it. */
+function sniffImage(head: Uint8Array): string | null {
+  if (head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47) return "image/png";
+  if (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return "image/jpeg";
+  const ascii = (from: number, to: number) => String.fromCharCode(...head.slice(from, to));
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
+/** Replaces the business logo (PNG, JPEG or WebP, up to 2 MB) in its private folder. */
+export async function uploadLogo(slug: string, formData: FormData) {
+  const { business } = await authorize(slug, can.own);
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Choose the logo file." };
+  if (file.size > MAX_LOGO) return { ok: false, message: "That file is over 2 MB. Save a smaller copy and try again." };
+  const type = sniffImage(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
+  const ext = type ? LOGO_TYPES[type] : undefined;
+  if (!type || !ext) return { ok: false, message: "The logo must be a PNG, JPEG or WebP image." };
+  const supabase = await createClient();
+  const { data: b } = await supabase.from("businesses").select("logo_path").eq("id", business.id).single();
+  const path = `${business.id}/logo-${crypto.randomUUID()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from("branding").upload(path, file, { contentType: type, upsert: false });
+  if (upErr) return { ok: false, message: "The logo didn't upload. Check the connection and try again." };
+  const { error } = await supabase.from("businesses").update({ logo_path: path }).eq("id", business.id);
+  if (error) {
+    await supabase.storage.from("branding").remove([path]);
+    return { ok: false, message: friendlyDbError(error) };
+  }
+  if (b?.logo_path) await supabase.storage.from("branding").remove([b.logo_path]);
+  refresh();
+  return { ok: true, message: "Logo saved." };
+}
+
+/** Takes the logo off; invoices go back to the business name in text. */
+export async function removeLogo(slug: string) {
+  const { business } = await authorize(slug, can.own);
+  const supabase = await createClient();
+  const { data: b } = await supabase.from("businesses").select("logo_path").eq("id", business.id).single();
+  const { error } = await supabase.from("businesses").update({ logo_path: null }).eq("id", business.id);
+  if (error) return { ok: false, message: friendlyDbError(error) };
+  if (b?.logo_path) await supabase.storage.from("branding").remove([b.logo_path]);
+  refresh();
+  return { ok: true, message: "Logo removed." };
+}

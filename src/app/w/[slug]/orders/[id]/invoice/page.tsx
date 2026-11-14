@@ -6,6 +6,7 @@ import { Money } from "@/components/ui/bits";
 import { Wordmark } from "@/components/wordmark";
 import { can, pageWorkspace } from "@/lib/dal";
 import { formatDate } from "@/lib/dates";
+import { vatIncluded } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "./print-button";
 
@@ -18,7 +19,21 @@ async function Invoice({ params }: PageProps<"/w/[slug]/orders/[id]/invoice">) {
   const { data: o } = await supabase.from("order_summaries")
     .select("*, customers(full_name, phone, email, address_line, city, state)").eq("id", id).eq("business_id", business.id).maybeSingle();
   if (!o) notFound();
-  const { data: items } = await supabase.from("order_items").select("id, description, quantity, unit_price_minor").eq("order_id", id).order("created_at");
+  const [{ data: items }, { data: b }, { data: firstDispatch }] = await Promise.all([
+    supabase.from("order_items").select("id, description, quantity, unit_price_minor").eq("order_id", id).order("created_at"),
+    supabase.from("businesses").select("logo_path, payment_details, tax_id").eq("id", business.id).single(),
+    supabase.from("order_dispatches").select("dispatched_on").eq("order_id", id).eq("business_id", business.id)
+      .order("dispatched_on").limit(1).maybeSingle(),
+  ]);
+  // The VAT the price includes, at the rate the owner set in the books: on the dispatch date, as the books post
+  // it, or the order date before anything is dispatched (0 when not charging VAT).
+  const { data: rate, error: vatError } = await supabase.rpc("invoice_vat_rate", {
+    p_business_id: business.id, p_date: firstDispatch?.dispatched_on ?? o.order_date!,
+  });
+  if (vatError) throw new Error("Couldn't work out the VAT for this invoice.");
+  const vatRate = Number(rate ?? 0);
+  const vat = vatIncluded(o.total_minor ?? 0, vatRate);
+  const balance = Math.max(o.balance_minor ?? 0, 0);
   const cur = business.currency;
   const c = o.customers;
   const quote = !o.confirmed_at;
@@ -32,7 +47,11 @@ async function Invoice({ params }: PageProps<"/w/[slug]/orders/[id]/invoice">) {
       <article className="rounded-[var(--radius-card)] border border-line bg-surface p-6 sm:p-10 print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-6 border-b border-line pb-6">
           <div>
-            <Wordmark name={business.name} className="block text-2xl" />
+            {b?.logo_path
+              // eslint-disable-next-line @next/next/no-img-element -- private file served by our own route
+              ? <img src={`/w/${slug}/logo?v=${encodeURIComponent(b.logo_path.split("/").pop()!)}`} alt={business.name} className="h-20 w-auto max-w-[14rem] object-contain object-left" />
+              : <Wordmark name={business.name} className="block text-2xl" />}
+            {b?.tax_id && <p className="mt-2 text-sm text-muted [overflow-wrap:anywhere]">TIN {b.tax_id}</p>}
           </div>
           <div className="text-right">
             <h1 className="font-display text-3xl font-medium">{quote ? "Quotation" : o.status === "cancelled" ? "Invoice (cancelled)" : "Invoice"}</h1>
@@ -74,9 +93,17 @@ async function Invoice({ params }: PageProps<"/w/[slug]/orders/[id]/invoice">) {
           {(o.discount_minor ?? 0) > 0 && <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd>−<Money minor={o.discount_minor ?? 0} currency={cur} /></dd></div>}
           {(o.delivery_fee_minor ?? 0) > 0 && <div className="flex justify-between"><dt className="text-muted">Delivery</dt><dd><Money minor={o.delivery_fee_minor ?? 0} currency={cur} /></dd></div>}
           <div className="flex justify-between border-t border-line pt-2 font-medium"><dt>Total</dt><dd><Money minor={o.total_minor ?? 0} currency={cur} /></dd></div>
+          {vat > 0 && <div className="flex justify-between gap-4 text-sm"><dt className="text-muted">Includes VAT at {vatRate}%</dt><dd><Money minor={vat} currency={cur} /></dd></div>}
           {!quote && <div className="flex justify-between"><dt className="text-muted">Paid</dt><dd><Money minor={o.net_paid_minor ?? 0} currency={cur} /></dd></div>}
-          {!quote && <div className="flex justify-between font-display text-2xl"><dt>Balance due</dt><dd><Money minor={Math.max(o.balance_minor ?? 0, 0)} currency={cur} /></dd></div>}
+          {!quote && <div className="flex justify-between font-display text-2xl"><dt>Balance due</dt><dd><Money minor={balance} currency={cur} /></dd></div>}
         </dl>
+        {!quote && balance > 0 && b?.payment_details && o.status !== "cancelled" && (
+          <section className="mb-6 rounded-[var(--radius-card)] border border-line p-4 print:break-inside-avoid">
+            <h2 className="text-sm text-muted">How to pay</h2>
+            <p className="mt-1 whitespace-pre-line font-medium [overflow-wrap:anywhere]">{b.payment_details}</p>
+            <p className="mt-1 text-sm text-muted">Please use {o.order_number} as the payment reference.</p>
+          </section>
+        )}
         <p className="text-sm text-muted">{quote ? "This is a quotation, not a request for payment." : "Thank you for your order."}</p>
       </article>
     </div>

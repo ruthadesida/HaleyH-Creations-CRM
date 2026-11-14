@@ -6,8 +6,8 @@ import { Card, Chip, PageHeader, SectionTitle } from "@/components/ui/bits";
 import { can, pageWorkspace } from "@/lib/dal";
 import { formatDate } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { updateBusiness, updateStockDates } from "./actions";
-import { BusinessForm, StockDatesForm } from "./forms";
+import { updateBusiness, updateInvoiceDetails, updateStockDates } from "./actions";
+import { BusinessForm, InvoiceDetailsForm, LogoForm, StockDatesForm } from "./forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -18,7 +18,7 @@ async function Settings({ params }: PageProps<"/w/[slug]/settings">) {
   const { business } = await pageWorkspace(slug, can.own);
   const supabase = await createClient();
   const [{ data: b }, { data: sub }] = await Promise.all([
-    supabase.from("businesses").select("name, order_prefix, currency, cutover_date, stock_closed_through").eq("id", business.id).single(),
+    supabase.from("businesses").select("name, order_prefix, currency, cutover_date, stock_closed_through, logo_path, payment_details, tax_id").eq("id", business.id).single(),
     supabase.from("business_subscriptions").select("status, trial_ends_at, managed_manually").eq("business_id", business.id).maybeSingle(),
   ]);
 
@@ -54,6 +54,16 @@ async function Settings({ params }: PageProps<"/w/[slug]/settings">) {
         <Card className="p-5">
           <BusinessForm action={updateBusiness.bind(null, slug)}
             defaults={{ name: b!.name, order_prefix: b!.order_prefix, currency: b!.currency }} />
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>Invoices</SectionTitle>
+        <Card className="flex flex-col gap-8 p-5">
+          <LogoForm slug={slug} businessName={b!.name}
+            logoUrl={b!.logo_path ? `/w/${slug}/logo?v=${encodeURIComponent(b!.logo_path.split("/").pop()!)}` : null} />
+          <InvoiceDetailsForm action={updateInvoiceDetails.bind(null, slug)}
+            defaults={{ payment_details: b!.payment_details ?? "", tax_id: b!.tax_id ?? "" }} />
         </Card>
       </section>
 
