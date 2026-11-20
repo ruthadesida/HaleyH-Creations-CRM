@@ -218,6 +218,10 @@ Tables (owners read; writes only through functions): `vat_returns`, `tax_payment
 
 `businesses.payment_details` (how customers pay, up to 500 characters) and `businesses.tax_id`, owner-updatable like the other business settings; `logo_path` must point into the business's own folder (check constraint). Logos live in the private `branding` bucket (PNG, JPEG, WebP; 2 MB; no SVG): owners upload and remove, members read, under `<business id>/…`; served by `/w/[slug]/logo`. `invoice_vat_rate(business, date)` (office roles) returns only the VAT rate the owner set in the books for that date (0 when not charging), because `books_settings` is owners-only. The invoice shows the VAT included in the total at the rate on the first dispatch date (the order date before dispatch), as the books post it; the books round per sales line and per dispatch, so the ledger can differ from the invoice by a kobo or two.
 
+## Phone numbers with country code and 0 (migration 0039)
+
+`app.normalize_phone` turns a number written with both the country code and the trunk 0 (`+234-08031112222`, as Zoho exports it) into `+2348031112222`, like the other copies of that number; the migration rewrites the affected customers so the stored `phone_normalized` / `whatsapp_normalized` columns recompute. `src/lib/phone.ts` mirrors it.
+
 ## Role matrix (Spec 2)
 
 The enum values `manager` and `production` were renamed to `front_office` and `production_manager`; `sales` is retired (blocked by a constraint).

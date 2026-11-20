@@ -8,6 +8,8 @@ export function normalizePhone(raw: string | null | undefined): string | null {
   const digits = raw.replace(/\D/g, "");
   if (digits.length === 0) return null;
   if (digits.startsWith("0") && digits.length === 11) return `+234${digits.slice(1)}`;
+  // Country code and the leading 0 together (Zoho's "+234-08031112222"): drop the 0.
+  if (digits.startsWith("2340") && digits.length === 14) return `+234${digits.slice(4)}`;
   if (digits.startsWith("234")) return `+${digits}`;
   return `+${digits}`;
 }

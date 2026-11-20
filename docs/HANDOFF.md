@@ -2,9 +2,11 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-18 (invoice logo, payment details and VAT line)_
+_Last updated: 2026-11-20 (Zoho customer import; phone numbers with country code and 0)_
 
 ## Where things stand
+
+- **2026-11-20 Zoho customer list imported (owner's choice: into the development project for now).** The owner imported their Zoho contacts through Settings → Import into the HaleyH workspace (269 customers listed afterwards). Fixes found on the way: the import now uses Zoho's `MobilePhone` when `Phone` is blank (most numbers are there), keeps a second different number in the notes and strips Zoho's leading `'`; migration 0039 normalises numbers written as `+234-0803…`. The file itself is never committed. When the clean production project exists, re-import the same file there (external IDs prevent duplicates).
 
 - **2026-11-18 Invoice details (migration 0038):** Settings → **Invoices**: upload the logo (private `branding` bucket), "How customers pay" and the TIN. The invoice shows the logo (text name until one is uploaded), the TIN, "Includes VAT at X%" (rate from the books on the dispatch date, or the order date before dispatch) and the payment details while a balance is due, with the order number as the reference. **Owner's next step:** in Settings → Invoices, upload the logo and type the account details (they are entered in the app only, never in the repo). A transparent-background copy of the logo was made for printing.
 

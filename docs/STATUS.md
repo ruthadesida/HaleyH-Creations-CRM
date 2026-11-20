@@ -98,7 +98,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | Global search (customers, orders, items, jobs, POs) | ✅ | By role; production never sees customers |
 | Printable job sheets | ✅ | No prices; customer first name and measurements only for order jobs |
 | Message templates (WhatsApp, prepared only) | ✅ | Owners edit; staff check and send themselves |
-| CSV import: customers, products (external IDs, preview, idempotent) | ✅ | Orders/payments not imported (would double-count) |
+| CSV import: customers, products (external IDs, preview, idempotent) | ✅ | Orders/payments not imported (would double-count). Zoho contacts: MobilePhone is used when Phone is blank |
 | Backup/restore | ✅ / ⚙️ | Restore proven in CI; nightly backup needs secrets |
 | Live Zoho / WooCommerce / payment provider integrations | 🔌 | Not connected (Settings → Integrations says so) |
 
