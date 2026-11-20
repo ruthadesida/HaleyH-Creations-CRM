@@ -24,5 +24,6 @@ as $$
 $$;
 
 -- Stored generated columns keep the old value until the row is written: recompute the affected rows.
-update public.customers set phone = phone
+-- Both base columns are assigned: Postgres 16+ only recomputes generated columns whose inputs are set.
+update public.customers set phone = phone, whatsapp = whatsapp
 where phone_normalized like '+2340%' or whatsapp_normalized like '+2340%';
