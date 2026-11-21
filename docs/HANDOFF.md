@@ -2,9 +2,11 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-20 (Zoho customer import; phone numbers with country code and 0)_
+_Last updated: 2026-11-21 (live on Vercel with a clean production database)_
 
 ## Where things stand
+
+- **2026-11-21 Live:** the app is on Vercel (`haleyh-creations-crm`, functions in London) against a **new, clean Supabase project `HaleyH-Creations-CRM-live`** (ref `nyjzgwuspjgqjhxciltm`, London) with all 39 migrations and no data. The development project keeps the test data and the test copy of the Zoho customers. Migrations now go to both (commands in `docs/DEPLOY.md`); the CLI stays linked to development. The owner signs up on the live site, creates the HaleyH workspace and re-imports the Zoho file there. Email via Resend is written up step by step in `docs/DEPLOY.md` for later.
 
 - **2026-11-20 Zoho customer list imported (owner's choice: into the development project for now).** The owner imported their Zoho contacts through Settings → Import into the HaleyH workspace (269 customers listed afterwards). Fixes found on the way: the import now uses Zoho's `MobilePhone` when `Phone` is blank (most numbers are there), keeps a second different number in the notes and strips Zoho's leading `'`; migration 0039 normalises numbers written as `+234-0803…`. The file itself is never committed. When the clean production project exists, re-import the same file there (external IDs prevent duplicates).
 
@@ -77,6 +79,6 @@ Done in Phase 4 (kept for reference): **Phase 4** (`docs/GAP-ANALYSIS.md`): repo
 - GitHub dependency graph (Settings → Code security) for the "Dependency review" check.
 - Dependabot PRs: #1 and #3 pass real checks; #2 (TypeScript 7) breaks lint.
 - Backups: the nightly encrypted backup is built but does nothing until the owner adds two GitHub secrets (`docs/BACKUPS.md`). Or Supabase Pro ($25/month). Do this before real data goes in.
-- A clean production Supabase project before real data (the current one is used for development).
-- **Email sending (needed before going live):** Supabase's built-in sender only reaches members of the Supabase organization's team, at most 2 emails an hour, so sign-up confirmations to other addresses never arrive (seen 2026-11-04). Connect custom SMTP (e.g. Resend or Brevo) under Authentication → Emails → SMTP Settings. For testing on the dev project the owner can switch off "Confirm email" (Authentication → Sign In / Providers → Email), then switch it back on before real use. Staff invites work by link and don't need email.
+- Done 2026-11-21: clean production Supabase project (`HaleyH-Creations-CRM-live`).
+- **Email sending (Resend steps in `docs/DEPLOY.md`):** Supabase's built-in sender only reaches members of the Supabase organization's team, at most 2 emails an hour, so sign-up confirmations to other addresses never arrive (seen 2026-11-04). Connect custom SMTP (e.g. Resend or Brevo) under Authentication → Emails → SMTP Settings. For testing on the dev project the owner can switch off "Confirm email" (Authentication → Sign In / Providers → Email), then switch it back on before real use. Staff invites work by link and don't need email.
 - Production domain.

@@ -1,10 +1,28 @@
 # Putting the app online (Vercel)
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-21_
 
 The app runs on **Vercel**, which builds it from the GitHub repository and redeploys automatically on every push to `main`. Staff open it on their phones like any website.
 
-> Right now it points at the **development** Supabase project, so everything entered is test data. Before real business data, create a clean production Supabase project and switch the three Supabase settings below to it (see HANDOFF → Waiting on the owner).
+## Where it runs now (set up 2026-11-21)
+
+| | Live | Development |
+|---|---|---|
+| Address | `https://haleyh-creations-crm.vercel.app` (Vercel project `haleyh-creations-crm`, functions in London `lhr1`) | `http://localhost:3000` |
+| Supabase project | **HaleyH-Creations-CRM-live** (London), clean: real business data only | **HaleyH Creations CRM** (test data, the demo, and a test copy of the Zoho customers) |
+| Settings | Vercel → Settings → Environment Variables | `.env.local` |
+
+**Migrations go to both.** The Supabase CLI stays linked to the development project. After CI passes on a change with a migration, apply it to dev as usual, then to live:
+
+```
+npx.cmd supabase link --project-ref nyjzgwuspjgqjhxciltm
+npx.cmd supabase db push --linked
+npx.cmd supabase link --project-ref ezuysbhroxcnacnqpazl
+```
+
+The last line links the CLI back to development. Apply the migration to live **before** the code that needs it reaches `main`, or in the same sitting, because every push to `main` redeploys the live app.
+
+The one-time setup below is what was done; it is kept for reference and for setting up another environment.
 
 ## One-time setup (owner, about 10 minutes)
 
@@ -35,5 +53,34 @@ Makers (tailors, the shoemaker) are a directory, not logins: add them under **St
 ## Notes
 
 - **Plan:** Vercel's free Hobby plan is meant for non-commercial use. For running the business on it, use **Pro (about $20/month)**.
-- **Sign-up emails:** Supabase's built-in email only reaches your Supabase team members. Connect your own sender (Resend or Brevo) before switching "Confirm email" back on (see HANDOFF → email sending).
+- **Sign-up emails:** Supabase's built-in email only reaches your Supabase team members. Connect your own sender (Resend, below) before switching "Confirm email" back on.
 - **Every push to `main` redeploys.** CI runs on the same push; check it is green before telling staff about changes.
+
+## Email with Resend (to do later)
+
+Supabase sends the sign-up confirmation and password-reset emails. Connecting Resend makes them reach anyone, from your own address. Nothing changes in the app's code: it is a Supabase setting.
+
+**You need a domain you own** (for example the one your website or business email uses), with access to its DNS settings at the registrar. Without a verified domain, Resend only delivers to your own Resend login address.
+
+1. **Create a Resend account** at resend.com. The free plan covers 3,000 emails a month (100 a day), plenty for sign-ups and password resets.
+2. **Add your domain:** Resend → **Domains → Add domain**. Use a subdomain such as `mail.yourdomain.com` so it can't affect your normal email. Pick the region **Ireland (eu-west-1)**.
+3. **Add the DNS records** Resend shows (an MX and TXT for sending, a TXT for DKIM) at your domain registrar, then click **Verify** in Resend. It can take from minutes to a few hours.
+4. **Create an API key:** Resend → **API Keys → Create**. Permission: **Sending access**, restricted to that domain. Copy it once: it starts with `re_`. Treat it like a password: it goes only into Supabase, never into the code or a chat.
+5. **Connect it to Supabase (live project):** **Authentication → Emails → SMTP Settings → Enable custom SMTP**:
+
+   | Field | Value |
+   |---|---|
+   | Sender email | `no-reply@mail.yourdomain.com` |
+   | Sender name | `HaleyH Creations` |
+   | Host | `smtp.resend.com` |
+   | Port | `465` |
+   | Username | `resend` |
+   | Password | the `re_…` API key |
+
+   Shortcut: Resend → **Integrations → Supabase** can fill these in for you.
+6. **Raise the email limit:** Supabase → **Authentication → Rate Limits**, "Rate limit for sending emails" (it starts at 30 an hour with custom SMTP). 30–100 an hour is plenty.
+7. **Use the app's templates:** Supabase → **Authentication → Emails → Templates**. Paste `supabase/templates/confirmation.html` into "Confirm signup" and `supabase/templates/recovery.html` into "Reset password".
+8. **Switch "Confirm email" back on:** Authentication → Sign In / Providers → Email.
+9. **Test:** sign up on the live site with an address that isn't in your Supabase team, and use "Forgot password". Both emails should arrive within a minute (check spam the first time). Resend → **Emails** shows each one and whether it was delivered.
+
+Staff invites don't need email: they're links you send yourself (WhatsApp is fine).
