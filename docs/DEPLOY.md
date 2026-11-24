@@ -56,7 +56,31 @@ Makers (tailors, the shoemaker) are a directory, not logins: add them under **St
 - **Sign-up emails:** Supabase's built-in email only reaches your Supabase team members. Connect your own sender (Resend, below) before switching "Confirm email" back on.
 - **Every push to `main` redeploys.** CI runs on the same push; check it is green before telling staff about changes.
 
-## Email with Resend (to do later)
+## Email without a domain: Gmail (until you buy one)
+
+While "Confirm email" is off, sign-ups don't need email at all. The one thing that does is **Forgot password**. Until there is a domain, Supabase can send these through a Gmail account. Nothing changes in the app's code.
+
+1. Use a **business Gmail** (create one such as `haleyhcreations…@gmail.com` if you don't have one), not a personal inbox.
+2. Turn on **2-Step Verification** for it: Google Account → Security.
+3. Create an **App password**: Google Account → Security → App passwords (search "App passwords" if it isn't listed). Name it "Supabase". Copy the 16 letters once. Treat it like a password: it goes only into Supabase, never into the code or a chat.
+4. **Supabase (live project) → Authentication → Emails → SMTP Settings → Enable custom SMTP:**
+
+   | Field | Value |
+   |---|---|
+   | Sender email | the Gmail address |
+   | Sender name | `HaleyH Creations` |
+   | Host | `smtp.gmail.com` |
+   | Port | `465` |
+   | Username | the Gmail address |
+   | Password | the 16-letter App password |
+
+5. Do steps 6, 7 and 9 of the Resend list below (rate limit, templates, test). Leave "Confirm email" off: Gmail is fine for password resets, but a domain gives better delivery for sign-ups.
+
+Limits: Gmail allows about 500 emails a day, far more than the business needs. Emails come from a gmail.com address, so the first ones may land in spam. When you buy a domain, switch to Resend below and delete the App password in Google.
+
+**Buying a domain:** about $10–15 a year for a `.com` (Vercel → Domains, Cloudflare, Namecheap or Porkbun; `.com.ng` from a Nigerian registrar). Bought through Vercel, it can also become the app's address (for example `app.haleyhcreations.com`) with no DNS work.
+
+## Email with Resend (once you have a domain)
 
 Supabase sends the sign-up confirmation and password-reset emails. Connecting Resend makes them reach anyone, from your own address. Nothing changes in the app's code: it is a Supabase setting.
 
