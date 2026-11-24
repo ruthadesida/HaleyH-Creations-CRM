@@ -23,6 +23,7 @@ Customer contact details and measurements, order values, payment records, staff 
 | Vulnerable dependencies | `npm audit --omit=dev --audit-level=high`, Dependabot, dependency review, CodeQL | CI |
 | Forged invite links | Random 192-bit tokens, only hashes stored, email must match, expiry, revocation | Planned e2e |
 | Tampering with the books | Journals only through owner-checked database functions; a constraint trigger refuses unbalanced journals; triggers refuse edits and deletes of posted journals (corrections are reversals); closed years and the month-close date refuse postings; RLS limits the books to owners | `19_books.test.sql` |
+| Bots creating accounts, guessing passwords or flooding reset emails | Cloudflare Turnstile on sign-in, sign-up and password reset; Supabase verifies the token once CAPTCHA protection is on (Attack Protection). Joining by invite has no check: the invite link is the proof, and the session starts from a server-made one-time link (`generateLink` + `verifyOtp`), not a password sign-in | `src/lib/captcha.test.ts`; live check by the owner (`docs/DEPLOY.md`) |
 | Card data exposure | Never collected or stored (manual payment records only) | Design rule |
 
 ## Business logos (2026-11-18)
@@ -33,7 +34,8 @@ Private `branding` bucket, folder per business: owners upload and remove, member
 
 - CSP still allows `'unsafe-inline'` scripts. Move authenticated routes to nonce-based CSP via `proxy.ts` once auth is built, and add the Supabase origin to `connect-src`.
 - HSTS `includeSubDomains; preload` deliberately off until the production domain is final.
-- Rate limiting on auth and invite acceptance relies on Supabase Auth limits; review before launch.
+- Rate limiting on auth and invite acceptance relies on Supabase Auth limits plus the Turnstile check (2026-11-24).
+- CSP allows `https://challenges.cloudflare.com` in `script-src` and `frame-src` for Turnstile.
 - Supabase MCP should be scoped to the dev project (`?project_ref=`) once it exists.
 
 ## Secret key use (2026-11-05)

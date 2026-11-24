@@ -1,6 +1,6 @@
 # Putting the app online (Vercel)
 
-_Last updated: 2026-11-21_
+_Last updated: 2026-11-24_
 
 The app runs on **Vercel**, which builds it from the GitHub repository and redeploys automatically on every push to `main`. Staff open it on their phones like any website.
 
@@ -55,6 +55,37 @@ Makers (tailors, the shoemaker) are a directory, not logins: add them under **St
 - **Plan:** Vercel's free Hobby plan is meant for non-commercial use. For running the business on it, use **Pro (about $20/month)**.
 - **Sign-up emails:** Supabase's built-in email only reaches your Supabase team members. Connect your own sender (Resend, below) before switching "Confirm email" back on.
 - **Every push to `main` redeploys.** CI runs on the same push; check it is green before telling staff about changes.
+
+## Security check (CAPTCHA) on sign-in and sign-up
+
+The sign-in, create-account and forgot-password forms show a **Cloudflare Turnstile** check. It's free, and most people only see a tick with no puzzle. It stops bots from creating accounts or guessing passwords. In development no key is set, so the check is hidden.
+
+**Do the steps in this order.** If Supabase starts requiring the check before the live site shows it, nobody can sign in.
+
+1. **Create a Turnstile widget:** sign in or create a free account at dash.cloudflare.com → **Turnstile → Add widget**.
+   - Widget name: `HaleyH CRM`
+   - Hostname: `haleyh-creations-crm.vercel.app` (add your own domain later if you buy one)
+   - Widget mode: **Managed**
+   - It shows a **Site key** (public) and a **Secret key** (keep private).
+2. **Put the Site key in Vercel:** Settings → Environment Variables → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = the site key (Production), then **Redeploy**. Claude can do this step for you: the site key is public.
+3. **Check the live site:** open the sign-in page. The check should appear above the button and show a tick.
+4. **Switch it on in Supabase (live project):** **Authentication → Attack Protection → Enable CAPTCHA protection**. Provider **Turnstile by Cloudflare**, paste the **Secret key**, Save. Only you enter the secret key: never into the code or a chat.
+5. **Test:** sign out and sign in again. Try "Forgot password" too.
+
+**Preview deployments** (Vercel builds of other branches) have no site key, so once Supabase requires the check you can only sign in on the main address. Test changes there or on your computer.
+
+To switch it off in an emergency, turn off CAPTCHA protection in Supabase first. The forms keep working with or without it.
+
+## Turning "Confirm email" on
+
+New accounts then have to click a link in an email before they can sign in. **Only do this after an email sender works** (Gmail or Resend, below), or nobody outside your Supabase team can finish signing up.
+
+1. Supabase (live project) → **Authentication → Sign In / Providers → Email**: switch on **Confirm email**, Save.
+2. **Authentication → URL Configuration:** **Site URL** is `https://haleyh-creations-crm.vercel.app` and **Redirect URLs** includes `https://haleyh-creations-crm.vercel.app/**`. The confirmation link goes there.
+3. **Authentication → Emails → Templates → Confirm signup:** paste `supabase/templates/confirmation.html`.
+4. **Test:** create an account with an address that isn't in your Supabase team. The email should arrive within a minute (check spam), and the link should sign you in.
+
+Staff who join by invite link skip this: the link already proves their email.
 
 ## Email without a domain: Gmail (until you buy one)
 

@@ -2,9 +2,11 @@
 
 > **Prompt for the next session:** "Continue building the HaleyH Creations system. Read `CLAUDE.md`, then `docs/HANDOFF.md`, `docs/STATUS.md`, `docs/SPEC.md` (Spec 2 wins), `docs/GAP-ANALYSIS.md` and `docs/COSTING.md`. Pick up from *Next steps* below. Follow the definition of done in `CLAUDE.md`, including the reviewer agent and updating these docs before you finish."
 
-_Last updated: 2026-11-21 (live on Vercel with a clean production database)_
+_Last updated: 2026-11-24 (security check on sign-in; email setup steps)_
 
 ## Where things stand
+
+- **2026-11-24 Security check and email steps:** Cloudflare Turnstile on sign-in, sign-up and forgot password (the invite join form has none: it now starts the session with a server-made one-time link instead of a password sign-in, so it never needs a check) (`src/components/ui/captcha.tsx`, `src/lib/captcha.ts`; tokens passed to Supabase as `captchaToken`). Hidden until `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set. **Owner's next steps, in this order** (`docs/DEPLOY.md` → Security check): create the Turnstile widget, give Claude the site key for Vercel (or add it), check the live sign-in page shows the tick, then enable CAPTCHA protection in Supabase with the secret key. DEPLOY.md also now has Gmail SMTP for password resets until there is a domain, and the steps to turn "Confirm email" on (only after an email sender works). Confirm email is **off** on live (checked 2026-11-24).
 
 - **2026-11-21 Live:** the app is on Vercel (`haleyh-creations-crm`, functions in London) against a **new, clean Supabase project `HaleyH-Creations-CRM-live`** (ref `nyjzgwuspjgqjhxciltm`, London) with all 39 migrations and no data. The development project keeps the test data and the test copy of the Zoho customers. Migrations now go to both (commands in `docs/DEPLOY.md`); the CLI stays linked to development. The owner signs up on the live site, creates the HaleyH workspace and re-imports the Zoho file there. Email via Resend is written up step by step in `docs/DEPLOY.md` for later.
 

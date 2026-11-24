@@ -14,6 +14,7 @@ Legend: ✅ works and tested · 🧪 built, verification pending · 🚧 in prog
 | CI pipeline | ✅ | Dependency review needs the GitHub dependency graph ⚙️ |
 | Supabase project | ✅ | Dev project; migrations 0001–0021 applied |
 | Sign up / in / out / reset | ✅ | |
+| Security check (Cloudflare Turnstile) | ⚙️ | Built 2026-11-24; shows once `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set in Vercel, enforced once CAPTCHA protection is on in Supabase (`docs/DEPLOY.md`) |
 | Auth emails | ⚙️ | Default Supabase emails only reach Supabase team members; custom SMTP for more |
 | Backups / restore | ⚙️ | Nightly encrypted backup workflow ready; needs two GitHub secrets (`docs/BACKUPS.md`). Restore tested in CI (Spec 2 test O) |
 | Hosting | ⚙️ | Not deployed |

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { Captcha } from "@/components/ui/captcha";
 import { Field, FormError, Input } from "@/components/ui/field";
 import { type ActionState, initialState } from "@/lib/action-state";
 import { requestPasswordReset, signIn, signUp, updatePassword } from "./actions";
@@ -46,6 +47,7 @@ export function SignInForm() {
         <Input id="password" name="password" type="password" autoComplete="current-password" required
           enterKeyHint="go" {...errorProps(state, "password")} />
       </Field>
+      <Captcha resetKey={state} />
       <Button type="submit" size="lg" block disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>
@@ -81,6 +83,7 @@ export function SignUpForm() {
         <Input id="password" name="password" type="password" autoComplete="new-password" required
           {...errorProps(state, "password")} />
       </Field>
+      <Captcha resetKey={state} />
       <Button type="submit" size="lg" block disabled={pending}>
         {pending ? "Creating account…" : "Create account"}
       </Button>
@@ -97,10 +100,12 @@ export function ResetRequestForm() {
   if (state.ok) return <Success message={state.message} />;
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
+      <FormError message={state.message} />
       <Field label="Email" htmlFor="email" error={state.fieldErrors?.email}>
         <Input id="email" name="email" type="email" autoComplete="email" autoCapitalize="none" inputMode="email"
           required defaultValue={state.values?.email} {...errorProps(state, "email")} />
       </Field>
+      <Captcha resetKey={state} />
       <Button type="submit" size="lg" block disabled={pending}>
         {pending ? "Sending…" : "Send reset link"}
       </Button>

@@ -25,7 +25,8 @@ export async function joinWithInvite(token: string, _prev: ActionState, formData
   const invite = await lookupInvite(token);
   if (!invite?.valid) return { message: "This invitation has expired or was already used. Ask the owner for a new link." };
 
-  const { error: createError } = await createAdminClient().auth.admin.createUser({
+  const admin = createAdminClient();
+  const { error: createError } = await admin.auth.admin.createUser({
     email: invite.email,
     password: parsed.data.password,
     email_confirm: true,
@@ -42,8 +43,12 @@ export async function joinWithInvite(token: string, _prev: ActionState, formData
     };
   }
 
+  // Start the session with a one-time sign-in link made on the server (nothing is emailed). Unlike a password
+  // sign-in it needs no security check: the invite link is the proof here, so the join form has no CAPTCHA.
   const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email: invite.email, password: parsed.data.password });
+  const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: invite.email });
+  const tokenHash = link?.properties?.hashed_token;
+  const signInError = linkError ?? (tokenHash ? (await supabase.auth.verifyOtp({ type: "email", token_hash: tokenHash })).error : true);
   if (signInError) return { message: "Your account was created. Sign in below to join." };
   const { data: businessId, error: acceptError } = await supabase.rpc("accept_invitation", { p_token: token });
   if (acceptError || !businessId) return { message: "Your account was created, but joining failed. Open the invite link again." };

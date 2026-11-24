@@ -11,9 +11,13 @@ const lanAddresses = isDev
 // Baseline CSP without nonces so pages can stay statically prerendered.
 // Tighten (nonces via proxy.ts) once authenticated routes exist, and add the
 // Supabase project URL to connect-src when Supabase is wired in.
+// Cloudflare Turnstile (the security check on sign-in and sign-up) loads a script and an iframe from here.
+const turnstile = "https://challenges.cloudflare.com";
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${turnstile}${isDev ? " 'unsafe-eval'" : ""}`,
+  `frame-src ${turnstile}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data:",
   "font-src 'self'",

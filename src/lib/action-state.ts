@@ -20,7 +20,7 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   return out;
 }
 
-export function formValues(formData: FormData, omit: string[] = ["password"]): Record<string, string> {
+export function formValues(formData: FormData, omit: string[] = ["password", "cf-turnstile-response"]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of formData.entries()) {
     if (typeof v !== "string" || omit.includes(k) || k.startsWith("$")) continue;

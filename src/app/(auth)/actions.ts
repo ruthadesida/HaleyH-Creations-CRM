@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { type ActionState, fieldErrors, formValues } from "@/lib/action-state";
+import { CAPTCHA_FAILED_MESSAGE, captchaToken, isCaptchaError } from "@/lib/captcha";
 import { createClient } from "@/lib/supabase/server";
 import {
   newPasswordSchema,
@@ -28,8 +29,12 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
     return { fieldErrors: fieldErrors(parsed.error), values: formValues(formData) };
   }
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: { captchaToken: captchaToken(formData) },
+  });
   if (error) {
+    if (isCaptchaError(error.code)) return { message: CAPTCHA_FAILED_MESSAGE, values: formValues(formData) };
     // Same message whether the email exists or not, so accounts can't be discovered.
     const unconfirmed = error.code === "email_not_confirmed";
     return {
@@ -44,6 +49,7 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
 /** Plain-language reasons for the common Supabase sign-up errors. */
 function signUpErrorMessage(code: string | undefined): string {
+  if (isCaptchaError(code)) return CAPTCHA_FAILED_MESSAGE;
   switch (code) {
     case "weak_password": return "Choose a stronger password: at least 10 characters with letters and numbers.";
     case "over_email_send_rate_limit": return "Too many sign-up emails were sent in the last hour. Please wait and try again later.";
@@ -66,6 +72,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
+      captchaToken: captchaToken(formData),
       emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(safeNext(formData.get("next")))}`,
     },
   });
@@ -88,9 +95,12 @@ export async function requestPasswordReset(_prev: ActionState, formData: FormDat
   }
   const supabase = await createClient();
   const origin = siteOrigin();
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/confirm?next=/reset-password/update`,
+    captchaToken: captchaToken(formData),
   });
+  // A failed security check says nothing about the account, so it can be reported.
+  if (isCaptchaError(error?.code)) return { message: CAPTCHA_FAILED_MESSAGE, values: formValues(formData) };
   // Always the same answer, so this can't be used to check which emails have accounts.
   return {
     ok: true,
